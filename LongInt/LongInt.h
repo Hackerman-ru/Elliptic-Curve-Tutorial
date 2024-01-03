@@ -9,12 +9,6 @@
 #include <functional>
 #include <string>
 
-template<typename T>
-concept UnsignedIntegral = std::is_integral_v<T> && !std::is_signed_v<T>;
-
-template<typename T, typename W>
-concept Convertable = std::is_convertible_v<T, W>;
-
 namespace ECG {
     class uint512_t {
         using T = uint32_t;   // must be unsigned integer
