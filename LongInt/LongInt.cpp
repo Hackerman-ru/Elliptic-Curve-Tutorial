@@ -46,16 +46,6 @@ uint512_t::uint512_t(const std::string& str, std::function<T(char)> map, size_t 
     }
 }
 
-auto uint512_t::operator<=>(const uint512_t& other) const {
-    for (size_t i = m_value.size(); i > 0; --i) {
-        if (m_value[i - 1] != other.m_value[i - 1]) {
-            return m_value[i - 1] <=> other.m_value[i - 1];
-        }
-    }
-
-    return std::strong_ordering::equal;
-}
-
 uint512_t uint512_t::operator+(const uint512_t& other) const {
     uint512_t result {};
 

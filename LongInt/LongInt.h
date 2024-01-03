@@ -31,8 +31,9 @@ namespace ECG {
         uint512_t(const std::string& str, StringType str_type);
         uint512_t(const std::string& str, std::function<T(char)> map, size_t shift);
 
-        auto operator<=>(const uint512_t& other) const;
-        bool operator==(const uint512_t& other) const = default;
+        auto operator<=>(const uint512_t& other) const {
+            return other.m_value <=> m_value;
+        }
 
         uint512_t operator+(const uint512_t& other) const;
         uint512_t operator-(const uint512_t& other) const;

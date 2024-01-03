@@ -7,11 +7,15 @@
 #include <vector>
 
 namespace ECG {
-    using T = uint512_t;   // should be uint256_t or uint512_t
+    using T = uint512_t;   // should be uint512_t or bigger
 
     class PrimeField {
     public:
         explicit PrimeField(const T& value);
+
+        auto operator<=>(const PrimeField& other) const {
+            return m_value <=> other.m_value;
+        }
 
         PrimeField operator+(const PrimeField& other) const;
         PrimeField operator-(const PrimeField& other) const;

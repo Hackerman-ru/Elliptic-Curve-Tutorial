@@ -2,7 +2,7 @@
 
 using ECG::PrimeField;
 
-PrimeField::PrimeField(const T& value) : m_value(value) {};
+PrimeField::PrimeField(const T& value) : m_value(value) {}
 
 PrimeField PrimeField::operator+(const PrimeField& other) const {
     // TODO: insert return statement here
