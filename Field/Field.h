@@ -48,14 +48,6 @@ public:
         } while (number != 0);
     }
 
-    PNumber(const std::string& str) : BASE(STRING_BASE) {
-        num.reserve(str.size());
-
-        for (const auto& symbol : str) {
-            emplace_back(char_to_int(symbol));
-        }
-    }
-
     bool operator==(const PNumber& other) const {
         size_t n = num.size(), m = other.num.size();
 
@@ -201,64 +193,10 @@ public:
         num.emplace_back(p_symbol);
     }
 
-    std::string str() const {
-        PNumber temp = *this;
-
-        if (BASE != STRING_BASE) {
-            temp.ConvertToOtherBase(STRING_BASE);
-        }
-
-        std::string res;
-
-        for (const auto& symbol : temp.num) {
-            res.push_back(int_to_char(symbol));
-        }
-
-        return res;
-    }
-
 private:
     std::vector<int64_t> num;
     int64_t BASE;
     static constexpr int64_t STRING_BASE = 64;
-
-    static int64_t char_to_int(char symbol) {
-        if (symbol >= 48 && symbol <= 57) {
-            return symbol - 48;
-        }
-        if (symbol >= 65 && symbol <= 90) {
-            return symbol - 55;
-        }
-        if (symbol >= 97 && symbol <= 122) {
-            return symbol - 61;
-        }
-        if (symbol == 32) {
-            return 62;
-        }
-        if (symbol == 46) {
-            return 63;
-        }
-        return 64;
-    }
-
-    static char int_to_char(int64_t num) {
-        if (num >= 0 && num <= 9) {
-            return num + 48;
-        }
-        if (num >= 10 && num <= 35) {
-            return num + 55;
-        }
-        if (num >= 36 && num <= 61) {
-            return num + 61;
-        }
-        if (num == 62) {
-            return 32;
-        }
-        if (num == 63) {
-            return 46;
-        }
-        return 64;
-    }
 };
 
 #endif

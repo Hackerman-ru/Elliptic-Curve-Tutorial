@@ -7,6 +7,7 @@ modernize-use-bool-literals, modernize-use-override, modernize-use-using, perfor
 readability-braces-around-statements, readability-container-size-empty, readability-duplicate-include,
 readability-identifier-naming, readability-isolate-declaration, readability-magic-numbers,
 readability-make-member-function-const, readability-redundant-control-flow, readability-redundant-string-init'
+
 HeaderFilterRegex: '\.h$'
 WarningsAsErrors: '*'
 CheckOptions:
@@ -23,7 +24,7 @@ CheckOptions:
   - key: readability-identifier-naming.TypeAliasCase
     value: CamelCase
   - key: readability-identifier-naming.PrivateMemberPrefix
-    value: 'm_'
+    value: m_
   - key: readability-identifier-naming.StructCase
     value: CamelCase
   - key: readability-identifier-naming.FunctionCase
