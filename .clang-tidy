@@ -1,5 +1,12 @@
 ---
-Checks:          '-*,bugprone-too-small-loop-variable, bugprone-use-after-move, cppcoreguidelines-avoid-goto, cppcoreguidelines-avoid-non-const-global-variables, cppcoreguidelines-init-variables, cppcoreguidelines-narrowing-conversions, cppcoreguidelines-pro-type-const-cast, google-build-using-namespace, google-explicit-constructor, google-readability-casting, google-runtime-int, modernize-replace-random-shuffle, modernize-use-bool-literals, modernize-use-override, modernize-use-using, performance-for-range-copy, readability-braces-around-statements, readability-container-size-empty, readability-duplicate-include, readability-identifier-naming, readability-isolate-declaration, readability-magic-numbers, readability-make-member-function-const, readability-redundant-control-flow, readability-redundant-string-init'
+Checks:'-*,bugprone-too-small-loop-variable, bugprone-use-after-move, cppcoreguidelines-avoid-goto,
+cppcoreguidelines-avoid-non-const-global-variables, cppcoreguidelines-init-variables,
+cppcoreguidelines-narrowing-conversions, cppcoreguidelines-pro-type-const-cast, google-build-using-namespace,
+google-explicit-constructor, google-readability-casting, google-runtime-int, modernize-replace-random-shuffle,
+modernize-use-bool-literals, modernize-use-override, modernize-use-using, performance-for-range-copy,
+readability-braces-around-statements, readability-container-size-empty, readability-duplicate-include,
+readability-identifier-naming, readability-isolate-declaration, readability-magic-numbers,
+readability-make-member-function-const, readability-redundant-control-flow, readability-redundant-string-init'
 HeaderFilterRegex: '\.h$'
 WarningsAsErrors: '*'
 CheckOptions:
@@ -7,6 +14,10 @@ CheckOptions:
     value: CamelCase
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
+  - key: readability-identifier-naming.ClassIgnoredRegexp
+    value: .int*_t
+  - key: readability-identifier-naming.ConstexprVariablePrefix
+    value: c_
   - key: readability-identifier-naming.TypedefCase
     value: CamelCase
   - key: readability-identifier-naming.TypeAliasCase

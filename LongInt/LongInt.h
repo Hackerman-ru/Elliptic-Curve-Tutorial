@@ -1,21 +1,59 @@
-#pragma once
+#ifndef ECG_LONGINT_H
+#define ECG_LONGINT_H
 
 #include <array>
+#include <functional>
+#include <string>
 
-class uint512_t {
-public:
-    uint512_t(uint64_t value) : m_value({value}) {};
+namespace ECG {
+    class uint512_t {
+        using T = uint64_t;
 
-    uint512_t operator+(const uint512_t& other) const;
-    uint512_t operator-(const uint512_t& other) const;
-    uint512_t operator*(const uint512_t& other) const;
-    uint512_t operator/(const uint512_t& other) const;
+    public:
+        enum class StringType {
+            BINARY,
+            DECIMAL,
+            HEXADECIMAL,
+        };
 
-    uint512_t& operator+=(const uint512_t& other);
-    uint512_t& operator-=(const uint512_t& other);
-    uint512_t& operator*=(const uint512_t& other);
-    uint512_t& operator/=(const uint512_t& other);
+        constexpr explicit uint512_t(T value);
+        explicit uint512_t(const std::string& str, StringType str_type);
+        explicit uint512_t(const std::string& str, std::function<T(char)> map);
 
-private:
-    std::array<uint64_t, 8> m_value;
-};
+        uint512_t operator+(const uint512_t& other) const;
+        uint512_t operator-(const uint512_t& other) const;
+        uint512_t operator*(const uint512_t& other) const;
+        uint512_t operator/(const uint512_t& other) const;
+        uint512_t operator%(const uint512_t& other) const;
+        uint512_t operator>>(size_t shift) const;
+        uint512_t operator<<(size_t shift) const;
+        uint512_t operator^(const uint512_t& other) const;
+        uint512_t operator|(const uint512_t& other) const;
+        uint512_t operator&(const uint512_t& other) const;
+
+        uint512_t& operator+=(const uint512_t& other);
+        uint512_t& operator-=(const uint512_t& other);
+        uint512_t& operator*=(const uint512_t& other);
+        uint512_t& operator/=(const uint512_t& other);
+        uint512_t& operator%=(const uint512_t& other);
+        uint512_t& operator>>=(size_t shift);
+        uint512_t& operator<<=(size_t shift);
+        uint512_t& operator^=(const uint512_t& other);
+        uint512_t& operator|=(const uint512_t& other);
+        uint512_t& operator&=(const uint512_t& other);
+
+        auto operator<=>(const uint512_t& other) const;
+        bool operator==(const uint512_t& other) const;
+
+        explicit operator T() const;
+
+        std::string into_string(StringType str_type) const;
+        std::string into_string(std::function<char(T)> map) const;
+
+    private:
+        static constexpr size_t Bytes = 64;
+        std::array<T, Bytes / sizeof(T)> m_value;
+    };
+}   // namespace ECG
+
+#endif

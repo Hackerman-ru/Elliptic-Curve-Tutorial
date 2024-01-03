@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECG_FIELD_H
+#define ECG_FIELD_H
 
 #include "../LongInt/LongInt.h"
 
@@ -6,17 +7,13 @@
 #include <vector>
 
 namespace ECG {
-    using _Ty = uint512_t;   // should be uint256_t or uint512_t
+    using T = uint512_t;   // should be uint256_t or uint512_t
 
-    template<_Ty p>
     class PrimeField {
     public:
-        PrimeField() : m_value({0}) {};
-        PrimeField(const _Ty& value) : m_value(value) {};
+        explicit PrimeField(const T& value);
 
-        PrimeField operator+(const PrimeField& other) const {
-
-        };
+        PrimeField operator+(const PrimeField& other) const;
         PrimeField operator-(const PrimeField& other) const;
         PrimeField operator-() const;
         PrimeField operator*(const PrimeField& other) const;
@@ -30,17 +27,15 @@ namespace ECG {
         PrimeField inverse() const;
 
     private:
-        std::vector<uint64_t> m_value;
+        T m_value;
     };
 
-    template<_Ty p, _Ty n>
     class Field {};
 }   // namespace ECG
 
 class PNumber {
 public:
     PNumber() {};
-    PNumber(int64_t base) : BASE(base) {};
 
     PNumber(int64_t number, int64_t base) : BASE(base) {
         int64_t remainder;
@@ -265,3 +260,5 @@ private:
         return 64;
     }
 };
+
+#endif
