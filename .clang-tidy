@@ -1,5 +1,4 @@
----
-Checks:'-*,bugprone-too-small-loop-variable, bugprone-use-after-move, cppcoreguidelines-avoid-goto,
+Checks: '-*,bugprone-too-small-loop-variable, bugprone-use-after-move, cppcoreguidelines-avoid-goto,
 cppcoreguidelines-avoid-non-const-global-variables, cppcoreguidelines-init-variables,
 cppcoreguidelines-narrowing-conversions, cppcoreguidelines-pro-type-const-cast, google-build-using-namespace,
 google-explicit-constructor, google-readability-casting, google-runtime-int, modernize-replace-random-shuffle,

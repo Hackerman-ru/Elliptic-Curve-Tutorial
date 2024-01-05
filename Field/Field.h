@@ -1,46 +1,37 @@
 #ifndef ECG_FIELD_H
 #define ECG_FIELD_H
 
-#include "../LongInt/LongInt.h"
+#include "../LongInt/long-int.h"
 
 #include <string>
 #include <vector>
 
 namespace ECG {
-    using T = uint512_t;   // should be uint512_t or bigger
+    using FieldElement = uint512_t;   // should be uint512_t or bigger
 
     class PrimeField {
     public:
-        explicit PrimeField(const T& value);
+        explicit PrimeField(const FieldElement& p);
 
-        auto operator<=>(const PrimeField& other) const {
-            return m_value <=> other.m_value;
-        }
+        template<typename T>
+        requires std::is_nothrow_convertible_v<T, FieldElement>
+        FieldElement normalize(const T& value) const;
 
-        PrimeField operator+(const PrimeField& other) const;
-        PrimeField operator-(const PrimeField& other) const;
-        PrimeField operator-() const;
-        PrimeField operator*(const PrimeField& other) const;
-        PrimeField operator/(const PrimeField& other) const;
-
-        PrimeField& operator+=(const PrimeField& other);
-        PrimeField& operator-=(const PrimeField& other);
-        PrimeField& operator*=(const PrimeField& other);
-        PrimeField& operator/=(const PrimeField& other);
-
-        PrimeField inverse() const;
+        FieldElement add(const FieldElement& lhs, const FieldElement& rhs) const;
+        FieldElement sub(const FieldElement& lhs, const FieldElement& rhs) const;
+        FieldElement neg(const FieldElement& element) const;
+        FieldElement mul(const FieldElement& lhs, const FieldElement& rhs) const;
+        FieldElement div(const FieldElement& lhs, const FieldElement& rhs) const;
 
     private:
-        T m_value;
+        FieldElement m_p;
     };
 
-    class Field {};
+    class GaloisField {};
 }   // namespace ECG
 
 class PNumber {
 public:
-    PNumber() {};
-
     PNumber(int64_t number, int64_t base) : BASE(base) {
         int64_t remainder;
         remainder = number % base;
@@ -58,7 +49,7 @@ public:
         return !(n != m || num != other.num);
     }
 
-    bool operator<(const PNumber& other) const {
+    auto operator<(const PNumber& other) const -> bool {
         size_t n = num.size(), m = other.num.size();
 
         if (n != m) {
@@ -72,10 +63,6 @@ public:
         }
 
         return false;
-    }
-
-    bool operator>(const PNumber& other) const {
-        return other < *this;
     }
 
     PNumber& operator+=(const PNumber& other) {
@@ -119,7 +106,6 @@ public:
 
             if (diff < 0) {
                 num[i] = diff + BASE;
-                num[i + 1] -= 1;
             }
         }
 

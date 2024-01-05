@@ -1,4 +1,4 @@
-#include "LongInt.h"
+#include "long-int.h"
 
 #include <cassert>
 #include <complex>
@@ -103,7 +103,8 @@ namespace {
 
     template<typename T>
     std::vector<T> multiply(std::vector<T> const& a, std::vector<T> const& b) {
-        std::vector<cd> fa(a.begin(), a.end()), fb(b.begin(), b.end());
+        std::vector<cd> fa(a.begin(), a.end());
+        std::vector<cd> fb(b.begin(), b.end());
         size_t n = 1;
 
         while (n < a.size() + b.size()) {
@@ -125,7 +126,7 @@ namespace {
         std::vector<T> result(n);
 
         for (size_t i = 0; i < n; i++) {
-            result[i] = round(fa[i].real());
+            result[i] = T(round(fa[i].real()));
         }
 
         return result;
@@ -202,7 +203,7 @@ uint512_t uint512_t::operator/(T value) const {
                 continue;
             }
 
-            result.m_value[i - 1] = remainder / divisor;
+            result.m_value[i - 1] = T(remainder / divisor);
             remainder %= divisor;
         }
     } else {
@@ -289,7 +290,7 @@ uint512_t uint512_t::operator&(const uint512_t& other) const {
     return result;
 }
 
-uint512_t ECG::uint512_t::operator-() const {
+uint512_t uint512_t::operator-() const {
     uint512_t result {};
 
     for (size_t i = 0; i < m_value.size(); ++i) {
