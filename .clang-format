@@ -4,7 +4,6 @@ AlignArrayOfStructures: Right
 AlignConsecutiveAssignments: None
 AlignConsecutiveBitFields: None
 AlignConsecutiveDeclarations: None
-AlignConsecutiveMacros: Consecutive
 AlignConsecutiveMacros:
   Enabled: true
   AcrossEmptyLines: true

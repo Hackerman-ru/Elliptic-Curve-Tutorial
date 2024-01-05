@@ -12,8 +12,11 @@
 namespace ECG {
     class uint512_t {
         using T = uint32_t;
-        static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>,
-                      "Bucket's type must be unsigned integer");
+        static_assert(std::is_unsigned_v<T>, "Bucket's type must be unsigned integer");
+
+        static_assert(
+            std::is_convertible_v<T, char>,
+            "Bucket's type must be convertible to char for string initialization and string representation");
 
     public:
         enum class StringType {

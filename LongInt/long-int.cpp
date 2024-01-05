@@ -65,17 +65,18 @@ uint512_t uint512_t::operator-(const uint512_t& other) const {
 }
 
 namespace {
-    using cd = std::complex<double>;
+    using complex_double = std::complex<double>;
     static const double PI = acos(-1);
 
-    void fft(std::vector<cd>& a, bool invert) {
+    void fft(std::vector<complex_double>& a, bool invert) {
         size_t n = a.size();
 
         if (n == 1) {
             return;
         }
 
-        std::vector<cd> a0(n / 2), a1(n / 2);
+        std::vector<complex_double> a0(n / 2);
+        std::vector<complex_double> a1(n / 2);
 
         for (size_t i = 0; 2 * i < n; i++) {
             a0[i] = a[2 * i];
@@ -86,7 +87,7 @@ namespace {
         fft(a1, invert);
 
         double ang = 2 * PI / n * (invert ? -1 : 1);
-        cd w(1), wn(cos(ang), sin(ang));
+        complex_double w(1), wn(cos(ang), sin(ang));
 
         for (size_t i = 0; 2 * i < n; i++) {
             a[i] = a0[i] + w * a1[i];
@@ -103,8 +104,8 @@ namespace {
 
     template<typename T>
     std::vector<T> multiply(std::vector<T> const& a, std::vector<T> const& b) {
-        std::vector<cd> fa(a.begin(), a.end());
-        std::vector<cd> fb(b.begin(), b.end());
+        std::vector<complex_double> fa(a.begin(), a.end());
+        std::vector<complex_double> fb(b.begin(), b.end());
         size_t n = 1;
 
         while (n < a.size() + b.size()) {
