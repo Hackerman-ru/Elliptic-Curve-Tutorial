@@ -41,3 +41,5 @@ CheckOptions:
     value: CamelCase
   - key: google-runtime-int.TypeSuffix
     value: _t
+  - key: cppcoreguidelines-narrowing-conversions.IgnoreConversionFromTypes
+    value: [unsigned int, char]

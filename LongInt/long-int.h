@@ -37,6 +37,8 @@ namespace ECG {
         uint512_t operator+(const uint512_t& other) const;
         uint512_t operator-(const uint512_t& other) const;
         uint512_t operator*(const uint512_t& other) const;
+        uint512_t operator/(const uint512_t& other) const;
+        uint512_t operator%(const uint512_t& other) const;
         uint512_t operator/(T value) const;
         uint512_t operator%(T value) const;
         uint512_t operator>>(size_t shift) const;
@@ -50,6 +52,8 @@ namespace ECG {
         uint512_t& operator+=(const uint512_t& other);
         uint512_t& operator-=(const uint512_t& other);
         uint512_t& operator*=(const uint512_t& other);
+        uint512_t& operator/(const uint512_t& other);
+        uint512_t& operator%(const uint512_t& other);
         uint512_t& operator/=(T value);
         uint512_t& operator%=(T value);
         uint512_t& operator>>=(size_t shift);

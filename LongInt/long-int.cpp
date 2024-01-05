@@ -8,7 +8,7 @@ using ECG::uint512_t;
 constexpr uint512_t::uint512_t(T value) : m_value({value}) {};
 
 uint512_t::uint512_t(const std::string& str, StringType str_type) {
-    *this = uint512_t {};
+    *this = uint512_t();
 
     switch (str_type) {
     case uint512_t::StringType::BINARY :
@@ -36,7 +36,7 @@ uint512_t::uint512_t(const std::string& str, StringType str_type) {
 }
 
 uint512_t::uint512_t(const std::string& str, std::function<T(char)> map, size_t shift) {
-    *this = uint512_t {};
+    *this = uint512_t();
 
     for (char c : str) {
         if (isdigit(c)) {
@@ -47,7 +47,7 @@ uint512_t::uint512_t(const std::string& str, std::function<T(char)> map, size_t 
 }
 
 uint512_t uint512_t::operator+(const uint512_t& other) const {
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] += m_value[i] + other.m_value[i];
@@ -138,7 +138,7 @@ uint512_t uint512_t::operator*(const uint512_t& other) const {
     std::vector<T> lhs(m_value.begin(), m_value.end());
     std::vector<T> rhs(other.m_value.begin(), other.m_value.end());
     std::vector<T> product = multiply(lhs, rhs);
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] = product[i];
@@ -189,9 +189,17 @@ uint512_t uint512_t::operator*(const uint512_t& other) const {
     }*/
 }
 
+uint512_t ECG::uint512_t::operator/(const uint512_t& other) const {
+    return uint512_t();
+}
+
+uint512_t ECG::uint512_t::operator%(const uint512_t& other) const {
+    return uint512_t();
+}
+
 uint512_t uint512_t::operator/(T value) const {
     assert(value != 0 && "Division by 0");
-    uint512_t result {};
+    uint512_t result;
 
     if constexpr (std::is_same_v<T, uint32_t>) {
         uint64_t remainder = 0;
@@ -204,7 +212,7 @@ uint512_t uint512_t::operator/(T value) const {
                 continue;
             }
 
-            result.m_value[i - 1] = T(remainder / divisor);
+            result.m_value[i - 1] = static_cast<T>(remainder / divisor);
             remainder %= divisor;
         }
     } else {
@@ -221,7 +229,7 @@ uint512_t uint512_t::operator%(T value) const {
 
 uint512_t uint512_t::operator>>(size_t shift) const {
     size_t bucket_shift = shift / c_BUCKET_SIZE;
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i + bucket_shift < m_value.size(); ++i) {
         result.m_value[i] = m_value[i + bucket_shift];
@@ -242,7 +250,7 @@ uint512_t uint512_t::operator>>(size_t shift) const {
 
 uint512_t uint512_t::operator<<(size_t shift) const {
     size_t bucket_shift = shift / c_BUCKET_SIZE;
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i + bucket_shift < m_value.size(); ++i) {
         result.m_value[i + bucket_shift] = m_value[i];
@@ -262,7 +270,7 @@ uint512_t uint512_t::operator<<(size_t shift) const {
 }
 
 uint512_t uint512_t::operator^(const uint512_t& other) const {
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] = m_value[i] ^ other.m_value[i];
@@ -272,7 +280,7 @@ uint512_t uint512_t::operator^(const uint512_t& other) const {
 }
 
 uint512_t uint512_t::operator|(const uint512_t& other) const {
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] = m_value[i] | other.m_value[i];
@@ -282,7 +290,7 @@ uint512_t uint512_t::operator|(const uint512_t& other) const {
 }
 
 uint512_t uint512_t::operator&(const uint512_t& other) const {
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] = m_value[i] & other.m_value[i];
@@ -292,7 +300,7 @@ uint512_t uint512_t::operator&(const uint512_t& other) const {
 }
 
 uint512_t uint512_t::operator-() const {
-    uint512_t result {};
+    uint512_t result;
 
     for (size_t i = 0; i < m_value.size(); ++i) {
         result.m_value[i] = ~(m_value[i]);
@@ -361,26 +369,29 @@ uint512_t::operator T() const {
 
 std::string uint512_t::into_string(StringType str_type) const {
     std::string result;
-    uint512_t clone = *this;
+    uint512_t clone_of_this = *this;
 
     switch (str_type) {
     case uint512_t::StringType::BINARY :
         do {
-            result.push_back((T(clone) & T(uint512_t::StringType::BINARY)) + '0');
-            clone >>= 1;
-        } while (clone > uint512_t(0));
+            result.push_back((static_cast<T>(clone_of_this) & static_cast<T>(uint512_t::StringType::BINARY))
+                             + '0');
+            clone_of_this >>= 1;
+        } while (clone_of_this > uint512_t(0));
         break;
     case uint512_t::StringType::DECIMAL :
         do {
-            result.push_back((T(clone) % T(uint512_t::StringType::DECIMAL)) + '0');
-            clone /= T(uint512_t::StringType::DECIMAL);
-        } while (clone > uint512_t(0));
+            result.push_back((static_cast<T>(clone_of_this) % static_cast<T>(uint512_t::StringType::DECIMAL))
+                             + '0');
+            clone_of_this /= T(uint512_t::StringType::DECIMAL);
+        } while (clone_of_this > uint512_t(0));
         break;
     case uint512_t::StringType::HEXADECIMAL :
         do {
-            result.push_back((T(clone) & T(uint512_t::StringType::HEXADECIMAL)) + '0');
-            clone >>= 4;
-        } while (clone > uint512_t(0));
+            result.push_back(
+                (static_cast<T>(clone_of_this) & static_cast<T>(uint512_t::StringType::HEXADECIMAL)) + '0');
+            clone_of_this >>= 4;
+        } while (clone_of_this > uint512_t(0));
         break;
     }
 
