@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace ECG {
-    using FieldElement = uint512_t;   // should be uint512_t or bigger
+    using FieldElement = uint_t;   // should be uint512_t or bigger
 
     class PrimeField {
     public:
