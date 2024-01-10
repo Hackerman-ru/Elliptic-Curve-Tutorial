@@ -86,8 +86,6 @@ namespace ECG {
         uint_t& operator++();
         uint_t& operator--();
 
-        explicit operator bucket_type() const;
-
         template<typename T, is_convertible<T> bucket_type>
         T convert_to() const {
             size_t shift = sizeof(T) * CHAR_BIT;

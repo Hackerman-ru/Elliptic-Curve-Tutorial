@@ -303,11 +303,6 @@ uint_t<bits>& uint_t<bits>::operator--() {
 }
 
 template<size_t bits>
-uint_t<bits>::operator bucket_type() const {
-    return m_buckets[0];
-}
-
-template<size_t bits>
 std::string uint_t<bits>::into_string(StringType str_type) const {
     static const uint_t ZERO = uint_t(0);
     std::string result;
@@ -316,24 +311,19 @@ std::string uint_t<bits>::into_string(StringType str_type) const {
     switch (str_type) {
     case StringType::BINARY :
         do {
-            result.push_back(
-                (static_cast<bucket_type>(clone_of_this) & static_cast<bucket_type>(StringType::BINARY))
-                + '0');
+            result.push_back((clone_of_this[0] & static_cast<bucket_type>(StringType::BINARY)) + '0');
             clone_of_this >>= 1;
         } while (clone_of_this > ZERO);
         break;
     case StringType::DECIMAL :
         do {
-            result.push_back(
-                (static_cast<bucket_type>(clone_of_this) % static_cast<bucket_type>(StringType::DECIMAL))
-                + '0');
+            result.push_back((clone_of_this[0] % static_cast<bucket_type>(StringType::DECIMAL)) + '0');
             clone_of_this /= bucket_type(StringType::DECIMAL);
         } while (clone_of_this > ZERO);
         break;
     case StringType::HEXADECIMAL :
         do {
-            bucket_type value =
-                static_cast<bucket_type>(clone_of_this) & static_cast<bucket_type>(StringType::HEXADECIMAL);
+            bucket_type value = clone_of_this[0] & static_cast<bucket_type>(StringType::HEXADECIMAL);
 
             if (value >= 10) {
                 value -= 10;

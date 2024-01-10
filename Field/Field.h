@@ -36,6 +36,8 @@ namespace ECG {
         static uint m_p;
     };
 
+    uint PFE::m_p(0);
+
     template<is_convertible<uint> T>
     inline PFE::PFE(const T& value, bool is_normalized) : m_value(value) {
         if (!is_normalized) {
