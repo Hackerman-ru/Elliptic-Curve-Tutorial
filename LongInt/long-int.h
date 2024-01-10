@@ -11,14 +11,20 @@
 #include <functional>
 #include <string>
 
-template<typename From, typename To>
-concept Convertible = std::is_nothrow_convertible_v<From, To>;
-
 namespace ECG {
+    template<typename From, typename To>
+    concept is_convertible = requires(From f) { static_cast<To>(f); };
+
     template<typename T, typename W>
-    concept ConvertableContainer = requires(T t, size_t i) {
-        { t[i] } -> std::convertible_to<W>;
+    concept ConvertibleContainer = requires(T t, size_t i) {
+        { t[i] } -> is_convertible<W>;
         { t.size() } -> std::same_as<size_t>;
+    };
+
+    enum class StringType {
+        BINARY = 0b1,
+        DECIMAL = 10,
+        HEXADECIMAL = 0xF,
     };
 
     template<size_t bits = 512>
@@ -27,16 +33,12 @@ namespace ECG {
         static_assert(std::is_same_v<bucket_type, uint32_t>, "The bucket type must be uint32_t");
 
     public:
-        enum class StringType {
-            BINARY = 0b1,
-            DECIMAL = 10,
-            HEXADECIMAL = 0xF,
-        };
-
         constexpr uint_t() = default;
-        constexpr explicit uint_t(const bucket_type& value);
 
-        template<ConvertableContainer<bucket_type> T>
+        template<is_convertible<bucket_type> T>
+        constexpr explicit uint_t(const T& value) : m_buckets({static_cast<bucket_type>(value)}) {};
+
+        template<ConvertibleContainer<bucket_type> T>
         uint_t(const T& other) {
             const size_t min_size = std::min(size(), other.size());
 
@@ -86,8 +88,7 @@ namespace ECG {
 
         explicit operator bucket_type() const;
 
-        template<typename T>
-        requires(std::is_nothrow_convertible_v<bucket_type, T>)
+        template<typename T, is_convertible<T> bucket_type>
         T convert_to() const {
             size_t shift = sizeof(T) * CHAR_BIT;
             size_t bucket_number = shift / c_BUCKET_SIZE;

@@ -5,21 +5,16 @@
 using ECG::uint_t;
 
 template<size_t bits>
-inline constexpr uint_t<bits>::uint_t(const bucket_type& value) {
-    m_buckets[0] = value;
-}
-
-template<size_t bits>
 uint_t<bits>::uint_t(const std::string& str, StringType str_type) {
     switch (str_type) {
-    case uint_t::StringType::BINARY :
+    case StringType::BINARY :
         for (size_t i = 0; i < str.size() && i < bits; ++i) {
             size_t bucket_pos = i / c_BUCKET_SIZE;
 
             m_buckets[bucket_pos] |= bucket_type(str[str.size() - 1 - i] - '0') << (i % c_BUCKET_SIZE);
         }
         break;
-    case uint_t::StringType::DECIMAL :
+    case StringType::DECIMAL :
         for (char c : str) {
             uint_t temp = (*this <<= 1);
             *this <<= 2;
@@ -27,7 +22,7 @@ uint_t<bits>::uint_t(const std::string& str, StringType str_type) {
             *this += uint_t(c - '0');
         }
         break;
-    case uint_t::StringType::HEXADECIMAL :
+    case StringType::HEXADECIMAL :
         for (char c : str) {
             *this <<= 4;
 
@@ -319,26 +314,26 @@ std::string uint_t<bits>::into_string(StringType str_type) const {
     uint_t clone_of_this = *this;
 
     switch (str_type) {
-    case uint_t::StringType::BINARY :
+    case StringType::BINARY :
         do {
-            result.push_back((static_cast<bucket_type>(clone_of_this)
-                              & static_cast<bucket_type>(uint_t::StringType::BINARY))
-                             + '0');
+            result.push_back(
+                (static_cast<bucket_type>(clone_of_this) & static_cast<bucket_type>(StringType::BINARY))
+                + '0');
             clone_of_this >>= 1;
         } while (clone_of_this > ZERO);
         break;
-    case uint_t::StringType::DECIMAL :
+    case StringType::DECIMAL :
         do {
-            result.push_back((static_cast<bucket_type>(clone_of_this)
-                              % static_cast<bucket_type>(uint_t::StringType::DECIMAL))
-                             + '0');
-            clone_of_this /= bucket_type(uint_t::StringType::DECIMAL);
+            result.push_back(
+                (static_cast<bucket_type>(clone_of_this) % static_cast<bucket_type>(StringType::DECIMAL))
+                + '0');
+            clone_of_this /= bucket_type(StringType::DECIMAL);
         } while (clone_of_this > ZERO);
         break;
-    case uint_t::StringType::HEXADECIMAL :
+    case StringType::HEXADECIMAL :
         do {
-            bucket_type value = static_cast<bucket_type>(clone_of_this)
-                              & static_cast<bucket_type>(uint_t::StringType::HEXADECIMAL);
+            bucket_type value =
+                static_cast<bucket_type>(clone_of_this) & static_cast<bucket_type>(StringType::HEXADECIMAL);
 
             if (value >= 10) {
                 value -= 10;
