@@ -6,6 +6,14 @@ void PFE::set_p(const uint& p) {
     m_p = p;
 }
 
+bool ECG::PFE::operator==(const PFE& other) const {
+    return m_value == other.m_value;
+}
+
+PFE::uint PFE::get_p() {
+    return m_p;
+}
+
 PFE::PFE(const std::string& str, StringType type) : m_value(str, type) {
     m_value %= m_p;
     assert(m_value < m_p);
@@ -21,6 +29,23 @@ PFE PFE::operator+(const PFE& other) const {
     }
 
     return PFE(result, true);
+}
+
+PFE PFE::operator-() const {
+    return PFE(m_p - m_value);
+}
+
+PFE PFE::fast_pow(const uint& pow) const {
+    if (pow == uint(1)) {
+        return *this;
+    }
+
+    if ((pow & uint(0b1)) == uint(0b1)) {
+        return *this * fast_pow(pow - uint(1));
+    }
+
+    PFE temp = fast_pow(pow >> 1);
+    return temp * temp;
 }
 
 PFE PFE::operator-(const PFE& other) const {

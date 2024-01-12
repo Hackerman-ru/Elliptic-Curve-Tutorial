@@ -13,7 +13,7 @@
 
 namespace ECG {
     template<typename From, typename To>
-    concept is_convertible = requires(From f) { static_cast<To>(f); };
+    concept is_convertible = std::is_same_v<From, To> || requires(From f) { static_cast<To>(f); };
 
     template<typename T, typename W>
     concept ConvertibleContainer = requires(T t, size_t i) {
@@ -47,7 +47,7 @@ namespace ECG {
             }
         }
 
-        uint_t(const std::string& str, StringType str_type);
+        uint_t(const std::string& str, StringType str_type = StringType::DECIMAL);
         uint_t(const std::string& str, std::function<bucket_type(char)> map, size_t shift);
 
         auto operator<=>(const uint_t& other) const = default;
@@ -86,7 +86,8 @@ namespace ECG {
         uint_t& operator++();
         uint_t& operator--();
 
-        template<typename T, is_convertible<T> bucket_type>
+        template<typename T>
+        requires is_convertible<bucket_type, T>
         T convert_to() const {
             size_t shift = sizeof(T) * CHAR_BIT;
             size_t bucket_number = shift / c_BUCKET_SIZE;
@@ -104,7 +105,7 @@ namespace ECG {
             return result;
         }
 
-        std::string into_string(StringType str_type) const;
+        std::string into_string(StringType str_type = StringType::DECIMAL) const;
         std::string into_string(std::function<char(bucket_type)> map, size_t shift) const;
 
         const bucket_type& operator[](size_t pos) const {

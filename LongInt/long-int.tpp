@@ -64,11 +64,12 @@ uint_t<bits> uint_t<bits>::operator+(const uint_t& other) const {
 template<size_t bits>
 uint_t<bits> uint_t<bits>::operator-(const uint_t& other) const {
     uint_t result;
-    bucket_type remainder = 0;
+    bool remainder = false;
 
     for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
-        result[i] += m_buckets[i] - other[i] + remainder;
-        remainder = static_cast<bucket_type>(result[i] > (m_buckets[i] + remainder));
+        bucket_type sum = m_buckets[i] + (remainder ? -1 : 0);
+        result[i] = sum - other[i];
+        remainder = (remainder && sum >= m_buckets[i]) || (result[i] > sum);
     }
 
     return result;
@@ -317,8 +318,9 @@ std::string uint_t<bits>::into_string(StringType str_type) const {
         break;
     case StringType::DECIMAL :
         do {
-            result.push_back((clone_of_this[0] % static_cast<bucket_type>(StringType::DECIMAL)) + '0');
-            clone_of_this /= bucket_type(StringType::DECIMAL);
+            uint_t remainder;
+            clone_of_this = divide(clone_of_this, static_cast<bucket_type>(StringType::DECIMAL), &remainder);
+            result.push_back(remainder[0] + '0');
         } while (clone_of_this > ZERO);
         break;
     case StringType::HEXADECIMAL :
@@ -430,7 +432,7 @@ inline uint_t<bits> uint_t<bits>::d_divide(const uint_t& lhs, const uint_t& rhs,
     dividend <<= shift;
     divisor <<= shift;
 
-    uint64_t divisor_ = divisor_head;
+    uint64_t divisor_ = divisor[divisor_size - 1];
     static constexpr uint64_t c_BUCKET = static_cast<uint64_t>(1) << c_BUCKET_SIZE;
 
     for (size_t i = dividend_size - divisor_size + 1; i > 0; --i) {
