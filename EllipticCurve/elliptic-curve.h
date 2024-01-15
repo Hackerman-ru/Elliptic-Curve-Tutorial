@@ -34,7 +34,7 @@ namespace ECG {
         static Field m_b;
 
         static bool find_y(const Field& x, Field* y);
-        static Field::uint generate_random_uint();
+        static Field::uint512_t generate_random_uint();
         static Field find_n();
     };
 

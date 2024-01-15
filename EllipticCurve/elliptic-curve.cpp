@@ -52,7 +52,7 @@ ECE ECE::find_point(const std::string& str) {
     while (true) {
         const size_t STR_SIZE = str.size();
         const size_t BYTES = (Field::get_p() >> 4).convert_to<size_t>();
-        Field::uint x_ = generate_random_uint();
+        Field::uint512_t x_ = generate_random_uint();
 
         for (size_t i = 0; i < STR_SIZE && i < BYTES; ++i) {
             x_ <<= 3;
@@ -82,23 +82,23 @@ bool ECE::operator==(const ECE& other) const {
 
 bool ECE::find_y(const Field& x, Field* y) {
     Field a = x * x * x + x * m_a + m_b;
-    Field a_pow_spec = a.fast_pow((Field::get_p() - Field::uint(1)) >> 1);
+    Field a_pow_spec = a.fast_pow((Field::get_p() - Field::uint512_t(1)) >> 1);
 
     if (a_pow_spec != Field(1)) {
         return false;
     }
 
-    if ((Field::get_p() & Field::uint(0b11)) == Field::uint(0b11)) {
-        *y = a.fast_pow((Field::get_p() + Field::uint(1)) >> 2);
+    if ((Field::get_p() & Field::uint512_t(0b11)) == Field::uint512_t(0b11)) {
+        *y = a.fast_pow((Field::get_p() + Field::uint512_t(1)) >> 2);
         return true;
     }
 
     // TODO: insert return statement here
 }
 
-ECE::Field::uint ECE::generate_random_uint() {
-    static constexpr size_t BITS = sizeof(Field::uint) * CHAR_BIT;
-    Field::uint result;
+ECE::Field::uint512_t ECE::generate_random_uint() {
+    static constexpr size_t BITS = sizeof(Field::uint512_t) * CHAR_BIT;
+    Field::uint512_t result;
 
     for (size_t i = 0; i < BITS; ++i) {
         result <<= 1;

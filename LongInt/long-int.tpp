@@ -47,6 +47,11 @@ uint_t<bits>::uint_t(const std::string& str, std::function<bucket_type(char)> ma
 }
 
 template<size_t bits>
+bool ECG::uint_t<bits>::operator==(const uint_t& other) const {
+    return m_buckets == other.m_buckets;
+}
+
+template<size_t bits>
 uint_t<bits> uint_t<bits>::operator+(const uint_t& other) const {
     uint_t result;
 
@@ -360,9 +365,7 @@ std::string uint_t<bits>::into_string(std::function<char(bucket_type)> map, size
 
 template<size_t bits>
 inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder) {
-    static constexpr uint_t ZERO = uint_t(0);
-
-    assert(rhs != ZERO && "Division by 0");
+    assert(rhs != 0 && "Division by 0");
 
     size_t dividend_size = lhs.clz();
     size_t divisor_size = rhs.clz();
@@ -373,7 +376,7 @@ inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const uint_t& rhs, u
             *remainder = lhs;
         }
 
-        return ZERO;
+        return uint_t(0);
     }
 
     // CASE 1:

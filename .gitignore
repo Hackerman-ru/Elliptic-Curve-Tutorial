@@ -36,3 +36,4 @@
 *.sln
 *.vcxproj*
 x64
+/packages/

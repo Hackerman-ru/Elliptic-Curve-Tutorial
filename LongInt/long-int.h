@@ -13,7 +13,10 @@
 
 namespace ECG {
     template<typename From, typename To>
-    concept is_convertible = std::is_same_v<From, To> || requires(From f) { static_cast<To>(f); };
+    concept is_explicitly_convertible = !std::is_same_v<From, To> && requires(From f) { static_cast<To>(f); };
+
+    template<typename From, typename To>
+    concept is_convertible = requires(From f) { static_cast<To>(f); };
 
     template<typename T, typename W>
     concept ConvertibleContainer = requires(T t, size_t i) {
@@ -27,7 +30,7 @@ namespace ECG {
         HEXADECIMAL = 0xF,
     };
 
-    template<size_t bits = 512>
+    template<size_t bits>
     class uint_t {
         using bucket_type = uint32_t;
         static_assert(std::is_same_v<bucket_type, uint32_t>, "The bucket type must be uint32_t");
@@ -51,6 +54,12 @@ namespace ECG {
         uint_t(const std::string& str, std::function<bucket_type(char)> map, size_t shift);
 
         auto operator<=>(const uint_t& other) const = default;
+        bool operator==(const uint_t& other) const;
+
+        template<is_explicitly_convertible<uint_t> T>
+        bool operator==(const T& other) const {
+            return *this == uint_t(other);
+        }
 
         uint_t operator+(const uint_t& other) const;
         uint_t operator-(const uint_t& other) const;

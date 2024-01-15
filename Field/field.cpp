@@ -2,7 +2,7 @@
 
 using ECG::PFE;
 
-void PFE::set_p(const uint& p) {
+void PFE::set_p(const uint512_t& p) {
     m_p = p;
 }
 
@@ -10,7 +10,7 @@ bool ECG::PFE::operator==(const PFE& other) const {
     return m_value == other.m_value;
 }
 
-PFE::uint PFE::get_p() {
+PFE::uint512_t PFE::get_p() {
     return m_p;
 }
 
@@ -22,7 +22,7 @@ PFE::PFE(const std::string& str, StringType type) : m_value(str, type) {
 PFE PFE::operator+(const PFE& other) const {
     assert(m_value < m_p && other.m_value < m_p);
 
-    uint result = m_value + other.m_value;
+    uint512_t result = m_value + other.m_value;
 
     if (result > m_p) {
         result -= m_p;
@@ -35,13 +35,13 @@ PFE PFE::operator-() const {
     return PFE(m_p - m_value);
 }
 
-PFE PFE::fast_pow(const uint& pow) const {
-    if (pow == uint(1)) {
+PFE PFE::fast_pow(const uint512_t& pow) const {
+    if (pow == uint512_t(1)) {
         return *this;
     }
 
-    if ((pow & uint(0b1)) == uint(0b1)) {
-        return *this * fast_pow(pow - uint(1));
+    if ((pow & uint512_t(0b1)) == 0b1) {
+        return *this * fast_pow(pow - uint512_t(1));
     }
 
     PFE temp = fast_pow(pow >> 1);
@@ -51,7 +51,7 @@ PFE PFE::fast_pow(const uint& pow) const {
 PFE PFE::operator-(const PFE& other) const {
     assert(m_value < m_p && other.m_value < m_p);
 
-    uint result = m_value;
+    uint512_t result = m_value;
 
     if (result < other.m_value) {
         result += m_p;
@@ -69,7 +69,7 @@ PFE PFE::operator-(const PFE& other) const {
 PFE PFE::operator*(const PFE& other) const {
     assert(m_value < m_p && other.m_value < m_p);
 
-    uint result = m_value * other.m_value;
+    uint512_t result = m_value * other.m_value;
     return PFE(result, false);
 }
 
@@ -80,19 +80,19 @@ PFE PFE::operator/(const PFE& other) const {
 PFE PFE::inverse() const {   // Extended Euclidean algorithm
     assert(m_value < m_p);
     PFE t(0);
-    uint r(m_p);
+    uint512_t r(m_p);
     PFE new_t(1);
-    uint new_r(m_value);
+    uint512_t new_r(m_value);
 
-    while (new_r != uint(0)) {
-        uint quotien = r / new_r;
+    while (new_r != 0) {
+        uint512_t quotien = r / new_r;
         PFE temp(quotien * new_t.m_value);
 
         std::make_pair(t, new_t) = std::make_pair(new_t, t - temp);
         std::make_pair(r, new_r) = std::make_pair(new_r, r % new_r);
     }
 
-    assert(r == uint(1));
+    assert(r == 1);
     return t;
 }
 
