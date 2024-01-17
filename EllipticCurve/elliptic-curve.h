@@ -1,45 +1,51 @@
 #ifndef ECG_ELLIPTIC_CURVE_H
 #define ECG_ELLIPTIC_CURVE_H
 
-#include "../Field/Field.h"
+#include "../Field/field.h"
 
 namespace ECG {
-    class ECE {
+
+    template<const Field* field>
+    class EllipticCurve {
+        using Element = FieldElement<field>;
+
     public:
-        using Field = PFE;
-        ECE() = default;
-        explicit ECE(const Field& x);
-        template<is_convertible<Field> T, is_convertible<Field> W>
-        ECE(const T& x, const W& y) : m_x(Field(x)), m_y(Field(y)) {};
-        static void set_params(const Field& a, const Field& b);
+        constexpr EllipticCurve(const Element& a, const Element& b);
+        uint find_points_number() const;   // SEA algorithm
 
-        ECE operator+(const ECE& other) const;
-        ECE operator-(const ECE& other) const;
-        ECE operator-() const;
-
-        ECE& operator+=(const ECE& other);
-        ECE& operator-=(const ECE& other);
-
-        bool operator==(const ECE& other) const;
-
-        bool is_inf() const;
-
-        static ECE find_point(const std::string& str);
+        const Element& get_a() const;
+        const Element& get_b() const;
 
     private:
-        Field m_x = Field(0);
-        Field m_y = Field(0);
+        const Element m_a;
+        const Element m_b;
 
-        static Field m_a;
-        static Field m_b;
-
-        static bool find_y(const Field& x, Field* y);
-        static Field::uint512_t generate_random_uint();
-        static Field find_n();
+        Element find_y(const Element& x) const;
+        static uint generate_random_uint();
     };
 
-    ECE::Field ECE::m_a(0);
-    ECE::Field ECE::m_b(0);
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePoint {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePoint(const Element& x, const Element& y);
+
+        EllipticCurvePoint operator+(const EllipticCurvePoint& other) const;
+        EllipticCurvePoint operator-(const EllipticCurvePoint& other) const;
+        EllipticCurvePoint operator*(const uint& other) const;
+        EllipticCurvePoint operator-() const;
+
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other);
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other);
+
+        bool operator==(const EllipticCurvePoint& other) const;
+        bool is_inf() const;
+
+    private:
+        Element m_x;
+        Element m_y;
+    };
 }   // namespace ECG
 
 #endif

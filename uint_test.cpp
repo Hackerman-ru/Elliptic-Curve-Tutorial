@@ -1,5 +1,7 @@
 #define BOOST_TEST_MODULE uint_test
-#include "LongInt/long-int.h"
+
+#include "Field/field.h"
+#include "Uint/uint.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/test/included/unit_test.hpp>
@@ -8,6 +10,17 @@
 using namespace boost::multiprecision;
 
 static constexpr size_t N = 100000;
+using namespace boost::unit_test;
+
+BOOST_AUTO_TEST_CASE(FieldTest) {
+    unit_test_log.set_threshold_level(log_test_units);
+    static constexpr Field F(1000000007);
+    FieldElement<&F> P(ECG::uint(3));
+    P = P.fast_pow(ECG::uint(3));
+    auto str = P.into_string(ECG::StringType::DECIMAL);
+    std::string s = "27";
+    BOOST_TEST_REQUIRE(str == s);
+}
 
 BOOST_AUTO_TEST_CASE(OneStringConvertion) {
     std::string str = "6227020800";

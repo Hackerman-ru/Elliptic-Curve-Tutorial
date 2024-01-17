@@ -5,6 +5,8 @@
     #define CHAR_BIT 8
 #endif
 
+#include "../util.h"
+
 #include <array>
 #include <cassert>
 #include <complex>
@@ -12,46 +14,19 @@
 #include <string>
 
 namespace ECG {
-    template<typename From, typename To>
-    concept is_explicitly_convertible = !std::is_same_v<From, To> && requires(From f) { static_cast<To>(f); };
-
-    template<typename From, typename To>
-    concept is_convertible = requires(From f) { static_cast<To>(f); };
-
-    template<typename T, typename W>
-    concept ConvertibleContainer = requires(T t, size_t i) {
-        { t[i] } -> is_convertible<W>;
-        { t.size() } -> std::same_as<size_t>;
-    };
-
-    enum class StringType {
-        BINARY = 0b1,
-        DECIMAL = 10,
-        HEXADECIMAL = 0xF,
-    };
-
     template<size_t bits>
     class uint_t {
-        using bucket_type = uint32_t;
-        static_assert(std::is_same_v<bucket_type, uint32_t>, "The bucket type must be uint32_t");
-
     public:
         constexpr uint_t() = default;
 
-        template<is_convertible<bucket_type> T>
-        constexpr explicit uint_t(const T& value) : m_buckets({static_cast<bucket_type>(value)}) {};
+        template<is_convertible<uint32_t> T>
+        constexpr explicit uint_t(const T& value) : m_buckets({static_cast<uint32_t>(value)}) {};
 
-        template<ConvertibleContainer<bucket_type> T>
-        uint_t(const T& other) {
-            const size_t min_size = std::min(size(), other.size());
-
-            for (size_t i = 0; i < min_size; i++) {
-                m_buckets[i] = other[i];
-            }
-        }
+        template<ConvertibleContainer<uint32_t> T>
+        uint_t(const T& other);
 
         uint_t(const std::string& str, StringType str_type = StringType::DECIMAL);
-        uint_t(const std::string& str, std::function<bucket_type(char)> map, size_t shift);
+        uint_t(const std::string& str, std::function<uint32_t(char)> map, size_t shift);
 
         auto operator<=>(const uint_t& other) const = default;
         bool operator==(const uint_t& other) const;
@@ -64,11 +39,11 @@ namespace ECG {
         uint_t operator+(const uint_t& other) const;
         uint_t operator-(const uint_t& other) const;
         uint_t operator*(const uint_t& other) const;
-        uint_t operator*(bucket_type other) const;
+        uint_t operator*(uint32_t other) const;
         uint_t operator/(const uint_t& other) const;
         uint_t operator%(const uint_t& other) const;
-        uint_t operator/(bucket_type other) const;
-        uint_t operator%(bucket_type other) const;
+        uint_t operator/(uint32_t other) const;
+        uint_t operator%(uint32_t other) const;
         uint_t operator>>(size_t shift) const;
         uint_t operator<<(size_t shift) const;
         uint_t operator^(const uint_t& other) const;
@@ -80,11 +55,11 @@ namespace ECG {
         uint_t& operator+=(const uint_t& other);
         uint_t& operator-=(const uint_t& other);
         uint_t& operator*=(const uint_t& other);
-        uint_t& operator*=(bucket_type other);
+        uint_t& operator*=(uint32_t other);
         uint_t& operator/=(const uint_t& other);
         uint_t& operator%=(const uint_t& other);
-        uint_t& operator/=(bucket_type other);
-        uint_t& operator%=(bucket_type other);
+        uint_t& operator/=(uint32_t other);
+        uint_t& operator%=(uint32_t other);
         uint_t& operator>>=(size_t shift);
         uint_t& operator<<=(size_t shift);
         uint_t& operator^=(const uint_t& other);
@@ -96,7 +71,7 @@ namespace ECG {
         uint_t& operator--();
 
         template<typename T>
-        requires is_convertible<bucket_type, T>
+        requires is_convertible<uint32_t, T> || std::is_same_v<T, std::string>
         T convert_to() const {
             size_t shift = sizeof(T) * CHAR_BIT;
             size_t bucket_number = shift / c_BUCKET_SIZE;
@@ -115,31 +90,26 @@ namespace ECG {
         }
 
         std::string into_string(StringType str_type = StringType::DECIMAL) const;
-        std::string into_string(std::function<char(bucket_type)> map, size_t shift) const;
+        std::string into_string(std::function<char(uint32_t)> map, size_t shift) const;
 
-        const bucket_type& operator[](size_t pos) const {
-            return m_buckets[pos];
-        }
+        const uint32_t& operator[](size_t pos) const;
+        uint32_t& operator[](size_t pos);
 
-        bucket_type& operator[](size_t pos) {
-            return m_buckets[pos];
-        }
-
-        constexpr size_t size() const;
+        static constexpr size_t size();
         size_t clz() const;
 
     private:
-        static constexpr size_t c_BUCKET_SIZE = sizeof(bucket_type) * CHAR_BIT;
+        static uint_t divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr);
+        static uint_t divide(const uint_t& lhs, const uint32_t& rhs, uint_t* remainder = nullptr);
+        static uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr);
+
+        static constexpr size_t c_BUCKET_SIZE = sizeof(uint32_t) * CHAR_BIT;
         static constexpr size_t c_BUCKET_NUMBER = bits / c_BUCKET_SIZE;
 
-        std::array<bucket_type, c_BUCKET_NUMBER> m_buckets = {};
-
-        static uint_t divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr);
-        static uint_t divide(const uint_t& lhs, const bucket_type& rhs, uint_t* remainder = nullptr);
-        static uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr);
+        std::array<uint32_t, c_BUCKET_NUMBER> m_buckets = {};
     };
 }   // namespace ECG
 
-#include "long-int.tpp"
+#include "uint.tpp"
 
 #endif

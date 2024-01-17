@@ -1,8 +1,18 @@
-#ifndef ECG_LONG_INT_HPP
-#define ECG_LONG_INT_HPP
-#include "long-int.h"
+#ifndef ECG_UINT_HPP
+#define ECG_UINT_HPP
+#include "uint.h"
 
 using ECG::uint_t;
+
+template<size_t bits>
+template<ECG::ConvertibleContainer<uint32_t> T>
+uint_t<bits>::uint_t(const T& other) {
+    const size_t min_size = std::min(size(), other.size());
+
+    for (size_t i = 0; i < min_size; i++) {
+        m_buckets[i] = other[i];
+    }
+}
 
 template<size_t bits>
 uint_t<bits>::uint_t(const std::string& str, StringType str_type) {
@@ -11,7 +21,7 @@ uint_t<bits>::uint_t(const std::string& str, StringType str_type) {
         for (size_t i = 0; i < str.size() && i < bits; ++i) {
             size_t bucket_pos = i / c_BUCKET_SIZE;
 
-            m_buckets[bucket_pos] |= bucket_type(str[str.size() - 1 - i] - '0') << (i % c_BUCKET_SIZE);
+            m_buckets[bucket_pos] |= uint32_t(str[str.size() - 1 - i] - '0') << (i % c_BUCKET_SIZE);
         }
         break;
     case StringType::DECIMAL :
@@ -37,7 +47,7 @@ uint_t<bits>::uint_t(const std::string& str, StringType str_type) {
 }
 
 template<size_t bits>
-uint_t<bits>::uint_t(const std::string& str, std::function<bucket_type(char)> map, size_t shift) {
+uint_t<bits>::uint_t(const std::string& str, std::function<uint32_t(char)> map, size_t shift) {
     for (char c : str) {
         if (isdigit(c)) {
             *this <<= shift;
@@ -72,7 +82,7 @@ uint_t<bits> uint_t<bits>::operator-(const uint_t& other) const {
     bool remainder = false;
 
     for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
-        bucket_type sum = m_buckets[i] + (remainder ? -1 : 0);
+        uint32_t sum = m_buckets[i] + (remainder ? -1 : 0);
         result[i] = sum - other[i];
         remainder = (remainder && sum >= m_buckets[i]) || (result[i] > sum);
     }
@@ -93,7 +103,7 @@ uint_t<bits> uint_t<bits>::operator*(const uint_t& other) const {
 }
 
 template<size_t bits>
-uint_t<bits> ECG::uint_t<bits>::operator*(bucket_type other) const {
+uint_t<bits> ECG::uint_t<bits>::operator*(uint32_t other) const {
     uint_t result;
     uint32_t remainder = 0;
 
@@ -119,12 +129,12 @@ uint_t<bits> uint_t<bits>::operator%(const uint_t& other) const {
 }
 
 template<size_t bits>
-uint_t<bits> uint_t<bits>::operator/(bucket_type other) const {
+uint_t<bits> uint_t<bits>::operator/(uint32_t other) const {
     return divide(*this, other);
 }
 
 template<size_t bits>
-uint_t<bits> uint_t<bits>::operator%(bucket_type other) const {
+uint_t<bits> uint_t<bits>::operator%(uint32_t other) const {
     uint_t result;
     divide(*this, other, &result);
     return result;
@@ -244,7 +254,7 @@ uint_t<bits>& uint_t<bits>::operator*=(const uint_t& other) {
 }
 
 template<size_t bits>
-uint_t<bits>& ECG::uint_t<bits>::operator*=(bucket_type other) {
+uint_t<bits>& ECG::uint_t<bits>::operator*=(uint32_t other) {
     return (*this = *this * other);
 }
 
@@ -259,12 +269,12 @@ inline uint_t<bits>& uint_t<bits>::operator%=(const uint_t& other) {
 }
 
 template<size_t bits>
-inline uint_t<bits>& uint_t<bits>::operator/=(bucket_type other) {
+inline uint_t<bits>& uint_t<bits>::operator/=(uint32_t other) {
     return (*this = *this / other);
 }
 
 template<size_t bits>
-inline uint_t<bits>& uint_t<bits>::operator%=(bucket_type other) {
+inline uint_t<bits>& uint_t<bits>::operator%=(uint32_t other) {
     return (*this = *this % other);
 }
 
@@ -317,20 +327,20 @@ std::string uint_t<bits>::into_string(StringType str_type) const {
     switch (str_type) {
     case StringType::BINARY :
         do {
-            result.push_back((clone_of_this[0] & static_cast<bucket_type>(StringType::BINARY)) + '0');
+            result.push_back((clone_of_this[0] & static_cast<uint32_t>(StringType::BINARY)) + '0');
             clone_of_this >>= 1;
         } while (clone_of_this > ZERO);
         break;
     case StringType::DECIMAL :
         do {
             uint_t remainder;
-            clone_of_this = divide(clone_of_this, static_cast<bucket_type>(StringType::DECIMAL), &remainder);
+            clone_of_this = divide(clone_of_this, static_cast<uint32_t>(StringType::DECIMAL), &remainder);
             result.push_back(remainder[0] + '0');
         } while (clone_of_this > ZERO);
         break;
     case StringType::HEXADECIMAL :
         do {
-            bucket_type value = clone_of_this[0] & static_cast<bucket_type>(StringType::HEXADECIMAL);
+            uint32_t value = clone_of_this[0] & static_cast<uint32_t>(StringType::HEXADECIMAL);
 
             if (value >= 10) {
                 value -= 10;
@@ -349,18 +359,33 @@ std::string uint_t<bits>::into_string(StringType str_type) const {
 }
 
 template<size_t bits>
-std::string uint_t<bits>::into_string(std::function<char(bucket_type)> map, size_t shift) const {
+std::string uint_t<bits>::into_string(std::function<char(uint32_t)> map, size_t shift) const {
     static constexpr uint_t ZERO = uint_t(0);
     std::string result;
     uint_t clone = *this;
 
     do {
-        result.push_back(map((bucket_type(clone) << (c_BUCKET_SIZE - shift)) >> (c_BUCKET_SIZE - shift)));
+        result.push_back(map((uint32_t(clone) << (c_BUCKET_SIZE - shift)) >> (c_BUCKET_SIZE - shift)));
         clone >>= shift;
     } while (clone > ZERO);
 
     std::reverse(result.begin(), result.end());
     return result;
+}
+
+template<size_t bits>
+const uint32_t& uint_t<bits>::operator[](size_t pos) const {
+    return m_buckets[pos];
+}
+
+template<size_t bits>
+uint32_t& uint_t<bits>::operator[](size_t pos) {
+    return m_buckets[pos];
+}
+
+template<size_t bits>
+constexpr size_t ECG::uint_t<bits>::size() {
+    return c_BUCKET_NUMBER;
 }
 
 template<size_t bits>
@@ -389,7 +414,7 @@ inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const uint_t& rhs, u
 }
 
 template<size_t bits>
-inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const bucket_type& rhs, uint_t* remainder) {
+inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const uint32_t& rhs, uint_t* remainder) {
     assert(rhs != 0 && "Division by 0");
 
     uint_t result;
@@ -407,7 +432,7 @@ inline uint_t<bits> uint_t<bits>::divide(const uint_t& lhs, const bucket_type& r
     }
 
     if (remainder != nullptr) {
-        *remainder = uint_t(static_cast<bucket_type>(part));
+        *remainder = uint_t(static_cast<uint32_t>(part));
     }
 
     return result;
@@ -495,11 +520,6 @@ inline uint_t<bits> uint_t<bits>::d_divide(const uint_t& lhs, const uint_t& rhs,
     }
 
     return quotient;
-}
-
-template<size_t bits>
-constexpr inline size_t uint_t<bits>::size() const {
-    return c_BUCKET_NUMBER;
 }
 
 template<size_t bits>
