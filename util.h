@@ -10,6 +10,9 @@ namespace ECG {
     template<typename From, typename To>
     concept is_convertible = requires(From f) { static_cast<To>(f); };
 
+    template<typename To, typename From>
+    concept is_convertible_reverse = is_convertible<From, To>;
+
     template<typename T, typename W>
     concept ConvertibleContainer = requires(T t, size_t i) {
         { t[i] } -> is_convertible<W>;
