@@ -1,7 +1,7 @@
 #include "elliptic-curve.h"
 
 using ECG::EllipticCurve;
-using ECG::EllipticCurvePoint;
+using ECG::EllipticCurvePointBasic;
 
 template<const Field* field>
 constexpr EllipticCurve<field>::EllipticCurve(const EllipticCurve<field>::Element& a,
@@ -34,18 +34,19 @@ ECG::uint EllipticCurve<field>::generate_random_uint() {
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-ECG::EllipticCurvePoint<field, elliptic_curve>::EllipticCurvePoint(const Element& x, const Element& y) :
+ECG::EllipticCurvePointBasic<field, elliptic_curve>::EllipticCurvePointBasic(const Element& x,
+                                                                             const Element& y) :
     m_x(x), m_y(y) {}
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve>
-    ECG::EllipticCurvePoint<field, elliptic_curve>::operator+(const EllipticCurvePoint& other) const {
+EllipticCurvePointBasic<field, elliptic_curve> ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator+(
+    const EllipticCurvePointBasic& other) const {
     if (is_inf() || other.is_inf()) {
         return (is_inf() ? other : *this);
     }
 
     if (*this == -other) {
-        return EllipticCurvePoint(1, 0);
+        return EllipticCurvePointBasic(1, 0);
     }
 
     Element k;
@@ -59,45 +60,47 @@ EllipticCurvePoint<field, elliptic_curve>
 
     Element x = k * k - m_x - other.m_x;
     Element y = -k * (x - m_x) - m_y;
-    return EllipticCurvePoint(x, y);
+    return EllipticCurvePointBasic(x, y);
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve>
-    ECG::EllipticCurvePoint<field, elliptic_curve>::operator-(const EllipticCurvePoint& other) const {
+EllipticCurvePointBasic<field, elliptic_curve> ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator-(
+    const EllipticCurvePointBasic& other) const {
     return *this + (-other);
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve>
-    ECG::EllipticCurvePoint<field, elliptic_curve>::operator*(const uint& other) const {
-    return EllipticCurvePoint();
+EllipticCurvePointBasic<field, elliptic_curve>
+    ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator*(const uint& other) const {
+    return EllipticCurvePointBasic();
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve> ECG::EllipticCurvePoint<field, elliptic_curve>::operator-() const {
-    return EllipticCurvePoint(m_x, -m_y);
+EllipticCurvePointBasic<field, elliptic_curve>
+    ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator-() const {
+    return EllipticCurvePointBasic(m_x, -m_y);
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve>&
-    ECG::EllipticCurvePoint<field, elliptic_curve>::operator+=(const EllipticCurvePoint& other) {
+EllipticCurvePointBasic<field, elliptic_curve>&
+    ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator+=(const EllipticCurvePointBasic& other) {
     return (*this = *this + other);
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-EllipticCurvePoint<field, elliptic_curve>&
-    ECG::EllipticCurvePoint<field, elliptic_curve>::operator-=(const EllipticCurvePoint& other) {
+EllipticCurvePointBasic<field, elliptic_curve>&
+    ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator-=(const EllipticCurvePointBasic& other) {
     return (*this = *this - other);
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-bool ECG::EllipticCurvePoint<field, elliptic_curve>::operator==(const EllipticCurvePoint& other) const {
+bool ECG::EllipticCurvePointBasic<field, elliptic_curve>::operator==(
+    const EllipticCurvePointBasic& other) const {
     return false;
 }
 
 template<const Field* field, EllipticCurve<field>* elliptic_curve>
-bool ECG::EllipticCurvePoint<field, elliptic_curve>::is_inf() const {
+bool ECG::EllipticCurvePointBasic<field, elliptic_curve>::is_inf() const {
     return (m_x == Element(1) && m_y == Element(0));
 }
 

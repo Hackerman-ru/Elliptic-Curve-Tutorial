@@ -146,7 +146,7 @@ namespace ECG {
             return lhs -= rhs;
         }
 
-        friend uint_t operator-(const uint_t& lhs, uint_t rhs) {
+        friend uint_t operator-(const uint_t& lhs, uint_t&& rhs) {
             return -(rhs -= lhs);   // or result version, if operator-() will be expensive
         }
 

@@ -6,7 +6,7 @@
 namespace ECG {
     class ElGamal {
     public:
-        using EC = EllipticCurvePoint;
+        using EC = EllipticCurvePointBasic;
 
         ElGamal();
         ElGamal(const EC& gen);

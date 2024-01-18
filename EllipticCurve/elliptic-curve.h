@@ -25,26 +25,95 @@ namespace ECG {
     };
 
     template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePoint {
+    class EllipticCurvePointBasic {
         using Element = FieldElement<field>;
 
     public:
-        EllipticCurvePoint(const Element& x, const Element& y);
+        EllipticCurvePointBasic(const Element& x, const Element& y);
 
-        EllipticCurvePoint operator+(const EllipticCurvePoint& other) const;
-        EllipticCurvePoint operator-(const EllipticCurvePoint& other) const;
-        EllipticCurvePoint operator*(const uint& other) const;
-        EllipticCurvePoint operator-() const;
+        EllipticCurvePointBasic operator+(const EllipticCurvePointBasic& other) const;
+        EllipticCurvePointBasic operator-(const EllipticCurvePointBasic& other) const;
+        EllipticCurvePointBasic operator*(const uint& other) const;
+        EllipticCurvePointBasic operator-() const;
 
-        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other);
-        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other);
+        EllipticCurvePointBasic& operator+=(const EllipticCurvePointBasic& other);
+        EllipticCurvePointBasic& operator-=(const EllipticCurvePointBasic& other);
 
-        bool operator==(const EllipticCurvePoint& other) const;
+        bool operator==(const EllipticCurvePointBasic& other) const;
         bool is_inf() const;
 
     private:
         Element m_x;
         Element m_y;
+    };
+
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePointProjective {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePointProjective(const Element& x, const Element& y);
+
+    private:
+        Element m_X;
+        Element m_Y;
+        Element m_Z;
+    };
+
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePointJacobi {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePointJacobi(const Element& x, const Element& y);
+
+    private:
+        Element m_X;
+        Element m_Y;
+        Element m_Z;
+    };
+
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePointJacobiChudnovski {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePointJacobiChudnovski(const Element& x, const Element& y);
+
+    private:
+        Element m_X;
+        Element m_Y;
+        Element m_Z;
+        Element m_Z2;
+        Element m_Z3;
+    };
+
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePointModifiedJacobi {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePointModifiedJacobi(const Element& x, const Element& y);
+
+    private:
+        Element m_X;
+        Element m_Y;
+        Element m_Z;
+        Element m_aZ4;
+    };
+
+    template<const Field* field, EllipticCurve<field>* elliptic_curve>
+    class EllipticCurvePointSimplifiedJacobiChudnovski {
+        using Element = FieldElement<field>;
+
+    public:
+        EllipticCurvePointSimplifiedJacobiChudnovski(const Element& x, const Element& y);
+
+    private:
+        Element m_X;
+        Element m_Y;
+        Element m_Z;
+        Element m_Z2;
     };
 }   // namespace ECG
 
