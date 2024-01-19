@@ -1,119 +1,92 @@
 #ifndef ECG_ELLIPTIC_CURVE_H
 #define ECG_ELLIPTIC_CURVE_H
 
-#include "../Field/field.h"
+#include "../Field/Field.h"
 
 namespace ECG {
 
-    template<const Field* field>
     class EllipticCurve {
-        using Element = FieldElement<field>;
-
     public:
-        constexpr EllipticCurve(const Element& a, const Element& b);
+        constexpr EllipticCurve(const FieldElement& a, const FieldElement& b);
         uint find_points_number() const;   // SEA algorithm
 
-        const Element& get_a() const;
-        const Element& get_b() const;
+        const FieldElement& get_a() const;
+        const FieldElement& get_b() const;
 
     private:
-        const Element m_a;
-        const Element m_b;
+        const FieldElement m_a;
+        const FieldElement m_b;
 
-        Element find_y(const Element& x) const;
+        FieldElement find_y(const FieldElement& x) const;
+        FieldElement find_n(const FieldElement& x) const;
         static uint generate_random_uint();
     };
 
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointBasic {
-        using Element = FieldElement<field>;
+    class EllipticCurvePoint {
+        enum class CoordinatesType {
+            Normal,
+            Projective,
+            Jacobi,
+            ModifiedJacobi,
+            JacobiChudnovski,
+            SimplifiedJacobiChudnovski,
+        };
+        friend class EllipticCurve;
+        class BasePoint;
+
+        EllipticCurvePoint(std::unique_ptr<BasePoint>&& ptr);
+        EllipticCurvePoint(FieldElement x, FieldElement y, CoordinatesType type);
 
     public:
-        EllipticCurvePointBasic(const Element& x, const Element& y);
+        EllipticCurvePoint(const EllipticCurvePoint& other);
+        EllipticCurvePoint(EllipticCurvePoint&& other) noexcept = default;
 
-        EllipticCurvePointBasic operator+(const EllipticCurvePointBasic& other) const;
-        EllipticCurvePointBasic operator-(const EllipticCurvePointBasic& other) const;
-        EllipticCurvePointBasic operator*(const uint& other) const;
-        EllipticCurvePointBasic operator-() const;
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+            m_self->operator+=(*other.m_self);
+            return *this;
+        }
 
-        EllipticCurvePointBasic& operator+=(const EllipticCurvePointBasic& other);
-        EllipticCurvePointBasic& operator-=(const EllipticCurvePointBasic& other);
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+            m_self->operator-=(*other.m_self);
+            return *this;
+        }
 
-        bool operator==(const EllipticCurvePointBasic& other) const;
-        bool is_inf() const;
+        EllipticCurvePoint& operator*=(const uint& other) {
+            // TODO
+            return *this;
+        }
 
-    private:
-        Element m_x;
-        Element m_y;
-    };
-
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointProjective {
-        using Element = FieldElement<field>;
-
-    public:
-        EllipticCurvePointProjective(const Element& x, const Element& y);
+        EllipticCurvePoint operator-() const {
+            return {m_self->operator-()};
+        }
 
     private:
-        Element m_X;
-        Element m_Y;
-        Element m_Z;
-    };
+        class BasePoint {
+        public:
+            virtual ~BasePoint() = default;
 
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointJacobi {
-        using Element = FieldElement<field>;
+            virtual void operator+=(const BasePoint& other) const = 0;
+            virtual void operator-=(const BasePoint& other) const = 0;
+            virtual void operator*=(const uint& other) const = 0;
 
-    public:
-        EllipticCurvePointJacobi(const Element& x, const Element& y);
+            virtual std::unique_ptr<BasePoint> operator-() const = 0;
 
-    private:
-        Element m_X;
-        Element m_Y;
-        Element m_Z;
-    };
+            virtual bool operator==(const BasePoint& other) const = 0;
+        };
 
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointJacobiChudnovski {
-        using Element = FieldElement<field>;
+        class NormalPoint final : public BasePoint {};
 
-    public:
-        EllipticCurvePointJacobiChudnovski(const Element& x, const Element& y);
+        class ProjectivePoint final : public BasePoint {};
 
-    private:
-        Element m_X;
-        Element m_Y;
-        Element m_Z;
-        Element m_Z2;
-        Element m_Z3;
-    };
+        class JacobiPoint final : public BasePoint {};
 
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointModifiedJacobi {
-        using Element = FieldElement<field>;
+        class ModifiedJacobiPoint final : public BasePoint {};
 
-    public:
-        EllipticCurvePointModifiedJacobi(const Element& x, const Element& y);
+        class JacobiChudnovskyPoint final : public BasePoint {};
 
-    private:
-        Element m_X;
-        Element m_Y;
-        Element m_Z;
-        Element m_aZ4;
-    };
+        class SimplifiedJacobiChudnovskyPoint final : public BasePoint {};
 
-    template<const Field* field, EllipticCurve<field>* elliptic_curve>
-    class EllipticCurvePointSimplifiedJacobiChudnovski {
-        using Element = FieldElement<field>;
-
-    public:
-        EllipticCurvePointSimplifiedJacobiChudnovski(const Element& x, const Element& y);
-
-    private:
-        Element m_X;
-        Element m_Y;
-        Element m_Z;
-        Element m_Z2;
+        std::unique_ptr<BasePoint> m_self;
     };
 }   // namespace ECG
 

@@ -8,6 +8,7 @@
 #include "../util.h"
 
 #include <array>
+#include <bitset>
 #include <cassert>
 #include <complex>
 #include <functional>
@@ -25,9 +26,6 @@ namespace ECG {
 
         template<is_convertible<bucket> T>
         constexpr uint_t(T value) : m_buckets({static_cast<bucket>(value)}) {};
-
-        template<>
-        constexpr uint_t(bucket value) : m_buckets({value}) {};
 
         template<>
         constexpr uint_t(size_t value) {
@@ -420,10 +418,9 @@ namespace ECG {
 
             switch (str_type) {
             case StringType::BINARY :
-                do {
-                    result.push_back((clone_of_this[0] & static_cast<bucket>(StringType::BINARY)) + '0');
-                    clone_of_this >>= 1;
-                } while (clone_of_this > 0);
+                for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
+                    result += std::bitset<32>(m_buckets[i]).to_string();
+                }
                 break;
             case StringType::DECIMAL :
                 do {
@@ -458,8 +455,7 @@ namespace ECG {
             uint_t clone = *this;
 
             do {
-                result.push_back(
-                    map((bucket(clone) << (c_BUCKET_SIZE - shift_size)) >> (c_BUCKET_SIZE - shift_size)));
+                result += map((clone[0] << (c_BUCKET_SIZE - shift_size)) >> (c_BUCKET_SIZE - shift_size));
                 clone >>= shift_size;
             } while (clone > 0);
 
