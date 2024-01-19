@@ -5,22 +5,21 @@
 
 namespace ECG {
 
-    template<const Field* field>
-    class ElGamal {
-        using Curve = EllipticCurve<field>;
-        static const Curve m_elliptic_curve;
-
+    class ElGamal {   // TODO
     public:
         ElGamal() = delete;
-        ElGamal(const Curve& ec) : m_elliptic_curve(ec) {};
+        ElGamal(const EllipticCurve& elliptic_curve, const EllipticCurvePoint& public_key,
+                const EllipticCurvePoint& generator) :
+            m_elliptic_curve(elliptic_curve), m_public_key(public_key), m_generator(generator) {};
 
-        std::pair<EllipticCurvePointBasic<field, &m_elliptic_curve>,
-                  EllipticCurvePointBasic<field, &m_elliptic_curve>>
-            encrypt(const std::string& message) const;
-        std::string decrypt(const EllipticCurve::Field& key,
-                            const std::pair<EllipticCurve, EllipticCurve>& value) const;
+        std::pair<std::string, std::string> encrypt(const std::string& message, CoordinatesType type) const;
+        std::pair<std::string, std::string> decrypt(const std::string& a, const std::string& b,
+                                                    CoordinatesType type) const;
 
     private:
+        const EllipticCurve m_elliptic_curve;
+        const EllipticCurvePoint& m_public_key;
+        const EllipticCurvePoint& m_generator;
     };
 }   // namespace ECG
 

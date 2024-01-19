@@ -4,6 +4,14 @@
 #include "../Field/Field.h"
 
 namespace ECG {
+    enum class CoordinatesType {
+        Normal,
+        Projective,
+        Jacobi,
+        ModifiedJacobi,
+        JacobiChudnovski,
+        SimplifiedJacobiChudnovski,
+    };
 
     class EllipticCurve {
     public:
@@ -23,14 +31,6 @@ namespace ECG {
     };
 
     class EllipticCurvePoint {
-        enum class CoordinatesType {
-            Normal,
-            Projective,
-            Jacobi,
-            ModifiedJacobi,
-            JacobiChudnovski,
-            SimplifiedJacobiChudnovski,
-        };
         friend class EllipticCurve;
         class BasePoint;
 
