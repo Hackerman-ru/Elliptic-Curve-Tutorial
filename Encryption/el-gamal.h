@@ -4,22 +4,27 @@
 #include "../EllipticCurve/elliptic-curve.h"
 
 namespace ECG {
+    struct EncryptedInfo {
+        const EllipticCurvePoint generator_degree;
+        const EllipticCurvePoint message_with_noise;
+    };
 
     class ElGamal {   // TODO
     public:
-        ElGamal() = delete;
-        ElGamal(const EllipticCurve& elliptic_curve, const EllipticCurvePoint& public_key,
-                const EllipticCurvePoint& generator) :
-            m_elliptic_curve(elliptic_curve), m_public_key(public_key), m_generator(generator) {};
+        using Type = EllipticCurvePoint::CoordinatesType;
 
-        std::pair<std::string, std::string> encrypt(const std::string& message, CoordinatesType type) const;
-        std::pair<std::string, std::string> decrypt(const std::string& a, const std::string& b,
-                                                    CoordinatesType type) const;
+        ElGamal() = delete;
+        ElGamal(const EllipticCurve& elliptic_curve, const EllipticCurvePoint& generator,
+                const uint& generator_order) :
+            m_elliptic_curve(elliptic_curve), m_generator(generator), m_generator_order(generator_order) {};
+
+        EncryptedInfo encrypt(const std::string& message, Type type) const;
+        std::string decrypt(EncryptedInfo info, Type type) const;
 
     private:
         const EllipticCurve m_elliptic_curve;
-        const EllipticCurvePoint& m_public_key;
-        const EllipticCurvePoint& m_generator;
+        const EllipticCurvePoint m_generator;
+        const uint m_generator_order;
     };
 }   // namespace ECG
 

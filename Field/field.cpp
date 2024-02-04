@@ -3,126 +3,174 @@
 using ECG::Field;
 using ECG::FieldElement;
 
-FieldElement::FieldElement(std::unique_ptr<ECG::FieldElement::BaseElement>&& ptr) : m_self(std::move(ptr)) {};
-FieldElement::FieldElement(uint value, std::shared_ptr<const uint> p) :
-    m_self(std::make_unique<PrimeElement>(std::move(value), std::move(p))) {};
-
-FieldElement::FieldElement(std::vector<uint> poly, std::shared_ptr<const std::vector<uint>> reducer) :
-    m_self(std::make_unique<PolyElement>(std::move(poly), std::move(reducer))) {};
-
-FieldElement::FieldElement(const FieldElement& other) : m_self(other.m_self->copy_()) {};
-
-FieldElement& FieldElement::operator=(const FieldElement& other) {
-    return *this = FieldElement(other);
+FieldElement::FieldElement(uint value, std::shared_ptr<const uint> p) : m_value(value), m_p(p) {
+    if (m_value > *m_p) {
+        m_value %= *m_p;
+    }
 }
 
 FieldElement FieldElement::operator-() const {
-    return {m_self->operator-()};
+    assert(m_value < *m_p && "Field element value must be less than p");
+
+    return FieldElement(*m_p - m_value, m_p);
 }
 
 // operator+
-FieldElement operator+(const FieldElement& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator+(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
     return result += rhs;
 }
 
-FieldElement operator+(FieldElement&& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator+(FieldElement&& lhs, const FieldElement& rhs) {
     return lhs += rhs;
 }
 
-FieldElement operator+(const FieldElement& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator+(const FieldElement& lhs, FieldElement&& rhs) {
     return rhs += lhs;
 }
 
-FieldElement operator+(FieldElement&& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator+(FieldElement&& lhs, FieldElement&& rhs) {
     return lhs += rhs;
 }
 
 // operator-
-FieldElement operator-(const FieldElement& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator-(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
     return result -= rhs;
 }
 
-FieldElement operator-(FieldElement&& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator-(FieldElement&& lhs, const FieldElement& rhs) {
     return lhs -= rhs;
 }
 
-FieldElement operator-(const FieldElement& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator-(const FieldElement& lhs, FieldElement&& rhs) {
     return -(rhs -= lhs);
 }
 
-FieldElement operator-(FieldElement&& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator-(FieldElement&& lhs, FieldElement&& rhs) {
     return lhs -= rhs;
 }
 
 // operator*
-FieldElement operator*(const FieldElement& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator*(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
     return result *= rhs;
 }
 
-FieldElement operator*(FieldElement&& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator*(FieldElement&& lhs, const FieldElement& rhs) {
     return lhs *= rhs;
 }
 
-FieldElement operator*(const FieldElement& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator*(const FieldElement& lhs, FieldElement&& rhs) {
     return rhs *= lhs;
 }
 
-FieldElement operator*(FieldElement&& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator*(FieldElement&& lhs, FieldElement&& rhs) {
     return lhs *= rhs;
 }
 
 // operator/
-FieldElement operator/(const FieldElement& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator/(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
     return result /= rhs;
 }
 
-FieldElement operator/(FieldElement&& lhs, const FieldElement& rhs) {
+FieldElement ECG::operator/(FieldElement&& lhs, const FieldElement& rhs) {
     return lhs /= rhs;
 }
 
-FieldElement operator/(const FieldElement& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator/(const FieldElement& lhs, FieldElement&& rhs) {
     FieldElement result = lhs;
     return result /= rhs;
 }
 
-FieldElement operator/(FieldElement&& lhs, FieldElement&& rhs) {
+FieldElement ECG::operator/(FieldElement&& lhs, FieldElement&& rhs) {
     return lhs /= rhs;
 }
 
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PrimeElement::operator-() const {
-    return std::make_unique<PrimeElement>(*m_p - m_value, m_p);
+bool ECG::operator==(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value == rhs.m_value;
+}
+
+bool ECG::operator!=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value != rhs.m_value;
+}
+
+bool ECG::operator>(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value > rhs.m_value;
+}
+
+bool ECG::operator<(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value < rhs.m_value;
+}
+
+bool ECG::operator>=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value >= rhs.m_value;
+}
+
+bool ECG::operator<=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value <= rhs.m_value;
 }
 
 FieldElement& FieldElement::operator+=(const FieldElement& other) {
-    m_self->operator+=(*other.m_self);
+    assert(m_value < *m_p && "Field element value must be less than p");
+    assert(other.m_value < *m_p && "Field element value must be less than p");
+
+    m_value += other.m_value;
+
+    if (m_value > *m_p) {
+        m_value -= *m_p;
+    }
+
     return *this;
 }
 
 FieldElement& FieldElement::operator-=(const FieldElement& other) {
-    m_self->operator-=(*other.m_self);
+    assert(m_value < *m_p && "Field element value must be less than p");
+    assert(other.m_value < *m_p && "Field element value must be less than p");
+
+    if (m_value < other.m_value) {
+        m_value += *m_p;
+    }
+
+    m_value -= other.m_value;
     return *this;
 }
 
 FieldElement& FieldElement::operator*=(const FieldElement& other) {
-    m_self->operator*=(*other.m_self);
+    assert(m_value < *m_p && "Field element value must be less than p");
+    assert(other.m_value < *m_p && "Field element value must be less than p");
+
+    m_value *= other.m_value;
+
+    if (m_value > *m_p) {
+        m_value %= *m_p;
+    }
+
     return *this;
 }
 
 FieldElement& FieldElement::operator/=(const FieldElement& other) {
-    m_self->operator/=(*other.m_self);
-    return *this;
+    assert(m_value < *m_p && "Field element value must be less than p");
+    assert(other.m_value < *m_p && "Field element value must be less than p");
+
+    return (*this *= other.inverse());
 }
 
 FieldElement FieldElement::inverse() const {
-    return {m_self->inverse()};
+    assert(m_value < *m_p && "Field element value must be less than p");
+
+    return *this;   // TODO
+}
+
+bool ECG::FieldElement::is_inversible() const {
+    return m_value != 0;
 }
 
 FieldElement FieldElement::fast_pow(const uint& pow) const {
-    if ((pow & 1) == 1) {
+    assert(m_value < *m_p && "Field element value must be less than p");
+
+    if (pow & 1) {
         if (pow == 1) {
             return *this;
         }
@@ -135,56 +183,8 @@ FieldElement FieldElement::fast_pow(const uint& pow) const {
 }
 
 std::string FieldElement::into_string(StringType str_type) const {
-    return m_self->into_string(str_type);
-}
+    assert(m_value < *m_p && "Field element value must be less than p");
 
-std::string FieldElement::into_string(std::function<char(uint32_t)> map, size_t shift) const {
-    return m_self->into_string(map, shift);
-}
-
-FieldElement::PrimeElement::PrimeElement(const uint& value, const std::shared_ptr<const uint>& p) :
-    m_value(value), m_p(p) {
-    m_value %= *m_p;
-}
-
-bool ECG::FieldElement::PrimeElement::operator==(const BaseElement& other) const {
-    return m_value == static_cast<const PrimeElement&>(other).m_value;
-}
-
-void FieldElement::PrimeElement::operator+=(const BaseElement& other) {
-    m_value += static_cast<const PrimeElement&>(other).m_value;
-
-    if (m_value > *m_p) {
-        m_value -= *m_p;
-    }
-}
-
-void FieldElement::PrimeElement::operator-=(const BaseElement& other) {
-    m_value -= static_cast<const PrimeElement&>(other).m_value;
-
-    if (m_value > *m_p) {
-        m_value -= *m_p;
-    }
-}
-
-void FieldElement::PrimeElement::operator*=(const BaseElement& other) {
-    m_value *= static_cast<const PrimeElement&>(other).m_value;
-    m_value %= *m_p;
-}
-
-void FieldElement::PrimeElement::operator/=(const BaseElement& other) {
-    *this *= *other.inverse();
-}
-
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PrimeElement::inverse() const {
-    return std::make_unique<PrimeElement>(*this);   // TODO
-}
-
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PrimeElement::copy_() const {
-    return std::make_unique<PrimeElement>(*this);
-}
-
-std::string FieldElement::PrimeElement::into_string(StringType str_type) const {
 #ifdef ECG_BOOST
     std::string result;
     uint clone = m_value;
@@ -225,7 +225,9 @@ std::string FieldElement::PrimeElement::into_string(StringType str_type) const {
 #endif
 }
 
-std::string FieldElement::PrimeElement::into_string(std::function<char(uint32_t)> map, size_t shift) const {
+std::string FieldElement::into_string(std::function<char(uint32_t)> map, size_t shift) const {
+    assert(m_value < *m_p && "Field element value must be less than p");
+
 #ifdef ECG_BOOST
     std::string result;
     uint clone = m_value;
@@ -243,60 +245,12 @@ std::string FieldElement::PrimeElement::into_string(std::function<char(uint32_t)
 #endif
 }
 
-FieldElement::PolyElement::PolyElement(const std::vector<uint>& poly,
-                                       const std::shared_ptr<const std::vector<uint>>& reducer) :
-    m_poly(poly), m_reducer(reducer) {}
-
-bool ECG::FieldElement::PolyElement::operator==(const BaseElement& other) const {
-    return m_poly == static_cast<const PolyElement&>(other).m_poly;
+const ECG::uint& FieldElement::get_p() const {
+    return *m_p;
 }
 
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PolyElement::operator-() const {
-    return std::make_unique<PolyElement>(*this);   // TODO
-}
+ECG::Field::Field(uint p) : m_p(std::make_shared<const uint>(std::move(p))) {};
 
-void FieldElement::PolyElement::operator+=(const BaseElement& other) {
-    // TODO
-}
-
-void FieldElement::PolyElement::operator-=(const BaseElement& other) {
-    // TODO
-}
-
-void FieldElement::PolyElement::operator*=(const BaseElement& other) {
-    // TODO
-}
-
-void FieldElement::PolyElement::operator/=(const BaseElement& other) {
-    *this *= *other.inverse();
-}
-
-std::string FieldElement::PolyElement::into_string(StringType str_type) const {
-    return "0";   // TODO
-}
-
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PolyElement::inverse() const {
-    return std::make_unique<PolyElement>(*this);   // TODO
-}
-
-std::unique_ptr<ECG::FieldElement::BaseElement> FieldElement::PolyElement::copy_() const {
-    return std::make_unique<PolyElement>(*this);
-}
-
-std::string FieldElement::PolyElement::into_string(std::function<char(uint32_t)> map, size_t shift) const {
-    return "0";   // TODO
-}
-
-Field::Field(uint p, uint n) : m_p(std::make_shared<const uint>(std::move(p))), m_n(n) {
-    if (n > 1) {
-        // TODO
-    }
-}
-
-FieldElement Field::create_element(uint value) {
+FieldElement Field::operator()(uint value) {
     return FieldElement(std::move(value), m_p);
-}
-
-FieldElement Field::create_element(std::vector<uint> value) {
-    return FieldElement(std::move(value), m_reducer);
 }

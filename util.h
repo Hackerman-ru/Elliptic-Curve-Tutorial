@@ -24,5 +24,14 @@ namespace ECG {
         DECIMAL = 10,
         HEXADECIMAL = 0xF,
     };
+
+    enum class CoordinatesType {
+        Normal,
+        Projective,
+        Jacobi,
+        ModifiedJacobi,
+        JacobiChudnovski,
+        SimplifiedJacobiChudnovski,
+    };
 }   // namespace ECG
 #endif
