@@ -25,16 +25,17 @@ namespace ECG {
         constexpr uint_t() = default;
 
         template<is_convertible<bucket> T>
-        constexpr uint_t(T value) : m_buckets({static_cast<bucket>(value)}) {};
+        constexpr uint_t(T value) {
+            if constexpr (sizeof(T) * CHAR_BIT <= c_BUCKET_SIZE) {
+                m_buckets[0] = static_cast<bucket>(value);
+            } else {
+                for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
+                    m_buckets[i] = static_cast<bucket>(value);
+                    value >>= c_BUCKET_SIZE;
 
-        template<>
-        constexpr uint_t(size_t value) {
-            for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
-                m_buckets[i] = static_cast<bucket>(value);
-                value >>= c_BUCKET_SIZE;
-
-                if (value == 0) {
-                    break;
+                    if (value == 0) {
+                        break;
+                    }
                 }
             }
         }
@@ -298,51 +299,84 @@ namespace ECG {
         }
 
         uint_t& operator>>=(shift shift_size) {
-            shift bucket_shift = shift_size / c_BUCKET_SIZE;
+            static constexpr size_t BUCKET_SIZE = 64;
+            static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
-            for (size_t i = 0; i + bucket_shift < c_BUCKET_NUMBER; ++i) {
-                m_buckets[i] = m_buckets[i + bucket_shift];
+            shift bucket_shift = shift_size >> 6;
+            auto data = static_cast<uint64_t*>(static_cast<void*>(m_buckets.data()));
+
+            if (bucket_shift > 0) {
+                for (size_t i = 0; i < BUCKET_NUMBER; ++i) {
+                    if (i + bucket_shift < BUCKET_NUMBER) {
+                        data[i] = data[i + bucket_shift];
+                    } else {
+                        data[i] = 0;
+                    }
+                }
             }
 
-            shift_size %= c_BUCKET_SIZE;
+            shift_size %= BUCKET_SIZE;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + bucket_shift < c_BUCKET_NUMBER; ++i) {
-                m_buckets[i] >>= shift_size;
+            for (size_t i = 0; i + bucket_shift < BUCKET_NUMBER; ++i) {
+                data[i] >>= shift_size;
 
-                if (i + 1 < c_BUCKET_NUMBER) {
-                    m_buckets[i] |= m_buckets[i + 1] << (c_BUCKET_SIZE - shift_size);
+                if (i + 1 < BUCKET_NUMBER) {
+                    data[i] |= data[i + 1] << (BUCKET_SIZE - shift_size);
                 }
+            }
+
+            if constexpr (bits % BUCKET_SIZE != 0) {
+                if constexpr (c_BUCKET_NUMBER > 1) {
+                    m_buckets[c_BUCKET_NUMBER - 2] |= m_buckets[c_BUCKET_NUMBER - 1]
+                                                   << (c_BUCKET_SIZE - shift_size);
+                }
+                m_buckets[c_BUCKET_NUMBER - 1] >>= shift_size;
             }
 
             return *this;
         }
 
         uint_t& operator<<=(shift shift_size) {
-            shift bucket_shift = shift_size / c_BUCKET_SIZE;
+            static constexpr size_t BUCKET_SIZE = 64;
+            static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
-            for (size_t i = c_BUCKET_NUMBER; i > 0; --i) {
-                if (i > bucket_shift) {
-                    m_buckets[i - 1] = m_buckets[i - bucket_shift - 1];
-                } else {
-                    m_buckets[i - 1] = 0;
+            shift bucket_shift = shift_size >> 6;
+            auto data = static_cast<uint64_t*>(static_cast<void*>(m_buckets.data()));
+
+            if (bucket_shift > 0) {
+                for (size_t i = BUCKET_NUMBER; i > 0; --i) {
+                    if (i > bucket_shift) {
+                        data[i - 1] = data[i - bucket_shift - 1];
+                    } else {
+                        data[i - 1] = 0;
+                    }
                 }
             }
 
-            shift_size %= c_BUCKET_SIZE;
+            shift_size %= BUCKET_SIZE;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = c_BUCKET_NUMBER; i > bucket_shift; --i) {
-                m_buckets[i - 1] <<= shift_size;
+            if constexpr (bits % BUCKET_SIZE != 0) {
+                m_buckets[c_BUCKET_NUMBER - 1] <<= shift_size;
+
+                if constexpr (c_BUCKET_NUMBER > 1) {
+                    m_buckets[c_BUCKET_NUMBER - 1] |=
+                        m_buckets[c_BUCKET_NUMBER - 2] >> (c_BUCKET_SIZE - shift_size);
+                }
+            }
+
+            for (size_t i = BUCKET_NUMBER; i > bucket_shift; --i) {
+                data[i - 1] <<= shift_size;
 
                 if (i - 1 > 0) {
-                    m_buckets[i - 1] |= m_buckets[i - 2] >> (c_BUCKET_SIZE - shift_size);
+                    data[i - 1] |= data[i - 2] >> (BUCKET_SIZE - shift_size);
                 }
             }
 
@@ -403,12 +437,6 @@ namespace ECG {
                 result |= T(m_buckets[i]) << (i * c_BUCKET_SIZE);
             }
 
-            shift_size %= c_BUCKET_SIZE;
-
-            result |= ((T(m_buckets[bucket_number]) << (c_BUCKET_SIZE - shift_size))
-                       >> (c_BUCKET_SIZE - shift_size))
-                   << (bucket_number * c_BUCKET_SIZE);
-
             return result;
         }
 
@@ -418,9 +446,10 @@ namespace ECG {
 
             switch (str_type) {
             case StringType::BINARY :
-                for (size_t i = 0; i < c_BUCKET_NUMBER; ++i) {
-                    result += std::bitset<32>(m_buckets[i]).to_string();
-                }
+                do {
+                    result.push_back(((clone_of_this & 1) != 0) + '0');
+                    clone_of_this >>= 1;
+                } while (clone_of_this > 0);
                 break;
             case StringType::DECIMAL :
                 do {
