@@ -170,7 +170,7 @@ bool ECG::FieldElement::is_inversible() const {
 FieldElement FieldElement::fast_pow(const uint& pow) const {
     assert(m_value < *m_p && "Field element value must be less than p");
 
-    if (pow & 1) {
+    if (pow.convert_to<uint32_t>() & 1) {
         if (pow == 1) {
             return *this;
         }

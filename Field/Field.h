@@ -3,8 +3,6 @@
 
 #include "../util.h"
 
-#define ECG_BOOST
-
 #ifdef ECG_BOOST
     #include "boost/multiprecision/cpp_int.hpp"
 #else
