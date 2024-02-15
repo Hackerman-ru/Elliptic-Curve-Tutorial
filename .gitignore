@@ -32,8 +32,5 @@
 *.app
 
 # Visual Studio files
-*.vs
-*.sln
-*.vcxproj*
 x64
-/packages/
+.vs
