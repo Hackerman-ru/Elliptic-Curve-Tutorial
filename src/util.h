@@ -10,12 +10,24 @@ namespace ECG {
     template<typename From, typename To>
     concept is_convertible_to = requires(From f) { static_cast<To>(f); };
 
+    template<typename From, typename To>
+    concept is_upcastable_to = requires(From f) {
+        static_cast<To>(f);
+        sizeof(From) <= sizeof(To);
+    };
+
+    template<typename From, typename To>
+    concept is_downcastable_to = requires(From f) {
+        static_cast<To>(f);
+        sizeof(From) > sizeof(To);
+    };
+
     template<typename To, typename From>
     concept is_convertible_from = is_convertible_to<From, To>;
 
-    template<typename T, typename W>
-    concept ConvertibleContainer = requires(T t, size_t i) {
-        { t[i] } -> is_convertible_to<W>;
+    template<typename FromContainer, typename ToType>
+    concept ConvertibleContainer = requires(FromContainer t, size_t i) {
+        { t[i] } -> is_convertible_to<ToType>;
         { t.size() } -> std::same_as<size_t>;
     };
 
