@@ -1,11 +1,10 @@
-#include "../../../../../../Program Files/Boost/boost_1_84_0/boost/multiprecision/fwd.hpp"
-#include "../packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7/build/native/include/gtest/gtest.h"
+#include "../multiprecision/include/boost/multiprecision/cpp_int.hpp"
 #include "../src/Uint/uint.h"
 #include "pch.h"
 
 #include <random>
 
-using boost::multiprecision::uint512_t;
+using namespace boost;
 using namespace ECG;
 
 static constexpr size_t ConvertCorrectnessN = 10000000;
