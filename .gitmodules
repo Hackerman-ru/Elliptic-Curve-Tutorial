@@ -1,0 +1,3 @@
+[submodule "libs/multiprecision"]
+	path = libs/multiprecision
+	url = https://github.com/boostorg/multiprecision
