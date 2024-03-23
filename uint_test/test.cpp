@@ -1,10 +1,10 @@
-#include "../multiprecision/include/boost/multiprecision/cpp_int.hpp"
 #include "../src/Uint/uint.h"
 #include "pch.h"
 
+using boost::multiprecision::uint512_t;
+
 #include <random>
 
-using namespace boost;
 using namespace ECG;
 
 static constexpr size_t ConvertCorrectnessN = 10000000;
