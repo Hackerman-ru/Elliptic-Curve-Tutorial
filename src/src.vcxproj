@@ -78,7 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)strings;$(ProjectDir)core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -95,7 +95,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)strings;$(ProjectDir)core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)strings;$(ProjectDir)core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -129,7 +129,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>$(ProjectDir)strings;$(ProjectDir)core</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)core</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -143,14 +143,14 @@
     <ClInclude Include="core\Field.h" />
     <ClInclude Include="core\uint.h" />
     <ClInclude Include="core\util.h" />
+    <ClInclude Include="core\string-parser.h" />
     <ClInclude Include="Encryption\ecdsa.h" />
     <ClInclude Include="Encryption\el-gamal.h" />
-    <ClInclude Include="strings\string-parser.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\field.cpp" />
-    <ClCompile Include="strings\string-parser.cpp" />
+    <ClCompile Include="core\string-parser.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
