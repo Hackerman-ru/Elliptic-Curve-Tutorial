@@ -1,6 +1,9 @@
 #include "../src/Uint/uint.h"
 #include "pch.h"
 
+#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/fwd.hpp>
+
 using boost::multiprecision::uint512_t;
 
 #include <random>
