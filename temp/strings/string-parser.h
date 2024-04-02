@@ -1,7 +1,7 @@
 #ifndef ECG_STRING_PARSER_H
 #define ECG_STRING_PARSER_H
-
-#include "util.h"
+#include "../Uint/uint.h"
+#include "../util.h"
 
 #include <array>
 #include <limits>
@@ -48,20 +48,5 @@ namespace ECG {
     template<typename Block, size_t Size, typename T>
     requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, Block>
     static constexpr std::array<Block, Size> split_into_blocks(T value) {}
-
-    static StringType find_type(const std::string& str) {
-        if (str.size() < 2) {
-            return StringType::DECIMAL;
-        }
-
-        switch (str[1]) {
-        case 'x' :
-            return StringType::HEXADECIMAL;
-        case 'b' :
-            return StringType::BINARY;
-        default :
-            return StringType::DECIMAL;
-        }
-    }
 }   // namespace ECG
 #endif

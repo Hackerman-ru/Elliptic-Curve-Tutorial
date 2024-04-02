@@ -1,13 +1,14 @@
 #ifndef ECG_LONGINT_H
 #define ECG_LONGINT_H
 
-#include "string-parser.h"
-#include "util.h"
+#include "../StringParser/string-parser.h"
+#include "../util.h"
 
 #include <array>
 #include <bitset>
 #include <cassert>
 #include <complex>
+#include <functional>
 #include <string>
 
 namespace ECG {
@@ -625,6 +626,21 @@ namespace ECG {
             }
 
             return quotient;
+        }
+
+        static StringType find_type(const std::string& str) {
+            if (str.size() < 2) {
+                return StringType::DECIMAL;
+            }
+
+            switch (str[1]) {
+            case 'x' :
+                return StringType::HEXADECIMAL;
+            case 'b' :
+                return StringType::BINARY;
+            default :
+                return StringType::DECIMAL;
+            }
         }
 
         uint_t operator*(block_t other) const {   // FFT will delete this
