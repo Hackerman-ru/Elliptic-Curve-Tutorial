@@ -1,12 +1,12 @@
 #ifndef ECG_FIELD_H
 #define ECG_FIELD_H
 
-#include "../util.h"
+#include "util.h"
 
 #ifdef ECG_BOOST
     #include "boost/multiprecision/cpp_int.hpp"
 #else
-    #include "../Uint/uint.h"
+    #include "uint.h"
 #endif
 
 #include <string>
@@ -61,9 +61,6 @@ namespace ECG {
         bool is_inversible() const;
         FieldElement fast_pow(const uint& pow) const;
         FieldElement inverse() const;
-
-        std::string into_string(StringType str_type = StringType::DECIMAL) const;
-        std::string into_string(std::function<char(uint32_t)> map, size_t shift) const;
 
         const uint& get_p() const;
 

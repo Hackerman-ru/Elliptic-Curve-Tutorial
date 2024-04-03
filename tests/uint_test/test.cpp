@@ -46,79 +46,19 @@ static void comp(uint512_t lhs, uint_t<512> rhs) {
 }
 
 TEST(StringConversionCorrectness, DecimalStringConversion) {
-    uint512_t a = 1;
+    uint512_t boost_value = 1;
 
     for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
+        boost_value *= i;
 
-        if (a == 0) {
-            a = 1;
+        if (boost_value == 0) {
+            boost_value = 1;
         }
 
-        auto a_str = a.convert_to<std::string>();
-        uint_t<512> b(a_str);
-        auto b_str = b.into_string();
-        EXPECT_EQ(a_str, b_str);
-    }
-}
-
-TEST(StringConversionCorrectness, BinaryStringConversion) {
-    uint512_t a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        uint512_t a_clone = a;
-        std::string a_str;
-
-        while (a_clone != 0) {
-            a_str.push_back(((a_clone & 1) != 0) + '0');
-            a_clone >>= 1;
-        }
-
-        std::reverse(a_str.begin(), a_str.end());
-
-        uint_t<512> b(a_str, StringType::BINARY);
-        auto b_str = b.into_string(StringType::BINARY);
-        EXPECT_EQ(a_str, b_str);
-    }
-}
-
-TEST(StringConversionCorrectness, HexadecimalStringConversion) {
-    uint512_t a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        uint512_t a_clone = a;
-        std::string a_str;
-
-        while (a_clone != 0) {
-            auto n = a_clone.convert_to<uint32_t>() & 0xF;
-
-            if (n < 10) {
-                a_str.push_back(n + '0');
-            } else {
-                n -= 10;
-                a_str.push_back(n + 'a');
-            }
-
-            a_clone >>= 4;
-        }
-
-        std::reverse(a_str.begin(), a_str.end());
-
-        uint_t<512> b(a_str, StringType::HEXADECIMAL);
-        auto b_str = b.into_string(StringType::HEXADECIMAL);
-        EXPECT_EQ(a_str, b_str);
+        auto boost_str = boost_value.convert_to<std::string>();
+        uint_t<512> my_value(boost_str.c_str());
+        auto my_str = my_value.convert_to<std::string>();
+        EXPECT_EQ(boost_str, my_str);
     }
 }
 
@@ -146,85 +86,7 @@ TEST(StringConversionTiming, DecimalStringConversion) {
             a = 1;
         }
 
-        std::string a_str = a.into_string();
-    }
-}
-
-TEST(StringConversionTiming, BinaryStringConversionBoost) {
-    uint512_t a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        std::string a_str;
-
-        while (a != 0) {
-            a_str += ((a & 1) != 0) + '0';
-            a >>= 1;
-        }
-
-        std::reverse(a_str.begin(), a_str.end());
-    }
-}
-
-TEST(StringConversionTiming, BinaryStringConversion) {
-    uint_t<512> a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        std::string a_str = a.into_string(StringType::BINARY);
-    }
-}
-
-TEST(StringConversionTiming, HexadecimalStringConversionBoost) {
-    uint512_t a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        std::string a_str;
-
-        while (a != 0) {
-            auto n = a.convert_to<uint32_t>() & 0xF;
-
-            if (n < 10) {
-                a_str.push_back(n + '0');
-            } else {
-                n -= 10;
-                a_str.push_back(n + 'a');
-            }
-
-            a >>= 4;
-        }
-
-        std::reverse(a_str.begin(), a_str.end());
-    }
-}
-
-TEST(StringConversionTiming, HexadecimalStringConversion) {
-    uint_t<512> a = 1;
-
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
-        a *= i;
-
-        if (a == 0) {
-            a = 1;
-        }
-
-        std::string a_str = a.into_string(StringType::HEXADECIMAL);
+        std::string a_str = a.convert_to<std::string>();
     }
 }
 
@@ -262,7 +124,7 @@ TEST(ShiftCorrectness, LeftShift) {
             a = 1;
         }
 
-        uint_t<512> b(a.convert_to<std::string>());
+        uint_t<512> b(a.convert_to<std::string>().c_str());
 
         for (size_t j = 0; j < 512; ++j) {
             comp(a << j, b << j);
@@ -284,7 +146,7 @@ TEST(ShiftCorrectness, RightShift) {
             a = 1;
         }
 
-        uint_t<512> b(a.convert_to<std::string>());
+        uint_t<512> b(a.convert_to<std::string>().c_str());
 
         for (size_t j = 0; j < 512; ++j) {
             comp(a >> j, b >> j);

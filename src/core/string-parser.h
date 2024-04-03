@@ -4,64 +4,52 @@
 #include "util.h"
 
 #include <array>
+#include <cassert>
 #include <limits>
 #include <string>
 
 namespace ECG {
-    enum class StringType {
-        BINARY = 0b1,
-        DECIMAL = 10,
-        HEXADECIMAL = 0xF,
-    };
+    // contains unsigned integer
+    template<typename T>
+    requires is_integral<T>
+    T parse_into(const char* str) {
+        assert(str != nullptr && "parse_into got nullptr");
 
-    template<typename Block, size_t Size, typename T>
-    constexpr std::array<Block, Size> split_into_blocks(const T& value);
+        T value = 0;
+        uint16_t radix = 10;
 
-    template<typename Block, size_t Size>
-    constexpr std::array<Block, Size> split_into_blocks<Block, Size, char*>(const char*& str) {
-        if (str == nullptr) {
-            return {};
-        }
-
-        static constexpr bits = sizeof(Block) * Size;
-        uint_t<bits> result;
-        const char* pos = str;
-
-        while (*str != '\0') {
-            uint_t<bits> temp = (result <<= 1);
-            result <<= 2;
-            result += temp;
-            result += uint_t<bits>(*str - '0');
+        if (str[0] == '0' && str[1] == 'x') {
+            radix = 16;
+            str += 2;
+        } else if (str[0] == '0' && str[1] == 'b') {
+            radix = 2;
+            str += 2;
+        } else if (str[0] == '0') {
+            radix = 8;
             ++str;
         }
 
-        return result.m_blocks;
-    }
+        while (*str != '\0') {
+            value *= static_cast<T>(radix);
+            uint16_t symbol_value = radix + 1;
 
-    template<typename Block, size_t Size>
-    constexpr std::array<Block, Size> split_into_blocks<Block, Size, std::string>(const std::string& value);
+            if (*str >= '0' && *str <= '9') {
+                symbol_value = static_cast<uint16_t>(*str - '0');
+            } else if (*str >= 'a' && *str <= 'f') {
+                symbol_value = static_cast<uint16_t>(*str - 'a');
+            } else if (*str >= 'A' && *str <= 'F') {
+                symbol_value = static_cast<uint16_t>(*str - 'A');
+            }
 
-    template<typename Block, size_t Size, typename T>
-    requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, Block>
-    constexpr std::array<Block, Size> split_into_blocks(T value);
+            if (symbol_value >= radix) {
+                assert(false && "parse_into got incorrect string");
+            }
 
-    template<typename Block, size_t Size, typename T>
-    requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, Block>
-    static constexpr std::array<Block, Size> split_into_blocks(T value) {}
-
-    static StringType find_type(const std::string& str) {
-        if (str.size() < 2) {
-            return StringType::DECIMAL;
+            value += static_cast<T>(symbol_value);
+            ++str;
         }
 
-        switch (str[1]) {
-        case 'x' :
-            return StringType::HEXADECIMAL;
-        case 'b' :
-            return StringType::BINARY;
-        default :
-            return StringType::DECIMAL;
-        }
+        return value;
     }
 }   // namespace ECG
 #endif

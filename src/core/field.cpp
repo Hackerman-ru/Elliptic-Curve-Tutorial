@@ -182,69 +182,6 @@ FieldElement FieldElement::fast_pow(const uint& pow) const {
     return temp * temp;
 }
 
-std::string FieldElement::into_string(StringType str_type) const {
-    assert(m_value < *m_p && "Field element value must be less than p");
-
-#ifdef ECG_BOOST
-    std::string result;
-    uint clone = m_value;
-
-    switch (str_type) {
-    case ECG::StringType::BINARY :
-        while (clone != 0) {
-            result += ((clone & 1) != 0) + '0';
-            clone >>= 1;
-        }
-
-        std::reverse(result.begin(), result.end());
-        break;
-    case ECG::StringType::DECIMAL :
-        result = m_value.convert_to<std::string>();
-        break;
-    case ECG::StringType::HEXADECIMAL :
-        while (clone != 0) {
-            auto n = clone.convert_to<uint32_t>() & 0xF;
-
-            if (n < 10) {
-                result += n + '0';
-            } else {
-                n -= 10;
-                result += n + 'a';
-            }
-
-            clone >>= 4;
-        }
-
-        std::reverse(result.begin(), result.end());
-        break;
-    }
-
-    return result;
-#else
-    return m_value.into_string(str_type);
-#endif
-}
-
-std::string FieldElement::into_string(std::function<char(uint32_t)> map, size_t shift) const {
-    assert(m_value < *m_p && "Field element value must be less than p");
-
-#ifdef ECG_BOOST
-    std::string result;
-    uint clone = m_value;
-
-    do {
-        result += map(static_cast<uint32_t>(clone));
-        clone >>= shift;
-    } while (clone > 0);
-
-    std::reverse(result.begin(), result.end());
-
-    return result;
-#else
-    return m_value.into_string(map, shift);
-#endif
-}
-
 const ECG::uint& FieldElement::get_p() const {
     return *m_p;
 }

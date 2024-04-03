@@ -20,5 +20,11 @@ namespace ECG {
         { t[i] } -> is_convertible_to<T>;
         { t.size() } -> std::same_as<size_t>;
     };
+
+    template<typename T>
+    concept is_integral = std::is_integral_v<T> || requires(T t, T* p, void (*f)(T)) {
+        f(0);
+        p + t;
+    };
 }   // namespace ECG
 #endif

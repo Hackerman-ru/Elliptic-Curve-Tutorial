@@ -14,7 +14,7 @@ namespace ECG {
     template<size_t bits>
     class uint_t {
         using block_t = uint32_t;
-        using double_block_t = uint64_t;   // TEMPORARY
+        using double_block_t = uint64_t;   // FFT will delete this
 
         static constexpr size_t c_BITS_IN_BYTE = 8;
         static constexpr size_t c_BLOCK_SIZE = sizeof(block_t) * c_BITS_IN_BYTE;
@@ -23,58 +23,27 @@ namespace ECG {
         using blocks = std::array<block_t, c_BLOCK_NUMBER>;
         blocks m_blocks = {};
 
+        template<size_t V>
+        friend class uint_t;
+
     public:
         constexpr uint_t() = default;
 
         template<typename T>
-        constexpr uint_t(const T& value) : uint_t(split_into_blocks<T, blocks>(value)) {}
+        constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
-        uint_t(const std::string& str) : uint_t(str, find_type(str)) {}
-
-        uint_t(const std::string& str, StringType str_type) {
-            switch (str_type) {
-            case StringType::BINARY :
-                for (size_t i = 0; i < str.size() && i < bits; ++i) {
-                    size_t bucket_pos = i / c_BLOCK_SIZE;
-
-                    m_blocks[bucket_pos] |= block_t(str[str.size() - 1 - i] - '0') << (i % c_BLOCK_SIZE);
-                }
-                break;
-            case StringType::DECIMAL :
-                for (char c : str) {
-                    uint_t temp = (*this <<= 1);
-                    *this <<= 2;
-                    *this += temp;
-                    *this += uint_t(c - '0');
-                }
-                break;
-            case StringType::HEXADECIMAL :
-                for (char c : str) {
-                    *this <<= 4;
-
-                    if (isdigit(c)) {
-                        *this += uint_t(c - '0');
-                    } else {
-                        *this += uint_t((c - 'a') + 10);
-                    }
-                }
-                break;
-            }
+        constexpr uint_t(const char* str) {
+            *this = parse_into<uint_t>(str);
         }
 
         // operator<=>
         friend auto operator<=>(const uint_t& lhs, const uint_t& rhs) = default;
 
-        // operator==
-        friend bool operator==(const uint_t& lhs, const uint_t& rhs) = default;
-
-        // operator!=
-        friend bool operator!=(const uint_t& lhs, const uint_t& rhs) = default;
-
         // operator+
         friend uint_t operator+(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = lhs;
-            return result += rhs;
+            lhs += rhs;
+            return result;
         }
 
         friend uint_t operator+(uint_t&& lhs, const uint_t& rhs) {
@@ -109,7 +78,7 @@ namespace ECG {
 
         // operator*
         friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
-            uint_t<bits> result;
+            uint_t result;
 
             for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
                 result += (lhs * rhs[i]) << (c_BLOCK_SIZE * i);
@@ -257,7 +226,7 @@ namespace ECG {
             static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
             size_t bucket_shift = shift_size >> 6;
-            auto data = static_cast<uint64_t*>(static_cast<void*>(m_blocks.data()));
+            auto data = reinterpret_cast<uint64_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
                 for (size_t i = 0; i < BUCKET_NUMBER; ++i) {
@@ -299,7 +268,7 @@ namespace ECG {
             static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
             size_t bucket_shift = shift_size >> 6;
-            auto data = static_cast<uint64_t*>(static_cast<void*>(m_blocks.data()));
+            auto data = reinterpret_cast<uint64_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
                 for (size_t i = BUCKET_NUMBER; i > 0; --i) {
@@ -373,13 +342,8 @@ namespace ECG {
             return (*this -= 1);
         }
 
-        const block_t& operator[](size_t pos) const {
-            return m_blocks[pos];
-        }
-
-        block_t& operator[](size_t pos) {
-            return m_blocks[pos];
-        }
+        template<typename T>
+        T convert_to() const;
 
         template<typename T>
         requires is_convertible_to<T, block_t>
@@ -395,40 +359,16 @@ namespace ECG {
             return result;
         }
 
-        std::string into_string(StringType str_type = StringType::DECIMAL) const {
+        template<>
+        std::string convert_to() const {
             std::string result;
             uint_t clone_of_this = *this;
 
-            switch (str_type) {
-            case StringType::BINARY :
-                do {
-                    result.push_back(((clone_of_this & 1) != 0) + '0');
-                    clone_of_this >>= 1;
-                } while (clone_of_this > 0);
-                break;
-            case StringType::DECIMAL :
-                do {
-                    uint_t remainder;
-                    clone_of_this =
-                        divide(clone_of_this, static_cast<block_t>(StringType::DECIMAL), &remainder);
-                    result.push_back(remainder[0] + '0');
-                } while (clone_of_this > 0);
-                break;
-            case StringType::HEXADECIMAL :
-                do {
-                    block_t value = clone_of_this[0] & static_cast<block_t>(StringType::HEXADECIMAL);
-
-                    if (value >= 10) {
-                        value -= 10;
-                        result.push_back(value + 'a');
-                    } else {
-                        result.push_back(value + '0');
-                    }
-
-                    clone_of_this >>= 4;
-                } while (clone_of_this > 0);
-                break;
-            }
+            do {
+                uint_t remainder;
+                clone_of_this = divide(clone_of_this, 10, &remainder);
+                result.push_back(remainder.m_blocks[0] + '0');
+            } while (clone_of_this > 0);
 
             std::reverse(result.begin(), result.end());
             return result;
@@ -440,31 +380,9 @@ namespace ECG {
 
     private:
         template<typename T>
-        static constexpr blocks split_into_blocks(const T& str) {}
-
-        template<>
-        static constexpr blocks split_into_blocks(const char*& str) {
-            if (str == nullptr) {
-                return blocks();
-            }
-
-            uint_t result;
-
-            while (*str != '\0') {
-                uint_t temp = (result <<= 1);
-                result <<= 2;
-                result += temp;
-                result += uint_t(*str - '0');
-                ++str;
-            }
-
-            return result.m_blocks;
-        }
-
-        template<typename T>
         requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
-            return blocks(value);
+            return {static_cast<block_t>(value)};
         }
 
         template<typename T>
@@ -484,21 +402,64 @@ namespace ECG {
             return result;
         }
 
-        template<is_convertible_container<block_t> T>
-        static constexpr blocks split_into_blocks(const T& value) {
-            const size_t min_size = std::min(size(), value.size());
+        template<typename T>
+        requires requires(T x) {
+            { ECG::uint_t {x} } -> std::same_as<T>;
+        }
+        static constexpr blocks split_into_blocks(const T& other) {
+            const size_t min_size = std::min(size(), other.size());
             blocks result;
 
             for (size_t i = 0; i < min_size; i++) {
-                result[i] = static_cast<block_t>(value[i]);
+                result[i] = static_cast<block_t>(other[i]);
             }
 
             return result;
         }
 
-        static uint_t divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
-            size_t dividend_size = lhs.clz();
-            size_t divisor_size = rhs.clz();
+        static uint_t fft(const uint_t& a, size_t w) {
+            if constexpr (c_BLOCK_NUMBER == 1) {
+                return a;
+            }
+
+            static constexpr size_t half_bits = bits >> 1;
+
+            uint_t<half_bits> a_even;
+            uint_t<half_bits> a_odd;
+
+            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+                if (i & 1) {
+                    a_odd[i >> 1] = a[i];
+                } else {
+                    a_even[i >> 1] = a[i];
+                }
+            }
+
+            size_t w_squared = w * w;
+
+            auto y_even = fft(a_even, w_squared);
+            auto y_odd = fft(a_odd, w_squared);
+
+            block_t x = 1;
+            uint_t y;
+            static constexpr size_t half_size = c_BLOCK_NUMBER >> 1;
+
+            for (size_t i = 0; i < half_size; ++i) {
+                y[i] = y_even[i] + x * y_odd[i];
+                y[i + half_size] = y_even[i] - x * y_odd[i];
+                x *= w;
+            }
+
+            return y;
+        }
+
+        static uint_t multiply(const uint_t& lhs, const uint_t& rhs) {}
+
+        static uint_t divide(const uint_t& lhs,
+                             const uint_t& rhs,
+                             uint_t* remainder = nullptr) {   // FFT will delete this
+            size_t dividend_size = lhs.actual_size();
+            size_t divisor_size = rhs.actual_size();
 
             // CASE 0:
             if (dividend_size < divisor_size) {
@@ -518,7 +479,9 @@ namespace ECG {
             return d_divide(lhs, rhs, remainder);
         }
 
-        static uint_t divide(const uint_t& lhs, const block_t& rhs, uint_t* remainder = nullptr) {
+        static uint_t divide(const uint_t& lhs,
+                             const block_t& rhs,
+                             uint_t* remainder = nullptr) {   // FFT will delete this
             uint_t result;
             double_block_t part = 0;
 
@@ -540,9 +503,11 @@ namespace ECG {
             return result;
         }
 
-        static uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
-            size_t dividend_size = lhs.clz();
-            size_t divisor_size = rhs.clz();
+        static uint_t d_divide(const uint_t& lhs,
+                               const uint_t& rhs,
+                               uint_t* remainder = nullptr) {   // FFT will delete this
+            size_t dividend_size = lhs.actual_size();
+            size_t divisor_size = rhs.actual_size();
 
             uint_t<bits + c_BLOCK_SIZE> dividend(lhs);
             uint_t divisor(rhs);
@@ -640,7 +605,15 @@ namespace ECG {
             return result;
         }
 
-        size_t clz() const {
+        const block_t& operator[](size_t pos) const {
+            return m_blocks[pos];
+        }
+
+        block_t& operator[](size_t pos) {
+            return m_blocks[pos];
+        }
+
+        size_t actual_size() const {   // FFT will delete this
             size_t result = c_BLOCK_NUMBER;
 
             while (result > 0 && m_blocks[result - 1] == 0) {
