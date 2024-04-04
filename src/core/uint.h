@@ -47,33 +47,41 @@ namespace ECG {
         }
 
         friend uint_t operator+(uint_t&& lhs, const uint_t& rhs) {
-            return lhs += rhs;
+            lhs += rhs;
+            return lhs;
         }
 
         friend uint_t operator+(const uint_t& lhs, uint_t&& rhs) {
-            return rhs += lhs;
+            rhs += lhs;
+            return rhs;
         }
 
         friend uint_t operator+(uint_t&& lhs, uint_t&& rhs) {
-            return lhs += rhs;
+            lhs += rhs;
+            return lhs;
         }
 
         // operator-
         friend uint_t operator-(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = lhs;
-            return result -= rhs;
+            result -= rhs;
+            return result;
         }
 
         friend uint_t operator-(uint_t&& lhs, const uint_t& rhs) {
-            return lhs -= rhs;
+            lhs -= rhs;
+            return lhs;
         }
 
         friend uint_t operator-(const uint_t& lhs, uint_t&& rhs) {
-            return -(rhs -= lhs);   // or result version, if operator-() will be expensive
+            rhs -= lhs;
+            rhs.neg();
+            return rhs;
         }
 
         friend uint_t operator-(uint_t&& lhs, uint_t&& rhs) {
-            return lhs -= rhs;
+            lhs -= rhs;
+            return lhs;
         }
 
         // operator*
@@ -174,14 +182,8 @@ namespace ECG {
         }
 
         uint_t operator-() const {
-            uint_t result;
-
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
-                result[i] = ~(m_blocks[i]);
-            }
-
-            result++;
-
+            uint_t result = *this;
+            result.neg();
             return result;
         }
 
@@ -210,15 +212,15 @@ namespace ECG {
         }
 
         uint_t& operator*=(const uint_t& other) {
-            return (*this = *this * other);
+            return *this = *this * other;
         }
 
         uint_t& operator/=(const uint_t& other) {
-            return (*this = *this / other);
+            return *this = *this / other;
         }
 
         uint_t& operator%=(const uint_t& other) {
-            return (*this = *this % other);
+            return *this = *this % other;
         }
 
         uint_t& operator>>=(size_t shift_size) {
@@ -330,16 +332,24 @@ namespace ECG {
             return *this;
         }
 
-        uint_t& operator++(int) {
-            return (*this += 1);
+        uint_t operator++(int) {
+            uint_t result = *this;
+            *this += 1;
+            return result;
         }
 
         uint_t& operator++() {
-            return (*this += 1);
+            return *this += 1;
+        }
+
+        uint_t operator--(int) {
+            uint_t result = *this;
+            *this -= 1;
+            return result;
         }
 
         uint_t& operator--() {
-            return (*this -= 1);
+            return *this -= 1;
         }
 
         template<typename T>
@@ -374,11 +384,11 @@ namespace ECG {
             return result;
         }
 
+    private:
         static constexpr size_t size() {
             return c_BLOCK_NUMBER;
         }
 
-    private:
         template<typename T>
         requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
@@ -388,7 +398,7 @@ namespace ECG {
         template<typename T>
         requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
-            blocks result;
+            blocks result = {};
 
             for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
                 result[i] = static_cast<block_t>(value);
@@ -408,7 +418,7 @@ namespace ECG {
         }
         static constexpr blocks split_into_blocks(const T& other) {
             const size_t min_size = std::min(size(), other.size());
-            blocks result;
+            blocks result = {};
 
             for (size_t i = 0; i < min_size; i++) {
                 result[i] = static_cast<block_t>(other[i]);
@@ -590,6 +600,14 @@ namespace ECG {
             }
 
             return quotient;
+        }
+
+        void neg() {
+            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+                m_blocks[i] = ~(m_blocks[i]);
+            }
+
+            m_blocks++;
         }
 
         uint_t operator*(block_t other) const {   // FFT will delete this

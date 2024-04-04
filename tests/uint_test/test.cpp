@@ -33,9 +33,9 @@ static uint_t<512> conv(uint512_t value) {
 
 static void comp(uint512_t lhs, uint_t<512> rhs) {
     for (size_t i = 0; i < 16; ++i) {
-        uint32_t a = lhs.convert_to<uint32_t>();
-        uint32_t b = rhs.convert_to<uint32_t>();
-        EXPECT_EQ(a, b);
+        uint32_t boost_value = lhs.convert_to<uint32_t>();
+        uint32_t my_value = rhs.convert_to<uint32_t>();
+        EXPECT_EQ(boost_value, my_value);
         lhs >>= 32;
         rhs >>= 32;
 
