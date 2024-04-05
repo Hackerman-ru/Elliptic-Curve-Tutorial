@@ -1,7 +1,9 @@
 #ifndef ECG_UTIL_H
 #define ECG_UTIL_H
 
+#include <complex>
 #include <concepts>
+#include <vector>
 
 namespace ECG {
     template<typename From, typename To>
@@ -26,5 +28,33 @@ namespace ECG {
         f(0);
         p + t;
     };
+
+    namespace FFT {
+        using complex = std::complex<long double>;
+
+        static constexpr std::vector<complex> evaluate(std::vector<complex> coeffs);
+        static constexpr std::vector<complex> interpolate(std::vector<complex> values);
+
+        template<typename T>
+        requires std::is_integral_v<T>
+        constexpr std::vector<T> multiply(std::vector<T> lhs, std::vector<T> rhs) {
+            size_t degree = lhs.size() + rhs.size();
+
+            lhs.resize(degree);
+            rhs.resize(degree);
+
+            std::vector<complex> lhs_values = evaluate(std::move(lhs));
+            std::vector<complex> rhs_values = evaluate(std::move(rhs));
+
+            std::vector<complex> result_values;
+
+            for (size_t i = 0; i < lhs_values.size(); ++i) {
+                result_values[i] = lhs_values[i] * rhs_values[i];
+            }
+
+            std::vector<T> result = interpolate(result_values);
+            return result;
+        }
+    }   // namespace FFT
 }   // namespace ECG
 #endif
