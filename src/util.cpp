@@ -34,10 +34,12 @@ static constexpr size_t clz(size_t n) {
     return power - 1;
 }
 
-enum class Part {
-    Even,
-    Odd,
-};
+namespace {
+    enum class Part {
+        Even,
+        Odd,
+    };
+}   // namespace
 
 static constexpr std::vector<complex> get_half(std::vector<complex> arr, Part part) {
     std::vector<complex> result;

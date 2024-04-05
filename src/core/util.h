@@ -52,7 +52,7 @@ namespace ECG {
                 result_values[i] = lhs_values[i] * rhs_values[i];
             }
 
-            std::vector<T> result = interpolate(result_values);
+            std::vector<T> result = interpolate(std::move(result_values));
             return result;
         }
     }   // namespace FFT
