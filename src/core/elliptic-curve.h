@@ -36,10 +36,7 @@ namespace ECG {
         uint points_number() const;   // SEA algorithm
 
         template<CoordinatesType type = CoordinatesType::Normal>
-        EllipticCurvePoint<type> operator()(FieldElement x) const {
-            if (!find_y(x, &y)) {
-            }
-        }
+        EllipticCurvePoint<type> operator()(FieldElement x) const {}
 
         template<CoordinatesType type = CoordinatesType::Normal>
         EllipticCurvePoint<type> operator()(FieldElement x, FieldElement y) const {

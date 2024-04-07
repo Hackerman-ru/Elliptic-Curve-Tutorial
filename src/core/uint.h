@@ -86,13 +86,7 @@ namespace ECG {
 
         // operator*
         friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
-            uint_t result;
-
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
-                result += (lhs * rhs[i]) << (c_BLOCK_SIZE * i);
-            }
-
-            return result;
+            return FFT::multiply<block_t, c_BLOCK_NUMBER>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
@@ -413,7 +407,7 @@ namespace ECG {
         }
 
         template<typename T>
-        requires requires(T x) {
+        requires is_convertible_container<T, block_t> || requires(T x) {
             { ECG::uint_t {x} } -> std::same_as<T>;
         }
         static constexpr blocks split_into_blocks(const T& other) {
@@ -426,44 +420,6 @@ namespace ECG {
 
             return result;
         }
-
-        static uint_t fft(const uint_t& a, size_t w) {
-            if constexpr (c_BLOCK_NUMBER == 1) {
-                return a;
-            }
-
-            static constexpr size_t half_bits = bits >> 1;
-
-            uint_t<half_bits> a_even;
-            uint_t<half_bits> a_odd;
-
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
-                if (i & 1) {
-                    a_odd[i >> 1] = a[i];
-                } else {
-                    a_even[i >> 1] = a[i];
-                }
-            }
-
-            size_t w_squared = w * w;
-
-            auto y_even = fft(a_even, w_squared);
-            auto y_odd = fft(a_odd, w_squared);
-
-            block_t x = 1;
-            uint_t y;
-            static constexpr size_t half_size = c_BLOCK_NUMBER >> 1;
-
-            for (size_t i = 0; i < half_size; ++i) {
-                y[i] = y_even[i] + x * y_odd[i];
-                y[i + half_size] = y_even[i] - x * y_odd[i];
-                x *= w;
-            }
-
-            return y;
-        }
-
-        static uint_t multiply(const uint_t& lhs, const uint_t& rhs) {}
 
         static uint_t divide(const uint_t& lhs,
                              const uint_t& rhs,
@@ -607,7 +563,7 @@ namespace ECG {
                 m_blocks[i] = ~(m_blocks[i]);
             }
 
-            m_blocks++;
+            ++*this;
         }
 
         uint_t operator*(block_t other) const {   // FFT will delete this

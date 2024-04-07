@@ -1,8 +1,7 @@
+#pragma warning(disable : 4244)   // for size_t -> complex conversions
+#pragma warning(disable : 4530)   // for resize of complex values
+
 #include "util.h"
-
-#include <algorithm>
-
-using namespace ECG::FFT;
 
 static constexpr bool is_power_of_2(size_t n) {
     if (n == 0) {
@@ -41,11 +40,13 @@ namespace {
     };
 }   // namespace
 
-static constexpr std::vector<complex> get_half(std::vector<complex> arr, Part part) {
-    std::vector<complex> result;
+using ECG::FFT::complex;
+
+static constexpr std::vector<complex> get_half(const std::vector<complex>& arr, Part part) {
+    std::vector<complex> result(arr.size() << 1);
 
     for (size_t i = (part == Part::Even ? 0 : 1); i < arr.size(); i += 2) {
-        result.emplace_back(arr[i]);
+        result[i << 1] = arr[i];
     }
 
     return result;
@@ -82,7 +83,7 @@ constexpr std::vector<complex> ECG::FFT::evaluate(std::vector<complex> coeffs) {
         return coeffs;
     }
 
-    complex w = exp(static_cast<complex>(2 * 3.14 * 1.0i) / static_cast<complex>(n));
+    complex w = exp(static_cast<complex>(2 * 3.14) * static_cast<complex>(1.0i) / static_cast<complex>(n));
 
     auto even_coeffs = get_half(coeffs, Part::Even);
     auto odd_coeffs = get_half(coeffs, Part::Odd);
@@ -115,7 +116,7 @@ constexpr std::vector<complex> ECG::FFT::interpolate(std::vector<complex> values
     }
 
     complex w = (static_cast<complex>(1) / static_cast<complex>(n))
-              * exp(-static_cast<complex>(2 * 3.14 * 1.0i) / static_cast<complex>(n));
+              * exp(-static_cast<complex>(2 * 3.14) * static_cast<complex>(1.0i) / static_cast<complex>(n));
 
     auto even_coeffs = get_half(values, Part::Even);
     auto odd_coeffs = get_half(values, Part::Odd);
