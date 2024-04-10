@@ -1,6 +1,7 @@
 #ifndef ECG_LONGINT_H
 #define ECG_LONGINT_H
 
+#include "fft.h"
 #include "string-parser.h"
 #include "util.h"
 
@@ -86,7 +87,7 @@ namespace ECG {
 
         // operator*
         friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
-            return FFT::multiply<block_t, c_BLOCK_NUMBER>(lhs.m_blocks, rhs.m_blocks);
+            return multiply<c_BLOCK_NUMBER>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
@@ -222,7 +223,7 @@ namespace ECG {
             static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
             size_t bucket_shift = shift_size >> 6;
-            auto data = reinterpret_cast<uint64_t*>(m_blocks.data());
+            auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
                 for (size_t i = 0; i < BUCKET_NUMBER; ++i) {
@@ -264,7 +265,7 @@ namespace ECG {
             static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
 
             size_t bucket_shift = shift_size >> 6;
-            auto data = reinterpret_cast<uint64_t*>(m_blocks.data());
+            auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
                 for (size_t i = BUCKET_NUMBER; i > 0; --i) {
@@ -353,10 +354,10 @@ namespace ECG {
         requires is_convertible_to<T, block_t>
         T convert_to() const {
             size_t shift_size = sizeof(T) * c_BITS_IN_BYTE;
-            size_t bucket_number = shift_size / c_BLOCK_SIZE;
+            size_t blocks_number = shift_size / c_BLOCK_SIZE;
             T result = 0;
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER && i < bucket_number; ++i) {
+            for (size_t i = 0; i < c_BLOCK_NUMBER && i < blocks_number; ++i) {
                 result |= T(m_blocks[i]) << (i * c_BLOCK_SIZE);
             }
 

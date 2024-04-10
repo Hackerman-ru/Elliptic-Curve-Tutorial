@@ -8,11 +8,11 @@
     <ClInclude Include="core\Field.h" />
     <ClInclude Include="core\elliptic-curve.h" />
     <ClInclude Include="core\string-parser.h" />
+    <ClInclude Include="core\fft.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\string-parser.cpp" />
-    <ClCompile Include="core\util.cpp" />
   </ItemGroup>
 </Project>

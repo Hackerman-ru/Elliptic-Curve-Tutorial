@@ -124,7 +124,7 @@ TEST(ShiftCorrectness, LeftShift) {
             a = 1;
         }
 
-        uint_t<512> b(a.convert_to<std::string>().c_str());
+        uint_t<512> b = conv(a);
 
         for (size_t j = 0; j < 512; ++j) {
             comp(a << j, b << j);
@@ -146,7 +146,7 @@ TEST(ShiftCorrectness, RightShift) {
             a = 1;
         }
 
-        uint_t<512> b(a.convert_to<std::string>().c_str());
+        uint_t<512> b = conv(a);
 
         for (size_t j = 0; j < 512; ++j) {
             comp(a >> j, b >> j);
