@@ -1,23 +1,13 @@
 #ifndef ECG_FIELD_H
 #define ECG_FIELD_H
 
+#include "uint.h"
 #include "util.h"
-
-#ifdef ECG_BOOST
-    #include "boost/multiprecision/cpp_int.hpp"
-#else
-    #include "uint.h"
-#endif
 
 #include <string>
 #include <vector>
 
 namespace ECG {
-#ifdef ECG_BOOST
-    using uint = boost::multiprecision::uint512_t;   // should be uint512_t or bigger
-#else
-    using uint = uint_t<512>;   // should be uint512_t or bigger
-#endif
     class FieldElement {
         friend class Field;
 

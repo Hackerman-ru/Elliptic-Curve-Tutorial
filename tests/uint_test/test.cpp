@@ -20,8 +20,9 @@ static constexpr size_t ShiftTimingN = 10000000;
 static constexpr size_t ArithmeticTimingN = 1000000;
 static constexpr size_t DivisionTimingN = 100000;
 
-static uint_t<512> conv(uint512_t value) {
-    uint_t<512> result;
+template<typename From, typename To>
+static To conv(const From& value) {
+    To result = 0;
 
     for (size_t i = 16; i > 0; --i) {
         result <<= 32;
@@ -31,18 +32,9 @@ static uint_t<512> conv(uint512_t value) {
     return result;
 }
 
-static void comp(uint512_t lhs, uint_t<512> rhs) {
-    for (size_t i = 0; i < 16; ++i) {
-        uint32_t boost_value = lhs.convert_to<uint32_t>();
-        uint32_t my_value = rhs.convert_to<uint32_t>();
-        EXPECT_EQ(boost_value, my_value);
-        lhs >>= 32;
-        rhs >>= 32;
-
-        if (lhs == 0 && rhs == 0) {
-            break;
-        }
-    }
+static void comp(uint512_t boost_value, uint_t<512> my_value_) {
+    uint512_t my_value = conv<uint_t<512>, uint512_t>(my_value_);
+    ASSERT_EQ(my_value, boost_value);
 }
 
 TEST(StringConversionCorrectness, DecimalStringConversion) {
@@ -58,7 +50,7 @@ TEST(StringConversionCorrectness, DecimalStringConversion) {
         auto boost_str = boost_value.convert_to<std::string>();
         uint_t<512> my_value(boost_str.c_str());
         auto my_str = my_value.convert_to<std::string>();
-        EXPECT_EQ(boost_str, my_str);
+        ASSERT_EQ(boost_str, my_str);
     }
 }
 
@@ -98,7 +90,7 @@ TEST(IntConversionCorrectness, uint32_t) {
     for (size_t i = 0; i < ConvertCorrectnessN; ++i) {
         uint32_t a = gen();
         uint_t<512> b(a);
-        EXPECT_EQ(a, b.convert_to<uint32_t>());
+        ASSERT_EQ(a, b.convert_to<uint32_t>());
     }
 }
 
@@ -108,7 +100,7 @@ TEST(IntConversionCorrectness, size_t) {
     for (size_t i = 0; i < ConvertCorrectnessN; ++i) {
         size_t a = gen();
         uint_t<512> b(a);
-        EXPECT_EQ(a, b.convert_to<size_t>());
+        ASSERT_EQ(a, b.convert_to<size_t>());
     }
 }
 
@@ -124,10 +116,12 @@ TEST(ShiftCorrectness, LeftShift) {
             a = 1;
         }
 
-        uint_t<512> b = conv(a);
+        uint_t<512> b = conv<uint512_t, uint_t<512>>(a);
 
         for (size_t j = 0; j < 512; ++j) {
-            comp(a << j, b << j);
+            uint512_t boost_value = a << j;
+            uint512_t my_value = conv<uint_t<512>, uint512_t>(b << j);
+            ASSERT_EQ(my_value, boost_value);
 
             if (a << j == 0) {
                 break;
@@ -146,10 +140,12 @@ TEST(ShiftCorrectness, RightShift) {
             a = 1;
         }
 
-        uint_t<512> b = conv(a);
+        uint_t<512> b = conv<uint512_t, uint_t<512>>(a);
 
         for (size_t j = 0; j < 512; ++j) {
-            comp(a >> j, b >> j);
+            uint512_t boost_value = a >> j;
+            uint512_t my_value = conv<uint_t<512>, uint512_t>(b >> j);
+            ASSERT_EQ(my_value, boost_value);
 
             if (a >> j == 0) {
                 break;
@@ -199,7 +195,9 @@ TEST(ArithmeticCorrectness, Addition) {
         a += i;
         b += i;
 
-        comp(a, b);
+        uint512_t boost_value = a;
+        uint512_t my_value = conv<uint_t<512>, uint512_t>(b);
+        ASSERT_EQ(my_value, boost_value);
     }
 }
 
@@ -211,7 +209,9 @@ TEST(ArithmeticCorrectness, Subtraction) {
         a -= i;
         b -= i;
 
-        comp(a, b);
+        uint512_t boost_value = a;
+        uint512_t my_value = conv<uint_t<512>, uint512_t>(b);
+        ASSERT_EQ(my_value, boost_value);
     }
 }
 
@@ -231,7 +231,9 @@ TEST(ArithmeticCorrectness, Multiplication) {
             b = 1;
         }
 
-        comp(a, b);
+        uint512_t boost_value = a;
+        uint512_t my_value = conv<uint_t<512>, uint512_t>(b);
+        ASSERT_EQ(my_value, boost_value);
     }
 }
 
@@ -254,7 +256,7 @@ TEST(ArithmeticCorrectness, Division) {
         uint512_t c = 1;
         uint_t<512> d = 1;
 
-        for (size_t j = 93; j < ArithmeticCorrectnessN >> 10; j += 3) {
+        for (size_t j = 0; j < ArithmeticCorrectnessN >> 10; j += 3) {
             c *= j;
             d *= j;
 
@@ -266,7 +268,9 @@ TEST(ArithmeticCorrectness, Division) {
                 d = 1;
             }
 
-            comp(a / c, b / d);
+            uint512_t boost_value = a / c;
+            uint512_t my_value = conv<uint_t<512>, uint512_t>(b / d);
+            ASSERT_EQ(my_value, boost_value);
         }
     }
 }

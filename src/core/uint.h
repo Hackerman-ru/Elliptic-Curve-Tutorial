@@ -1,15 +1,21 @@
 #ifndef ECG_LONGINT_H
 #define ECG_LONGINT_H
 
-#include "fft.h"
-#include "string-parser.h"
-#include "util.h"
+#define ECG_BOOST
 
-#include <array>
-#include <bitset>
-#include <cassert>
-#include <complex>
-#include <string>
+#ifdef ECG_BOOST
+    #include "boost/multiprecision/cpp_int.hpp"
+using uint = uint512_t;
+#else
+
+    #include "fft.h"
+    #include "string-parser.h"
+    #include "util.h"
+
+    #include <array>
+    #include <bitset>
+    #include <cassert>
+    #include <string>
 
 namespace ECG {
     template<size_t bits>
@@ -600,4 +606,6 @@ namespace ECG {
     };
 }   // namespace ECG
 
+using uint = uint_t<512>;
+#endif
 #endif
