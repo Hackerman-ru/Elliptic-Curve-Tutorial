@@ -1,193 +1,208 @@
-#include "Field.h"
+#include "field.h"
 
 using ECG::Field;
 using ECG::FieldElement;
 
-FieldElement::FieldElement(uint value, std::shared_ptr<const uint> p) : m_value(value), m_p(p) {
-    if (m_value > *m_p) {
-        m_value %= *m_p;
-    }
-}
+FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
+    m_value(normalize(value, modulus)), m_modulus(modulus) {}
 
 FieldElement FieldElement::operator-() const {
-    assert(m_value < *m_p && "Field element value must be less than p");
+    assert(is_valid() && "Field element value must be less than p");
 
-    return FieldElement(*m_p - m_value, m_p);
+    return FieldElement(*m_modulus - m_value, m_modulus);
 }
 
 // operator+
 FieldElement ECG::operator+(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
-    return result += rhs;
+    result += rhs;
+    return result;
 }
 
 FieldElement ECG::operator+(FieldElement&& lhs, const FieldElement& rhs) {
-    return lhs += rhs;
+    lhs += rhs;
+    return lhs;
 }
 
 FieldElement ECG::operator+(const FieldElement& lhs, FieldElement&& rhs) {
-    return rhs += lhs;
+    rhs += lhs;
+    return rhs;
 }
 
 FieldElement ECG::operator+(FieldElement&& lhs, FieldElement&& rhs) {
-    return lhs += rhs;
+    lhs += rhs;
+    return lhs;
 }
 
 // operator-
 FieldElement ECG::operator-(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
-    return result -= rhs;
+    result -= rhs;
+    return result;
 }
 
 FieldElement ECG::operator-(FieldElement&& lhs, const FieldElement& rhs) {
-    return lhs -= rhs;
+    lhs -= rhs;
+    return lhs;
 }
 
 FieldElement ECG::operator-(const FieldElement& lhs, FieldElement&& rhs) {
-    return -(rhs -= lhs);
+    rhs.m_value -= lhs.m_value;
+
+    if (rhs.m_value < 0) {
+        rhs.m_value += *lhs.m_modulus;
+    }
+
+    return FieldElement(rhs.m_value, lhs.m_modulus);
 }
 
 FieldElement ECG::operator-(FieldElement&& lhs, FieldElement&& rhs) {
-    return lhs -= rhs;
+    lhs -= rhs;
+    return lhs;
 }
 
 // operator*
 FieldElement ECG::operator*(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
-    return result *= rhs;
+    result *= rhs;
+    return result;
 }
 
 FieldElement ECG::operator*(FieldElement&& lhs, const FieldElement& rhs) {
-    return lhs *= rhs;
+    lhs *= rhs;
+    return lhs;
 }
 
 FieldElement ECG::operator*(const FieldElement& lhs, FieldElement&& rhs) {
-    return rhs *= lhs;
+    rhs *= lhs;
+    return rhs;
 }
 
 FieldElement ECG::operator*(FieldElement&& lhs, FieldElement&& rhs) {
-    return lhs *= rhs;
+    lhs *= rhs;
+    return lhs;
 }
 
 // operator/
 FieldElement ECG::operator/(const FieldElement& lhs, const FieldElement& rhs) {
     FieldElement result = lhs;
-    return result /= rhs;
+    result /= rhs;
+    return result;
 }
 
 FieldElement ECG::operator/(FieldElement&& lhs, const FieldElement& rhs) {
-    return lhs /= rhs;
+    lhs /= rhs;
+    return lhs;
 }
 
 FieldElement ECG::operator/(const FieldElement& lhs, FieldElement&& rhs) {
     FieldElement result = lhs;
-    return result /= rhs;
+    result /= rhs;
+    return result;
 }
 
 FieldElement ECG::operator/(FieldElement&& lhs, FieldElement&& rhs) {
-    return lhs /= rhs;
-}
-
-bool ECG::operator==(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value == rhs.m_value;
-}
-
-bool ECG::operator!=(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value != rhs.m_value;
-}
-
-bool ECG::operator>(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value > rhs.m_value;
-}
-
-bool ECG::operator<(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value < rhs.m_value;
-}
-
-bool ECG::operator>=(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value >= rhs.m_value;
-}
-
-bool ECG::operator<=(const FieldElement& lhs, const FieldElement& rhs) {
-    return lhs.m_value <= rhs.m_value;
+    lhs /= rhs;
+    return lhs;
 }
 
 FieldElement& FieldElement::operator+=(const FieldElement& other) {
-    assert(m_value < *m_p && "Field element value must be less than p");
-    assert(other.m_value < *m_p && "Field element value must be less than p");
+    assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
+    assert(other.is_valid() && "FieldElement::operator+= : Field element value must be less than p");
 
     m_value += other.m_value;
 
-    if (m_value > *m_p) {
-        m_value -= *m_p;
+    if (m_value > *m_modulus) {
+        m_value -= *m_modulus;
     }
 
     return *this;
 }
 
 FieldElement& FieldElement::operator-=(const FieldElement& other) {
-    assert(m_value < *m_p && "Field element value must be less than p");
-    assert(other.m_value < *m_p && "Field element value must be less than p");
-
-    if (m_value < other.m_value) {
-        m_value += *m_p;
-    }
+    assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
+    assert(other.is_valid() && "FieldElement::operator-= : Field element value must be less than p");
 
     m_value -= other.m_value;
+
+    if (m_value < 0) {
+        m_value += *m_modulus;
+    }
+
     return *this;
 }
 
 FieldElement& FieldElement::operator*=(const FieldElement& other) {
-    assert(m_value < *m_p && "Field element value must be less than p");
-    assert(other.m_value < *m_p && "Field element value must be less than p");
+    assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
+    assert(other.is_valid() && "FieldElement::operator*= : Field element value must be less than p");
 
     m_value *= other.m_value;
 
-    if (m_value > *m_p) {
-        m_value %= *m_p;
+    if (m_value > *m_modulus) {
+        m_value %= *m_modulus;
     }
 
     return *this;
 }
 
 FieldElement& FieldElement::operator/=(const FieldElement& other) {
-    assert(m_value < *m_p && "Field element value must be less than p");
-    assert(other.m_value < *m_p && "Field element value must be less than p");
+    assert(is_valid() && "FieldElement::operator/= : Field element value must be less than p");
+    assert(other.is_valid() && "FieldElement::operator/= : Field element value must be less than p");
 
-    return (*this *= other.inverse());
+    return (*this *= inverse(other));
 }
 
-FieldElement FieldElement::inverse() const {
-    assert(m_value < *m_p && "Field element value must be less than p");
+void FieldElement::inverse() {
+    assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
 
-    return *this;   // TODO
+    return;   // TODO
 }
 
-bool ECG::FieldElement::is_inversible() const {
+bool ECG::FieldElement::is_invertible() const {
     return m_value != 0;
 }
 
-FieldElement FieldElement::fast_pow(const uint& pow) const {
-    assert(m_value < *m_p && "Field element value must be less than p");
+FieldElement FieldElement::pow(const uint& power) const {
+    assert(is_valid() && "FieldElement::pow : Field element value must be less than p");
 
-    if (pow.convert_to<uint32_t>() & 1) {
-        if (pow == 1) {
+    if (power.convert_to<uint32_t>() & 1) {
+        if (power == 1) {
             return *this;
         }
 
-        return *this * fast_pow(pow - 1);
+        return *this * pow(power - 1);
     }
 
-    FieldElement temp = fast_pow(pow >> 1);
+    FieldElement temp = pow(power >> 1);
     return temp * temp;
 }
 
-const ECG::uint& FieldElement::get_p() const {
-    return *m_p;
+FieldElement FieldElement::inverse(const FieldElement& element) {
+    assert(element.is_valid() && "static FieldElement::inverse : Field element value must be less than p");
+
+    FieldElement result = element;
+    result.inverse();
+    return result;
 }
 
-ECG::Field::Field(uint p) : m_p(std::make_shared<const uint>(std::move(p))) {};
+const ECG::uint& FieldElement::modulus() const {
+    return *m_modulus;
+}
 
-FieldElement Field::operator()(uint value) {
-    return FieldElement(std::move(value), m_p);
+const ECG::uint& ECG::FieldElement::value() const {
+    return m_value;
+}
+
+ECG::uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
+    return value % *modulus;
+}
+
+bool ECG::FieldElement::is_valid() const {
+    return m_value < *m_modulus;
+}
+
+ECG::Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
+
+FieldElement Field::operator()(const uint& value) {
+    return FieldElement(value, m_modulus);
 }

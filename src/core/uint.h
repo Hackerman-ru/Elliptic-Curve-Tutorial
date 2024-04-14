@@ -1,21 +1,14 @@
 #ifndef ECG_LONGINT_H
 #define ECG_LONGINT_H
 
-#define ECG_BOOST
+#include "fft.h"
+#include "string-parser.h"
+#include "util.h"
 
-#ifdef ECG_BOOST
-    #include "boost/multiprecision/cpp_int.hpp"
-using uint = uint512_t;
-#else
-
-    #include "fft.h"
-    #include "string-parser.h"
-    #include "util.h"
-
-    #include <array>
-    #include <bitset>
-    #include <cassert>
-    #include <string>
+#include <array>
+#include <bitset>
+#include <cassert>
+#include <string>
 
 namespace ECG {
     template<size_t bits>
@@ -92,7 +85,7 @@ namespace ECG {
         }
 
         // operator*
-        friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
+        friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
             return multiply<c_BLOCK_NUMBER>(lhs.m_blocks, rhs.m_blocks);
         }
 
@@ -606,6 +599,4 @@ namespace ECG {
     };
 }   // namespace ECG
 
-using uint = uint_t<512>;
-#endif
 #endif

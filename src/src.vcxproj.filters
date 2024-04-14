@@ -5,7 +5,7 @@
     <ClInclude Include="Encryption\ecdsa.h" />
     <ClInclude Include="core\util.h" />
     <ClInclude Include="core\uint.h" />
-    <ClInclude Include="core\Field.h" />
+    <ClInclude Include="core\field.h" />
     <ClInclude Include="core\elliptic-curve.h" />
     <ClInclude Include="core\string-parser.h" />
     <ClInclude Include="core\fft.h" />

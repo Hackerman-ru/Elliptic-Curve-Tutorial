@@ -1,7 +1,7 @@
 #ifndef ECG_ELLIPTIC_CURVE_H
 #define ECG_ELLIPTIC_CURVE_H
 
-#include "Field.h"
+#include "field.h"
 
 namespace ECG {
     enum class CoordinatesType {

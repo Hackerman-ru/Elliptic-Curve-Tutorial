@@ -18,12 +18,18 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "uint_test", "tests\uint_tes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "src", "src\src.vcxproj", "{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "field_test", "tests\field_test\field_test.vcxproj", "{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		UnitTest(debug) - field|x64 = UnitTest(debug) - field|x64
+		UnitTest(debug) - field|x86 = UnitTest(debug) - field|x86
+		UnitTest(debug) - uint|x64 = UnitTest(debug) - uint|x64
+		UnitTest(debug) - uint|x86 = UnitTest(debug) - uint|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.Debug|x64.ActiveCfg = Debug|x64
@@ -34,6 +40,13 @@ Global
 		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.Release|x64.Build.0 = Release|x64
 		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.Release|x86.ActiveCfg = Release|Win32
 		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.Release|x86.Build.0 = Release|Win32
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - field|x64.ActiveCfg = Debug|x64
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - field|x86.ActiveCfg = Debug|Win32
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - field|x86.Build.0 = Debug|Win32
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - uint|x64.ActiveCfg = Debug|x64
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - uint|x64.Build.0 = Debug|x64
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
+		{BAA1C108-C83A-4CA9-933F-1BAB448A97DF}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Debug|x64.ActiveCfg = Debug|x64
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Debug|x64.Build.0 = Debug|x64
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Debug|x86.ActiveCfg = Debug|Win32
@@ -42,6 +55,28 @@ Global
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Release|x64.Build.0 = Release|x64
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Release|x86.ActiveCfg = Release|Win32
 		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.Release|x86.Build.0 = Release|Win32
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - field|x64.ActiveCfg = Debug - field|x64
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - field|x64.Build.0 = Debug - field|x64
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - field|x86.ActiveCfg = Debug|Win32
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - field|x86.Build.0 = Debug|Win32
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - uint|x64.ActiveCfg = Debug - uint|x64
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - uint|x64.Build.0 = Debug - uint|x64
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
+		{47B4D5F0-D710-4A7C-B859-EAD6DD505BEF}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Debug|x64.ActiveCfg = Debug|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Debug|x86.ActiveCfg = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Debug|x86.Build.0 = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Release|x64.ActiveCfg = Release|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Release|x64.Build.0 = Release|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Release|x86.ActiveCfg = Release|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.Release|x86.Build.0 = Release|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - field|x64.ActiveCfg = Debug|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - field|x64.Build.0 = Debug|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - field|x86.ActiveCfg = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - field|x86.Build.0 = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - uint|x64.ActiveCfg = Debug|x64
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
+		{5F75FC5F-8E1D-46CC-B65E-1073587D42A8}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
