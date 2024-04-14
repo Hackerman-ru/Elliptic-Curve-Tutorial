@@ -5,11 +5,11 @@ using ECG::FieldElement;
 using ECG::uint;
 
 FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
-    m_value(normalize(value, modulus)), m_modulus(modulus) {}
+    m_value(normalize(value, modulus)), m_modulus(modulus) {
+    assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than p");
+}
 
 FieldElement FieldElement::operator-() const {
-    assert(is_valid() && "Field element value must be less than p");
-
     return FieldElement(*m_modulus - m_value, m_modulus);
 }
 
@@ -48,13 +48,7 @@ FieldElement ECG::operator-(FieldElement&& lhs, const FieldElement& rhs) {
 }
 
 FieldElement ECG::operator-(const FieldElement& lhs, FieldElement&& rhs) {
-    rhs.m_value -= lhs.m_value;
-
-    if (rhs.m_value < 0) {
-        rhs.m_value += *lhs.m_modulus;
-    }
-
-    return FieldElement(rhs.m_value, lhs.m_modulus);
+    return -(rhs -= lhs);
 }
 
 FieldElement ECG::operator-(FieldElement&& lhs, FieldElement&& rhs) {
@@ -107,48 +101,39 @@ FieldElement ECG::operator/(FieldElement&& lhs, FieldElement&& rhs) {
 }
 
 FieldElement& FieldElement::operator+=(const FieldElement& other) {
-    assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
-    assert(other.is_valid() && "FieldElement::operator+= : Field element value must be less than p");
-
     m_value += other.m_value;
 
     if (m_value > *m_modulus) {
         m_value -= *m_modulus;
     }
 
+    assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
     return *this;
 }
 
 FieldElement& FieldElement::operator-=(const FieldElement& other) {
-    assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
-    assert(other.is_valid() && "FieldElement::operator-= : Field element value must be less than p");
-
-    m_value -= other.m_value;
-
-    if (m_value < 0) {
+    if (m_value < other.m_value) {
         m_value += *m_modulus;
     }
 
+    m_value -= other.m_value;
+
+    assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
     return *this;
 }
 
 FieldElement& FieldElement::operator*=(const FieldElement& other) {
-    assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
-    assert(other.is_valid() && "FieldElement::operator*= : Field element value must be less than p");
-
     m_value *= other.m_value;
 
     if (m_value > *m_modulus) {
         m_value %= *m_modulus;
     }
 
+    assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
     return *this;
 }
 
 FieldElement& FieldElement::operator/=(const FieldElement& other) {
-    assert(is_valid() && "FieldElement::operator/= : Field element value must be less than p");
-    assert(other.is_valid() && "FieldElement::operator/= : Field element value must be less than p");
-
     return (*this *= inverse(other));
 }
 
@@ -167,11 +152,11 @@ static uint gcdex(const uint& a, const uint& b, uint& x, uint& y) {
 }
 
 void FieldElement::inverse() {
-    assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
-
     uint x, y;
     gcdex(m_value, *m_modulus, x, y);
     m_value = x;
+
+    assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
 }
 
 bool FieldElement::is_invertible() const {
@@ -179,9 +164,7 @@ bool FieldElement::is_invertible() const {
 }
 
 FieldElement FieldElement::pow(const uint& power) const {
-    assert(is_valid() && "FieldElement::pow : Field element value must be less than p");
-
-    if (power.convert_to<uint32_t>() & 1) {
+    if ((power & 1) != 0) {
         if (power == 1) {
             return *this;
         }
@@ -194,8 +177,6 @@ FieldElement FieldElement::pow(const uint& power) const {
 }
 
 FieldElement FieldElement::inverse(const FieldElement& element) {
-    assert(element.is_valid() && "static FieldElement::inverse : Field element value must be less than p");
-
     FieldElement result = element;
     result.inverse();
     return result;
