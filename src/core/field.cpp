@@ -2,6 +2,7 @@
 
 using ECG::Field;
 using ECG::FieldElement;
+using ECG::uint;
 
 FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
     m_value(normalize(value, modulus)), m_modulus(modulus) {}
@@ -96,9 +97,8 @@ FieldElement ECG::operator/(FieldElement&& lhs, const FieldElement& rhs) {
 }
 
 FieldElement ECG::operator/(const FieldElement& lhs, FieldElement&& rhs) {
-    FieldElement result = lhs;
-    result /= rhs;
-    return result;
+    rhs.inverse();
+    return lhs * rhs;
 }
 
 FieldElement ECG::operator/(FieldElement&& lhs, FieldElement&& rhs) {
@@ -152,13 +152,29 @@ FieldElement& FieldElement::operator/=(const FieldElement& other) {
     return (*this *= inverse(other));
 }
 
+static uint gcdex(const uint& a, const uint& b, uint& x, uint& y) {
+    if (a == 0) {
+        x = 0;
+        y = 1;
+        return b;
+    }
+
+    uint x1, y1;
+    uint d = gcdex(b % a, a, x1, y1);
+    x = y1 - (b / a) * x1;
+    y = x1;
+    return d;
+}
+
 void FieldElement::inverse() {
     assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
 
-    return;   // TODO
+    uint x, y;
+    gcdex(m_value, *m_modulus, x, y);
+    m_value = x;
 }
 
-bool ECG::FieldElement::is_invertible() const {
+bool FieldElement::is_invertible() const {
     return m_value != 0;
 }
 
@@ -185,23 +201,23 @@ FieldElement FieldElement::inverse(const FieldElement& element) {
     return result;
 }
 
-const ECG::uint& FieldElement::modulus() const {
+const uint& FieldElement::modulus() const {
     return *m_modulus;
 }
 
-const ECG::uint& ECG::FieldElement::value() const {
+const uint& FieldElement::value() const {
     return m_value;
 }
 
-ECG::uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
+uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
     return value % *modulus;
 }
 
-bool ECG::FieldElement::is_valid() const {
+bool FieldElement::is_valid() const {
     return m_value < *m_modulus;
 }
 
-ECG::Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
+Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
 
 FieldElement Field::operator()(const uint& value) {
     return FieldElement(value, m_modulus);
