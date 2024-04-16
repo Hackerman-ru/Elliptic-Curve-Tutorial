@@ -300,7 +300,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="core\string-parser.cpp" />
+    <ClCompile Include="core\uint.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

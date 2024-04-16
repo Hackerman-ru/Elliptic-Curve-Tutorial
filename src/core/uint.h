@@ -6,55 +6,11 @@
 #include "util.h"
 
 #include <array>
-#include <bitset>
 #include <cassert>
-#include <iostream>
-#include <string>
-
-class Echo {
-public:
-    Echo() : number(count) {
-        ++count;
-        std::cout << number << ": I was constructed\n";
-    }
-
-    Echo(int n) : number(n) {
-        ++count;
-        std::cout << number << ": I was constructed\n";
-    }
-
-    Echo(const Echo& other) {
-        std::cout << number << ": I was copy constructed\n";
-    }
-
-    Echo(Echo&& other) noexcept {
-        std::cout << number << ": I was move constructed\n";
-    }
-
-    Echo& operator=(const Echo& other) {
-        std::cout << number << ": I was copy assigned\n";
-        return *this;
-    }
-
-    Echo& operator=(Echo&& other) noexcept {
-        std::cout << number << ": I was move assigned\n";
-        return *this;
-    }
-
-    ~Echo() {
-        std::cout << number << ": I was destructed\n";
-    }
-
-private:
-    int number;
-    static int count;
-};
-
-int Echo::count = 0;
 
 namespace ECG {
     template<size_t bits>
-    class uint_t : public Echo {
+    class uint_t {
         using block_t = uint32_t;
         using double_block_t = uint64_t;   // FFT will delete this
 
@@ -73,6 +29,8 @@ namespace ECG {
 
         template<typename T>
         constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
+
+        constexpr uint_t(const char* str) : m_blocks(parse_into<uint_t>(str).m_blocks) {};
 
         constexpr uint_t& operator=(const char* str) {
             return *this = parse_into<uint_t>(str);
@@ -458,11 +416,7 @@ namespace ECG {
 
         template<typename T>
         requires is_convertible_container<T, block_t> || requires(T x) {
-            {
-                ECG::uint_t {
-                    x
-                }
-            } -> std::same_as<T>;
+            { ECG::uint_t {x} } -> std::same_as<T>;
         }
         static constexpr blocks split_into_blocks(const T& other) {
             const size_t min_size = std::min(size(), other.size());
