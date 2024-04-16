@@ -6,13 +6,13 @@ using ECG::EllipticCurve;
 using ECG::uint;
 
 uint ECG::random_uint() {
-    static constexpr size_t UINT_SIZE = sizeof(uint);
+    static constexpr size_t uint_size = sizeof(uint);
     static constexpr size_t GENERATOR_SIZE = 8;
 
     std::mt19937_64 generator;
     uint result = 0;
 
-    for (size_t size = 0; size < UINT_SIZE; size += GENERATOR_SIZE) {
+    for (size_t size = 0; size < uint_size; size += GENERATOR_SIZE) {
         result += generator();
         result <<= GENERATOR_SIZE * CHAR_BIT;
     }

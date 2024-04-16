@@ -8,19 +8,61 @@
 #include <array>
 #include <bitset>
 #include <cassert>
+#include <iostream>
 #include <string>
+
+class Echo {
+public:
+    Echo() : number(count) {
+        ++count;
+        std::cout << number << ": I was constructed\n";
+    }
+
+    Echo(int n) : number(n) {
+        ++count;
+        std::cout << number << ": I was constructed\n";
+    }
+
+    Echo(const Echo& other) {
+        std::cout << number << ": I was copy constructed\n";
+    }
+
+    Echo(Echo&& other) noexcept {
+        std::cout << number << ": I was move constructed\n";
+    }
+
+    Echo& operator=(const Echo& other) {
+        std::cout << number << ": I was copy assigned\n";
+        return *this;
+    }
+
+    Echo& operator=(Echo&& other) noexcept {
+        std::cout << number << ": I was move assigned\n";
+        return *this;
+    }
+
+    ~Echo() {
+        std::cout << number << ": I was destructed\n";
+    }
+
+private:
+    int number;
+    static int count;
+};
+
+int Echo::count = 0;
 
 namespace ECG {
     template<size_t bits>
-    class uint_t {
+    class uint_t : public Echo {
         using block_t = uint32_t;
         using double_block_t = uint64_t;   // FFT will delete this
 
-        static constexpr size_t c_BITS_IN_BYTE = 8;
-        static constexpr size_t c_BLOCK_SIZE = sizeof(block_t) * c_BITS_IN_BYTE;
-        static constexpr size_t c_BLOCK_NUMBER = bits / c_BLOCK_SIZE;
+        static constexpr size_t c_BitsInByte = 8;
+        static constexpr size_t c_BlockSize = sizeof(block_t) * c_BitsInByte;
+        static constexpr size_t c_BlockNumber = bits / c_BlockSize;
 
-        using blocks = std::array<block_t, c_BLOCK_NUMBER>;
+        using blocks = std::array<block_t, c_BlockNumber>;
         blocks m_blocks = {};
 
         template<size_t V>
@@ -33,8 +75,7 @@ namespace ECG {
         constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
         constexpr uint_t& operator=(const char* str) {
-            *this = parse_into<uint_t>(str);
-            return *this;
+            return *this = parse_into<uint_t>(str);
         }
 
         // operator<=>
@@ -43,7 +84,7 @@ namespace ECG {
         // operator+
         friend uint_t operator+(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = lhs;
-            lhs += rhs;
+            result += rhs;
             return result;
         }
 
@@ -76,7 +117,7 @@ namespace ECG {
 
         friend uint_t operator-(const uint_t& lhs, uint_t&& rhs) {
             rhs -= lhs;
-            rhs.neg();
+            rhs.negative();
             return rhs;
         }
 
@@ -87,7 +128,7 @@ namespace ECG {
 
         // operator*
         friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
-            return multiply<c_BLOCK_NUMBER>(lhs.m_blocks, rhs.m_blocks);
+            return multiply<c_BlockNumber>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
@@ -143,49 +184,57 @@ namespace ECG {
         // operator|
         friend uint_t operator|(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = lhs;
-            return result |= rhs;
+            result |= rhs;
+            return result;
         }
 
         friend uint_t operator|(uint_t&& lhs, const uint_t& rhs) {
-            return lhs |= rhs;
+            lhs |= rhs;
+            return lhs;
         }
 
         friend uint_t operator|(const uint_t& lhs, uint_t&& rhs) {
-            return rhs |= lhs;
+            rhs |= lhs;
+            return rhs;
         }
 
         friend uint_t operator|(uint_t&& lhs, uint_t&& rhs) {
-            return lhs |= rhs;
+            lhs |= rhs;
+            return lhs;
         }
 
         // operator&
         friend uint_t operator&(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = lhs;
-            return result &= rhs;
+            result &= rhs;
+            return result;
         }
 
         friend uint_t operator&(uint_t&& lhs, const uint_t& rhs) {
-            return lhs &= rhs;
+            lhs &= rhs;
+            return lhs;
         }
 
         friend uint_t operator&(const uint_t& lhs, uint_t&& rhs) {
-            return rhs &= lhs;
+            rhs &= lhs;
+            return rhs;
         }
 
         friend uint_t operator&(uint_t&& lhs, uint_t&& rhs) {
-            return lhs &= rhs;
+            lhs &= rhs;
+            return lhs;
         }
 
         uint_t operator-() const {
             uint_t result = *this;
-            result.neg();
+            result.negative();
             return result;
         }
 
         uint_t& operator+=(const uint_t& other) {
             block_t carry = 0;
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 block_t sum = carry + other[i];
                 m_blocks[i] += sum;
                 carry = (m_blocks[i] < sum) || (sum < carry);
@@ -197,7 +246,7 @@ namespace ECG {
         uint_t& operator-=(const uint_t& other) {
             block_t remainder = 0;
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 block_t temp = m_blocks[i];
                 m_blocks[i] -= other[i] + remainder;
                 remainder = (temp < m_blocks[i]);
@@ -219,15 +268,15 @@ namespace ECG {
         }
 
         uint_t& operator>>=(size_t shift_size) {
-            static constexpr size_t BUCKET_SIZE = 64;
-            static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
+            static constexpr size_t c_NewBucketSize = 64;
+            static constexpr size_t c_NewBucketNumber = bits / c_NewBucketSize;
 
             size_t bucket_shift = shift_size >> 6;
             auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
-                for (size_t i = 0; i < BUCKET_NUMBER; ++i) {
-                    if (i + bucket_shift < BUCKET_NUMBER) {
+                for (size_t i = 0; i < c_NewBucketNumber; ++i) {
+                    if (i + bucket_shift < c_NewBucketNumber) {
                         data[i] = data[i + bucket_shift];
                     } else {
                         data[i] = 0;
@@ -235,40 +284,39 @@ namespace ECG {
                 }
             }
 
-            shift_size %= BUCKET_SIZE;
+            shift_size %= c_NewBucketSize;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + bucket_shift < BUCKET_NUMBER; ++i) {
+            for (size_t i = 0; i + bucket_shift < c_NewBucketNumber; ++i) {
                 data[i] >>= shift_size;
 
-                if (i + 1 < BUCKET_NUMBER) {
-                    data[i] |= data[i + 1] << (BUCKET_SIZE - shift_size);
+                if (i + 1 < c_NewBucketNumber) {
+                    data[i] |= data[i + 1] << (c_NewBucketSize - shift_size);
                 }
             }
 
-            if constexpr (bits % BUCKET_SIZE != 0) {
-                if constexpr (c_BLOCK_NUMBER > 1) {
-                    m_blocks[c_BLOCK_NUMBER - 2] |= m_blocks[c_BLOCK_NUMBER - 1]
-                                                 << (c_BLOCK_SIZE - shift_size);
+            if constexpr (bits % c_NewBucketSize != 0) {
+                if constexpr (c_BlockNumber > 1) {
+                    m_blocks[c_BlockNumber - 2] |= m_blocks[c_BlockNumber - 1] << (c_BlockSize - shift_size);
                 }
-                m_blocks[c_BLOCK_NUMBER - 1] >>= shift_size;
+                m_blocks[c_BlockNumber - 1] >>= shift_size;
             }
 
             return *this;
         }
 
         uint_t& operator<<=(size_t shift_size) {
-            static constexpr size_t BUCKET_SIZE = 64;
-            static constexpr size_t BUCKET_NUMBER = bits / BUCKET_SIZE;
+            static constexpr size_t c_NewBucketSize = 64;
+            static constexpr size_t c_NewBucketNumber = bits / c_NewBucketSize;
 
             size_t bucket_shift = shift_size >> 6;
             auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
-                for (size_t i = BUCKET_NUMBER; i > 0; --i) {
+                for (size_t i = c_NewBucketNumber; i > 0; --i) {
                     if (i > bucket_shift) {
                         data[i - 1] = data[i - bucket_shift - 1];
                     } else {
@@ -277,26 +325,25 @@ namespace ECG {
                 }
             }
 
-            shift_size %= BUCKET_SIZE;
+            shift_size %= c_NewBucketSize;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            if constexpr (bits % BUCKET_SIZE != 0) {
-                m_blocks[c_BLOCK_NUMBER - 1] <<= shift_size;
+            if constexpr (bits % c_NewBucketSize != 0) {
+                m_blocks[c_BlockNumber - 1] <<= shift_size;
 
-                if constexpr (c_BLOCK_NUMBER > 1) {
-                    m_blocks[c_BLOCK_NUMBER - 1] |=
-                        m_blocks[c_BLOCK_NUMBER - 2] >> (c_BLOCK_SIZE - shift_size);
+                if constexpr (c_BlockNumber > 1) {
+                    m_blocks[c_BlockNumber - 1] |= m_blocks[c_BlockNumber - 2] >> (c_BlockSize - shift_size);
                 }
             }
 
-            for (size_t i = BUCKET_NUMBER; i > bucket_shift; --i) {
+            for (size_t i = c_NewBucketNumber; i > bucket_shift; --i) {
                 data[i - 1] <<= shift_size;
 
                 if (i - 1 > 0) {
-                    data[i - 1] |= data[i - 2] >> (BUCKET_SIZE - shift_size);
+                    data[i - 1] |= data[i - 2] >> (c_NewBucketSize - shift_size);
                 }
             }
 
@@ -304,7 +351,7 @@ namespace ECG {
         }
 
         uint_t& operator^=(const uint_t& other) {
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 m_blocks[i] ^= other[i];
             }
 
@@ -312,7 +359,7 @@ namespace ECG {
         }
 
         uint_t& operator|=(const uint_t& other) {
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 m_blocks[i] |= other[i];
             }
 
@@ -320,7 +367,7 @@ namespace ECG {
         }
 
         uint_t& operator&=(const uint_t& other) {
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 m_blocks[i] &= other[i];
             }
 
@@ -329,22 +376,24 @@ namespace ECG {
 
         uint_t operator++(int) {
             uint_t result = *this;
-            *this += 1;
+            increment();
             return result;
         }
 
         uint_t& operator++() {
-            return *this += 1;
+            increment();
+            return *this;
         }
 
         uint_t operator--(int) {
             uint_t result = *this;
-            *this -= 1;
+            decrement();
             return result;
         }
 
         uint_t& operator--() {
-            return *this -= 1;
+            decrement();
+            return *this;
         }
 
         template<typename T>
@@ -353,12 +402,12 @@ namespace ECG {
         template<typename T>
         requires is_convertible_to<T, block_t>
         T convert_to() const {
-            size_t shift_size = sizeof(T) * c_BITS_IN_BYTE;
-            size_t blocks_number = shift_size / c_BLOCK_SIZE;
+            size_t shift_size = sizeof(T) * c_BitsInByte;
+            size_t blocks_number = shift_size / c_BlockSize;
             T result = 0;
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER && i < blocks_number; ++i) {
-                result |= T(m_blocks[i]) << (i * c_BLOCK_SIZE);
+            for (size_t i = 0; i < c_BlockNumber && i < blocks_number; ++i) {
+                result |= static_cast<T>(m_blocks[i]) << (i * c_BlockSize);
             }
 
             return result;
@@ -381,7 +430,7 @@ namespace ECG {
 
     private:
         static constexpr size_t size() {
-            return c_BLOCK_NUMBER;
+            return c_BlockNumber;
         }
 
         template<typename T>
@@ -395,9 +444,9 @@ namespace ECG {
         static constexpr blocks split_into_blocks(T value) {
             blocks result = {};
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 result[i] = static_cast<block_t>(value);
-                value >>= c_BLOCK_SIZE;
+                value >>= c_BlockSize;
 
                 if (value == 0) {
                     break;
@@ -409,7 +458,11 @@ namespace ECG {
 
         template<typename T>
         requires is_convertible_container<T, block_t> || requires(T x) {
-            { ECG::uint_t {x} } -> std::same_as<T>;
+            {
+                ECG::uint_t {
+                    x
+                }
+            } -> std::same_as<T>;
         }
         static constexpr blocks split_into_blocks(const T& other) {
             const size_t min_size = std::min(size(), other.size());
@@ -452,8 +505,8 @@ namespace ECG {
             uint_t result;
             double_block_t part = 0;
 
-            for (size_t i = c_BLOCK_NUMBER; i > 0; --i) {
-                part = (part << (c_BLOCK_SIZE)) + static_cast<double_block_t>(lhs[i - 1]);
+            for (size_t i = c_BlockNumber; i > 0; --i) {
+                part = (part << (c_BlockSize)) + static_cast<double_block_t>(lhs[i - 1]);
 
                 if (part < rhs) {
                     continue;
@@ -476,16 +529,15 @@ namespace ECG {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
-            uint_t<bits + c_BLOCK_SIZE> dividend(lhs);
+            uint_t<bits + c_BlockSize> dividend(lhs);
             uint_t divisor(rhs);
             uint_t quotient;
 
             size_t shift_size = 0;
             block_t divisor_head = divisor[divisor_size - 1];
-            static constexpr double_block_t c_HALF_BUCKET = static_cast<double_block_t>(1)
-                                                         << (c_BLOCK_SIZE - 1);
+            static constexpr double_block_t c_HalfBlock = static_cast<double_block_t>(1) << (c_BlockSize - 1);
 
-            while (divisor_head < c_HALF_BUCKET) {
+            while (divisor_head < c_HalfBlock) {
                 ++shift_size;
                 divisor_head <<= 1;
             }
@@ -494,24 +546,24 @@ namespace ECG {
             divisor <<= shift_size;
 
             double_block_t divisor_ = divisor[divisor_size - 1];
-            static constexpr double_block_t c_BUCKET = static_cast<double_block_t>(1) << c_BLOCK_SIZE;
+            static constexpr double_block_t c_Block = static_cast<double_block_t>(1) << c_BlockSize;
 
             for (size_t i = dividend_size - divisor_size + 1; i > 0; --i) {
                 double_block_t part =
-                    (static_cast<double_block_t>(dividend[i + divisor_size - 1]) << c_BLOCK_SIZE)
+                    (static_cast<double_block_t>(dividend[i + divisor_size - 1]) << c_BlockSize)
                     + static_cast<double_block_t>(dividend[i + divisor_size - 2]);
-                double_block_t quotient_t = part / divisor_;
+                double_block_t quotient_temp = part / divisor_;
                 part %= divisor_;
 
-                if (quotient_t == c_BUCKET) {
-                    --quotient_t;
+                if (quotient_temp == c_Block) {
+                    --quotient_temp;
                     part += divisor_;
                 }
 
-                while (part < c_BUCKET
-                       && (quotient_t * divisor[divisor_size - 2]
-                           > (part << c_BLOCK_SIZE) + dividend[i + divisor_size - 3])) {
-                    --quotient_t;
+                while (part < c_Block
+                       && (quotient_temp * divisor[divisor_size - 2]
+                           > (part << c_BlockSize) + dividend[i + divisor_size - 3])) {
+                    --quotient_temp;
                     part += divisor_;
                 }
 
@@ -520,17 +572,17 @@ namespace ECG {
 
                 for (size_t j = 0; j < divisor_size; ++j) {
                     double_block_t product =
-                        static_cast<block_t>(quotient_t) * static_cast<double_block_t>(divisor[j]);
+                        static_cast<block_t>(quotient_temp) * static_cast<double_block_t>(divisor[j]);
                     widedigit =
                         (static_cast<int64_t>(dividend[i + j - 1]) + carry) - (product & 0xffffffffLL);
                     dividend[i + j - 1] = static_cast<block_t>(widedigit);
-                    carry = (widedigit >> c_BLOCK_SIZE) - static_cast<int64_t>(product >> c_BLOCK_SIZE);
+                    carry = (widedigit >> c_BlockSize) - static_cast<int64_t>(product >> c_BlockSize);
                 }
 
                 widedigit = static_cast<int64_t>(dividend[i + divisor_size - 1]) + carry;
                 dividend[i + divisor_size - 1] = static_cast<block_t>(widedigit);
 
-                quotient[i - 1] = static_cast<block_t>(quotient_t);
+                quotient[i - 1] = static_cast<block_t>(quotient_temp);
 
                 if (widedigit < 0) {
                     --quotient[i - 1];
@@ -550,7 +602,7 @@ namespace ECG {
                 for (size_t i = 0; i < divisor_size - 1; ++i) {
                     (*remainder)[i] =
                         (dividend[i] >> shift_size)
-                        | (static_cast<double_block_t>(dividend[i + 1]) << (c_BLOCK_SIZE - shift_size));
+                        | (static_cast<double_block_t>(dividend[i + 1]) << (c_BlockSize - shift_size));
                 }
 
                 (*remainder)[divisor_size - 1] = dividend[divisor_size - 1] >> shift_size;
@@ -559,19 +611,44 @@ namespace ECG {
             return quotient;
         }
 
-        void neg() {
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+        void negative() {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 m_blocks[i] = ~(m_blocks[i]);
             }
 
             ++*this;
         }
 
+        void increment() {
+            static constexpr block_t c_Carry = 1;
+
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
+                m_blocks[i] += c_Carry;
+
+                if (m_blocks[i] != 0) {
+                    break;
+                }
+            }
+        }
+
+        void decrement() {
+            static constexpr block_t c_Remainder = 1;
+
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
+                block_t temp = m_blocks[i];
+                m_blocks[i] -= c_Remainder;
+
+                if (temp >= m_blocks[i]) {
+                    break;
+                }
+            }
+        }
+
         uint_t operator*(block_t other) const {   // FFT will delete this
             block_t remainder = 0;
             uint_t result;
 
-            for (size_t i = 0; i < c_BLOCK_NUMBER; ++i) {
+            for (size_t i = 0; i < c_BlockNumber; ++i) {
                 double_block_t prod = m_blocks[i] * static_cast<double_block_t>(other);
                 result[i] = static_cast<block_t>(prod) + remainder;
                 remainder = static_cast<block_t>(result[i] < remainder) + static_cast<block_t>(prod >> 32);
@@ -589,7 +666,7 @@ namespace ECG {
         }
 
         size_t actual_size() const {   // FFT will delete this
-            size_t result = c_BLOCK_NUMBER;
+            size_t result = c_BlockNumber;
 
             while (result > 0 && m_blocks[result - 1] == 0) {
                 --result;
