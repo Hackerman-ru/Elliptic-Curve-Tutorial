@@ -24,7 +24,15 @@ TEST(SimpleTesting, Arithmetic) {
     ASSERT_EQ(c, 2);
 }
 
-TEST(SimpleTesting, ArithmeticBig) {
+TEST(SimpleTesting, ArithmeticNegotiation) {
+    uint p("7");
+    Field f(p);
+    FieldElement a = -f(3);
+    uint c = a.pow(10).value();
+    ASSERT_EQ(c, 4);
+}
+
+TEST(SimpleTesting, ArithmeticInversion) {
     uint p = uint("1000000007");
     Field g(p);
     uint a_("999999999");

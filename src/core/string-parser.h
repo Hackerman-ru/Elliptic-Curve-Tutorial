@@ -3,13 +3,10 @@
 
 #include "util.h"
 
-#include <array>
 #include <cassert>
-#include <limits>
-#include <string>
 
 namespace ECG {
-    // contains unsigned integer
+    // Parsing invalid string of unsigned integer is UB
     template<typename T>
     requires is_integral<T>
     T parse_into(const char* str) {
