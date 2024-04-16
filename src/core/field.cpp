@@ -200,6 +200,6 @@ bool FieldElement::is_valid() const {
 
 Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
 
-FieldElement Field::operator()(const uint& value) {
+FieldElement Field::element(const uint& value) {
     return FieldElement(value, m_modulus);
 }

@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "uint.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/fwd.hpp>
+#include <long-arithmetic.h>
 
 using boost::multiprecision::uint512_t;
 

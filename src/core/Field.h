@@ -1,22 +1,7 @@
 #ifndef ECG_FIELD_H
 #define ECG_FIELD_H
 
-#define ECG_USE_BOOST
-
-#ifdef ECG_USE_BOOST
-    #include "boost/multiprecision/cpp_int.hpp"
-    #include "boost/multiprecision/fwd.hpp"
-
-namespace ECG {
-    using uint = boost::multiprecision::uint512_t;
-}   // namespace ECG
-#else
-    #include "uint.h"
-
-namespace ECG {
-    using uint = uint_t<512>;
-}   // namespace ECG
-#endif
+#include "uint.h"
 
 namespace ECG {
     class FieldElement {
@@ -72,7 +57,7 @@ namespace ECG {
     class Field {
     public:
         Field(const uint& modulus);
-        FieldElement operator()(const uint& value);
+        FieldElement element(const uint& value);
 
     private:
         const std::shared_ptr<const uint> m_modulus;

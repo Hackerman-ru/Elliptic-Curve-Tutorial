@@ -275,7 +275,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="core\uint.h" />
+    <ClInclude Include="core\long-arithmetic.h" />
+    <ClInclude Include="core\uint.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="core\util.h" />
     <ClInclude Include="core\string-parser.h" />
     <ClInclude Include="Encryption\ecdsa.h">
@@ -300,7 +303,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="core\uint.cpp" />
+    <ClCompile Include="core\long-arithmetic.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
