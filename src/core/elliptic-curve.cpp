@@ -68,12 +68,31 @@ namespace ECG {
 
         if (!m_cache) {
             uint degree = (p - 1) >> 1;
-            FieldElement b = find_b(one, degree);
             Decomposition decomposition = decompose(p - 1);
-            Cache cache = {.degree = degree,
-                           .power_of_two = decomposition.power_of_two,
-                           .residue = decomposition.residue,
-                           .b = b};
+            FieldElement b = find_b(one, degree);
+            size_t e = decomposition.residue.convert_to<size_t>();
+
+            std::vector<FieldElement> second_powers = {b << 1};
+            second_powers.reserve(e - 1);
+
+            for (size_t i = 1; i < e - 1; ++i) {
+                second_powers.emplace_back(second_powers[i - 1] << 1);
+            }
+
+            std::vector<FieldElement> second_u_powers = {b.pow(decomposition.residue)};
+            second_u_powers.reserve(e);
+
+            for (size_t i = 1; i < e; ++i) {
+                second_u_powers.emplace_back(second_u_powers[i - 1] << 1);
+            }
+
+            Cache cache = {.degree = std::move(degree),
+                           .power_of_two = std::move(decomposition.power_of_two),
+                           .residue = std::move(decomposition.residue),
+                           .b = std::move(b),
+                           .b_second_powers = std::move(second_powers),
+                           .b_second_u_powers = std::move(second_u_powers)};
+
             m_cache.emplace(std::move(cache));
         }
 
