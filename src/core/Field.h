@@ -30,14 +30,19 @@ namespace ECG {
         friend FieldElement operator/(const FieldElement& lhs, FieldElement&& rhs);
         friend FieldElement operator/(FieldElement&& lhs, FieldElement&& rhs);
 
+        friend FieldElement operator<<(const FieldElement& value, const uint& shift);
+        friend FieldElement operator<<(FieldElement&& value, const uint& shift);
+
         FieldElement operator-() const;
 
         FieldElement& operator+=(const FieldElement& other);
         FieldElement& operator-=(const FieldElement& other);
         FieldElement& operator*=(const FieldElement& other);
         FieldElement& operator/=(const FieldElement& other);
+        FieldElement& operator<<=(const uint& shift);
 
-        friend auto operator<=>(const FieldElement& lhs, const FieldElement& rhs) = default;
+        friend auto operator<=>(const FieldElement& lhs, const FieldElement& rhs);
+        friend bool operator==(const FieldElement& lhs, const FieldElement& rhs);
 
         bool is_invertible() const;
         FieldElement pow(const uint& power) const;
@@ -57,7 +62,8 @@ namespace ECG {
     class Field {
     public:
         Field(const uint& modulus);
-        FieldElement element(const uint& value);
+        FieldElement element(const uint& value) const;
+        const uint& modulus() const;
 
     private:
         const std::shared_ptr<const uint> m_modulus;

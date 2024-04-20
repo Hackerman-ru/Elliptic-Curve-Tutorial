@@ -3,6 +3,8 @@
 
 #include "field.h"
 
+#include <optional>
+
 namespace ECG {
     enum class CoordinatesType {
         Normal,
@@ -21,9 +23,9 @@ namespace ECG {
                 m_a {std::move(a)}, m_b {std::move(b)}, m_F {std::move(F)} {};
 
         protected:
-            const std::shared_ptr<const FieldElement> m_a;
-            const std::shared_ptr<const FieldElement> m_b;
-            const std::shared_ptr<const Field> m_F;
+            std::shared_ptr<const FieldElement> m_a;
+            std::shared_ptr<const FieldElement> m_b;
+            std::shared_ptr<const Field> m_F;
         };
     }   // namespace
 
@@ -44,14 +46,24 @@ namespace ECG {
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
-        EllipticCurvePoint<type> create_random_point() const;
+        EllipticCurvePoint<type> random_point() const;
 
     private:
+        std::optional<FieldElement> find_y(const FieldElement& x) const;
+
+        struct Cache {
+            uint degree;
+            uint power_of_two;
+            uint residue;
+            FieldElement b;
+            std::vector<FieldElement> b_second_powers;
+            std::vector<FieldElement> b_second_u_powers;
+        };
+
+        mutable std::optional<Cache> m_cache;
         std::shared_ptr<const FieldElement> m_a;
         std::shared_ptr<const FieldElement> m_b;
         std::shared_ptr<const Field> m_F;
-
-        bool find_y(const FieldElement& x, FieldElement& y) const;
     };
 
     template<>
@@ -67,8 +79,6 @@ namespace ECG {
         FieldElement m_x;
         FieldElement m_y;
     };
-
-    uint random_uint();
 }   // namespace ECG
 
 #endif

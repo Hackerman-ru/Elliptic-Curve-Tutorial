@@ -1,205 +1,238 @@
 #include "field.h"
 
-using ECG::Field;
-using ECG::FieldElement;
-using ECG::uint;
-
-FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
-    m_value(normalize(value, modulus)), m_modulus(modulus) {
-    assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than p");
-}
-
-FieldElement FieldElement::operator-() const {
-    return FieldElement(*m_modulus - m_value, m_modulus);
-}
-
-// operator+
-FieldElement ECG::operator+(const FieldElement& lhs, const FieldElement& rhs) {
-    FieldElement result = lhs;
-    result += rhs;
-    return result;
-}
-
-FieldElement ECG::operator+(FieldElement&& lhs, const FieldElement& rhs) {
-    lhs += rhs;
-    return lhs;
-}
-
-FieldElement ECG::operator+(const FieldElement& lhs, FieldElement&& rhs) {
-    rhs += lhs;
-    return rhs;
-}
-
-FieldElement ECG::operator+(FieldElement&& lhs, FieldElement&& rhs) {
-    lhs += rhs;
-    return lhs;
-}
-
-// operator-
-FieldElement ECG::operator-(const FieldElement& lhs, const FieldElement& rhs) {
-    FieldElement result = lhs;
-    result -= rhs;
-    return result;
-}
-
-FieldElement ECG::operator-(FieldElement&& lhs, const FieldElement& rhs) {
-    lhs -= rhs;
-    return lhs;
-}
-
-FieldElement ECG::operator-(const FieldElement& lhs, FieldElement&& rhs) {
-    return -(rhs -= lhs);
-}
-
-FieldElement ECG::operator-(FieldElement&& lhs, FieldElement&& rhs) {
-    lhs -= rhs;
-    return lhs;
-}
-
-// operator*
-FieldElement ECG::operator*(const FieldElement& lhs, const FieldElement& rhs) {
-    FieldElement result = lhs;
-    result *= rhs;
-    return result;
-}
-
-FieldElement ECG::operator*(FieldElement&& lhs, const FieldElement& rhs) {
-    lhs *= rhs;
-    return lhs;
-}
-
-FieldElement ECG::operator*(const FieldElement& lhs, FieldElement&& rhs) {
-    rhs *= lhs;
-    return rhs;
-}
-
-FieldElement ECG::operator*(FieldElement&& lhs, FieldElement&& rhs) {
-    lhs *= rhs;
-    return lhs;
-}
-
-// operator/
-FieldElement ECG::operator/(const FieldElement& lhs, const FieldElement& rhs) {
-    FieldElement result = lhs;
-    result /= rhs;
-    return result;
-}
-
-FieldElement ECG::operator/(FieldElement&& lhs, const FieldElement& rhs) {
-    lhs /= rhs;
-    return lhs;
-}
-
-FieldElement ECG::operator/(const FieldElement& lhs, FieldElement&& rhs) {
-    rhs.inverse();
-    return lhs * rhs;
-}
-
-FieldElement ECG::operator/(FieldElement&& lhs, FieldElement&& rhs) {
-    lhs /= rhs;
-    return lhs;
-}
-
-FieldElement& FieldElement::operator+=(const FieldElement& other) {
-    m_value += other.m_value;
-
-    if (m_value > *m_modulus) {
-        m_value -= *m_modulus;
+namespace ECG {
+    FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
+        m_value(normalize(value, modulus)), m_modulus(modulus) {
+        assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than p");
     }
 
-    assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
-    return *this;
-}
-
-FieldElement& FieldElement::operator-=(const FieldElement& other) {
-    if (m_value < other.m_value) {
-        m_value += *m_modulus;
+    FieldElement FieldElement::operator-() const {
+        return FieldElement(*m_modulus - m_value, m_modulus);
     }
 
-    m_value -= other.m_value;
-
-    assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
-    return *this;
-}
-
-FieldElement& FieldElement::operator*=(const FieldElement& other) {
-    m_value *= other.m_value;
-
-    if (m_value > *m_modulus) {
-        m_value %= *m_modulus;
+    // operator+
+    FieldElement operator+(const FieldElement& lhs, const FieldElement& rhs) {
+        FieldElement result = lhs;
+        result += rhs;
+        return result;
     }
 
-    assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
-    return *this;
-}
-
-FieldElement& FieldElement::operator/=(const FieldElement& other) {
-    return (*this *= inverse(other));
-}
-
-static uint gcdex(const uint& a, const uint& b, uint& x, uint& y) {
-    if (a == 0) {
-        x = 0;
-        y = 1;
-        return b;
+    FieldElement operator+(FieldElement&& lhs, const FieldElement& rhs) {
+        lhs += rhs;
+        return lhs;
     }
 
-    uint x1, y1;
-    uint d = gcdex(b % a, a, x1, y1);
-    x = y1 - (b / a) * x1;
-    y = x1;
-    return d;
-}
+    FieldElement operator+(const FieldElement& lhs, FieldElement&& rhs) {
+        rhs += lhs;
+        return rhs;
+    }
 
-void FieldElement::inverse() {
-    uint x, y;
-    gcdex(m_value, *m_modulus, x, y);
-    m_value = x;
+    FieldElement operator+(FieldElement&& lhs, FieldElement&& rhs) {
+        lhs += rhs;
+        return lhs;
+    }
 
-    assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
-}
+    // operator-
+    FieldElement operator-(const FieldElement& lhs, const FieldElement& rhs) {
+        FieldElement result = lhs;
+        result -= rhs;
+        return result;
+    }
 
-bool FieldElement::is_invertible() const {
-    return m_value != 0;
-}
+    FieldElement operator-(FieldElement&& lhs, const FieldElement& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
 
-FieldElement FieldElement::pow(const uint& power) const {
-    if ((power & 1) != 0) {
-        if (power == 1) {
-            return *this;
+    FieldElement operator-(const FieldElement& lhs, FieldElement&& rhs) {
+        return -(rhs -= lhs);
+    }
+
+    FieldElement operator-(FieldElement&& lhs, FieldElement&& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    // operator*
+    FieldElement operator*(const FieldElement& lhs, const FieldElement& rhs) {
+        FieldElement result = lhs;
+        result *= rhs;
+        return result;
+    }
+
+    FieldElement operator*(FieldElement&& lhs, const FieldElement& rhs) {
+        lhs *= rhs;
+        return lhs;
+    }
+
+    FieldElement operator*(const FieldElement& lhs, FieldElement&& rhs) {
+        rhs *= lhs;
+        return rhs;
+    }
+
+    FieldElement operator*(FieldElement&& lhs, FieldElement&& rhs) {
+        lhs *= rhs;
+        return lhs;
+    }
+
+    // operator/
+    FieldElement operator/(const FieldElement& lhs, const FieldElement& rhs) {
+        FieldElement result = lhs;
+        result /= rhs;
+        return result;
+    }
+
+    FieldElement operator/(FieldElement&& lhs, const FieldElement& rhs) {
+        lhs /= rhs;
+        return lhs;
+    }
+
+    FieldElement operator/(const FieldElement& lhs, FieldElement&& rhs) {
+        rhs.inverse();
+        return lhs * rhs;
+    }
+
+    FieldElement operator/(FieldElement&& lhs, FieldElement&& rhs) {
+        lhs /= rhs;
+        return lhs;
+    }
+
+    FieldElement operator<<(const FieldElement& value, const uint& shift) {
+        FieldElement result = value;
+        result <<= shift;
+        return result;
+    }
+
+    FieldElement operator<<(FieldElement&& value, const uint& shift) {
+        value <<= shift;
+        return value;
+    }
+
+    FieldElement& FieldElement::operator+=(const FieldElement& other) {
+        m_value += other.m_value;
+
+        if (m_value > *m_modulus) {
+            m_value -= *m_modulus;
         }
 
-        return *this * pow(power - 1);
+        assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
+        return *this;
     }
 
-    FieldElement temp = pow(power >> 1);
-    return temp * temp;
-}
+    FieldElement& FieldElement::operator-=(const FieldElement& other) {
+        if (m_value < other.m_value) {
+            m_value += *m_modulus;
+        }
 
-FieldElement FieldElement::inverse(const FieldElement& element) {
-    FieldElement result = element;
-    result.inverse();
-    return result;
-}
+        m_value -= other.m_value;
 
-const uint& FieldElement::modulus() const {
-    return *m_modulus;
-}
+        assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
+        return *this;
+    }
 
-const uint& FieldElement::value() const {
-    return m_value;
-}
+    FieldElement& FieldElement::operator*=(const FieldElement& other) {
+        m_value *= other.m_value;
 
-uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
-    return value % *modulus;
-}
+        if (m_value > *m_modulus) {
+            m_value %= *m_modulus;
+        }
 
-bool FieldElement::is_valid() const {
-    return m_value < *m_modulus;
-}
+        assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
+        return *this;
+    }
 
-Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
+    FieldElement& FieldElement::operator/=(const FieldElement& other) {
+        return (*this *= inverse(other));
+    }
 
-FieldElement Field::element(const uint& value) {
-    return FieldElement(value, m_modulus);
-}
+    FieldElement& FieldElement::operator<<=(const uint& shift) {
+        for (size_t i = 0; i < shift; ++i) {
+            m_value <<= 1;
+
+            if (m_value >= *m_modulus) {
+                m_value -= *m_modulus;
+            }
+        }
+
+        return *this;
+    }
+
+    auto operator<=>(const FieldElement& lhs, const FieldElement& rhs) {
+        return lhs.m_value == rhs.m_value;
+    }
+
+    bool operator==(const FieldElement& lhs, const FieldElement& rhs) {
+        return lhs.m_value == rhs.m_value;
+    }
+
+    static uint gcdex(const uint& a, const uint& b, uint& x, uint& y) {
+        if (a == 0) {
+            x = 0;
+            y = 1;
+            return b;
+        }
+
+        uint x1, y1;
+        uint d = gcdex(b % a, a, x1, y1);
+        x = y1 - (b / a) * x1;
+        y = x1;
+        return d;
+    }
+
+    void FieldElement::inverse() {
+        uint x, y;
+        gcdex(m_value, *m_modulus, x, y);
+        m_value = x;
+
+        assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
+    }
+
+    bool FieldElement::is_invertible() const {
+        return m_value != 0;
+    }
+
+    FieldElement FieldElement::pow(const uint& power) const {
+        if ((power & 1) != 0) {
+            if (power == 1) {
+                return *this;
+            }
+
+            return *this * pow(power - 1);
+        }
+
+        FieldElement temp = pow(power >> 1);
+        return temp * temp;
+    }
+
+    FieldElement FieldElement::inverse(const FieldElement& element) {
+        FieldElement result = element;
+        result.inverse();
+        return result;
+    }
+
+    const uint& FieldElement::modulus() const {
+        return *m_modulus;
+    }
+
+    const uint& FieldElement::value() const {
+        return m_value;
+    }
+
+    uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
+        return value % *modulus;
+    }
+
+    bool FieldElement::is_valid() const {
+        return m_value < *m_modulus;
+    }
+
+    Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
+
+    FieldElement Field::element(const uint& value) const {
+        return FieldElement(value, m_modulus);
+    }
+
+    const uint& Field::modulus() const {
+        return *m_modulus;
+    }
+}   // namespace ECG

@@ -15,5 +15,4 @@ namespace ECG {
     using uint = uint_t<512>;
 }   // namespace ECG
 #endif
-
 #endif
