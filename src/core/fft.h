@@ -4,10 +4,6 @@
 #include <complex>
 #include <vector>
 
-#pragma warning(disable : 4244)   // for size_t -> complex conversions
-#pragma warning(disable : 4530)   // for resize of complex values
-#pragma warning(disable : 4723)   // for division by size
-
 namespace ECG {
     using complex = std::complex<long double>;
 
