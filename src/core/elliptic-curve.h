@@ -2,6 +2,7 @@
 #define ECG_ELLIPTIC_CURVE_H
 
 #include "field.h"
+#include "utils/naf.h"
 
 #include <optional>
 
@@ -93,7 +94,7 @@ namespace ECG {
             return EllipticCurvePoint(F->element(0), F->element(1), a, b, F);
         }
 
-        EllipticCurvePoint null_point() {
+        EllipticCurvePoint null_point() const {
             return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F);
         }
 
@@ -222,7 +223,15 @@ namespace ECG {
         }
 
         EllipticCurvePoint& operator*=(const uint& value) {
-            // TODO
+            NAF naf = get_naf(value);
+
+            while (!naf.empty()) {
+                if (naf.negative_bit()) {
+                } else {
+                }
+
+                naf >>= 1;
+            }
         }
 
         friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -231,7 +240,9 @@ namespace ECG {
 
     private:
         static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
-            assert(P != Q && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
+            // P != +- Q, and P != +-(P + Q) <=> Q != 0 && 2P != Q
+            assert(P.m_x != Q.m_x && !Q.m_is_null && double_point(P) != Q
+                   && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
 
             // Algorithm implementation, no common sense.
             // See https://www.mathnet.ru/links/1e701a4b8a067ae27f9cdf3f310ea269/tdm187.pdf, page 17.
@@ -250,7 +261,10 @@ namespace ECG {
             FieldElement y = -P.m_y + l2 * (P.m_x - x);
 
             return EllipticCurvePoint(x, y, P.m_a, P.m_b, P.m_F);
-            // TODO
+        }
+
+        static EllipticCurvePoint double_point(const EllipticCurvePoint& point) {
+            return point + point;
         }
 
         void negative() {
