@@ -52,12 +52,14 @@ namespace ECG {
         std::optional<FieldElement> find_y(const FieldElement& x) const;
 
         struct Cache {
-            uint degree;
-            uint power_of_two;
-            uint residue;
-            FieldElement b;
-            std::vector<FieldElement> b_second_powers;
-            std::vector<FieldElement> b_second_u_powers;
+            uint degree;   // (p - 1) / 2
+            size_t power_of_two;
+            uint residue;                                // p - 1 = 2.pow(power_of_two) * residue
+            FieldElement b;                              // quadratic nonresidue
+            FieldElement inverse_two;                    // 1/2 mod p
+            std::vector<FieldElement> b_second_powers;   // b.pow(2) ... b.pow(2.pow(power_of_two - 1))
+            std::vector<FieldElement>
+                b_second_u_powers;   // b.pow(residue), b.pow(2 * residue), ... , b.pow(2.pow(power_of_two - 1) * residue)
         };
 
         mutable std::optional<Cache> m_cache;

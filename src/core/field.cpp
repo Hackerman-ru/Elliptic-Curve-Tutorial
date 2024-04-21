@@ -150,10 +150,11 @@ namespace ECG {
             m_value <<= 1;
 
             if (m_value >= *m_modulus) {
-                m_value -= *m_modulus;
+                m_value %= *m_modulus;
             }
         }
 
+        assert(is_valid() && "FieldElement::operator<<= : Field element value must be less than p");
         return *this;
     }
 

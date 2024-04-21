@@ -98,6 +98,7 @@ namespace ECG {
         friend uint_t operator%(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
             uint_t remainder;
             divide(lhs, rhs, &remainder);
+            assert(rhs > remainder && "uint_t::operator% : remainder must be less than divisor");
             return remainder;
         }
 

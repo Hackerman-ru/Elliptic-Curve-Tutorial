@@ -29,13 +29,15 @@ namespace ECG {
         return b;
     }
 
-    struct Decomposition {
-        uint power_of_two;
-        uint residue;
-    };
+    namespace {
+        struct Decomposition {
+            size_t power_of_two;
+            uint residue;
+        };
+    }   // namespace
 
     static Decomposition decompose(const uint& value) {
-        uint power_of_two = 0;
+        size_t power_of_two = 0;
         uint residue = value;
 
         while (residue != 0 && (residue & 0b1) == 0) {
@@ -46,8 +48,8 @@ namespace ECG {
         return {power_of_two, residue};
     }
 
-    static uint order_of_two(uint value) {
-        uint power_of_two = 0;
+    static size_t order_of_two(uint value) {
+        size_t power_of_two = 0;
 
         while (value != 0 && (value & 0b1) == 0) {
             ++power_of_two;
@@ -70,7 +72,8 @@ namespace ECG {
             uint degree = (p - 1) >> 1;
             Decomposition decomposition = decompose(p - 1);
             FieldElement b = find_b(one, degree);
-            size_t e = decomposition.residue.convert_to<size_t>();
+            FieldElement inverse_two = one / m_F->element(2);
+            size_t e = decomposition.power_of_two;
 
             std::vector<FieldElement> second_powers = {b << 1};
             second_powers.reserve(e - 1);
@@ -90,6 +93,7 @@ namespace ECG {
                            .power_of_two = std::move(decomposition.power_of_two),
                            .residue = std::move(decomposition.residue),
                            .b = std::move(b),
+                           .inverse_two = std::move(inverse_two),
                            .b_second_powers = std::move(second_powers),
                            .b_second_u_powers = std::move(second_u_powers)};
 
@@ -97,14 +101,65 @@ namespace ECG {
         }
 
         const Cache& cache = m_cache.value();
+        FieldElement current_z_u_2 = value.pow(cache.degree);
 
-        if (value.pow(cache.degree) != one) {
+        if (current_z_u_2 != one) {
             return std::nullopt;
         }
 
         if ((p & 0b11) == 3) {
             return value.pow((cache.degree + 1) >> 1);
         }
+
+        const FieldElement& inverse_two = cache.inverse_two;
+        const size_t& e = cache.power_of_two;
+
+        std::vector<size_t> two_orders;
+        size_t current_r = e;
+
+        while (current_r > 0 && current_z_u_2 == one) {
+            current_z_u_2 *= inverse_two;
+            --current_r;
+        }
+
+        if (current_z_u_2 != one) {
+            ++current_r;
+        }
+
+        two_orders.emplace_back(current_r);
+        FieldElement current_z = value;
+
+        while (current_r != 0) {
+            FieldElement next_z = current_z * cache.b_second_powers[e - current_r];
+            FieldElement next_z_u_2 = current_z_u_2 * cache.b_second_u_powers[e - 1];
+            size_t next_r = current_r - 1;
+
+            assert(next_z_u_2 == one && "EllipticCurve::find_y : wrong implementation");
+
+            while (next_r > 0 && next_z_u_2 == one) {
+                next_z_u_2 *= inverse_two;
+                --next_r;
+            }
+
+            if (next_z_u_2 != one) {
+                ++next_r;
+            }
+            two_orders.emplace_back(next_r);
+
+            current_z = next_z;
+            current_z_u_2 = next_z_u_2;
+            current_r = next_r;
+        }
+
+        FieldElement current_x = current_z.pow((cache.residue + 1) >> 1);
+        const size_t n = two_orders.size();
+
+        for (size_t i = 0; i + 1 < n; ++i) {
+            current_x /= cache.b_second_powers[e - two_orders[n - i - 2] - 1];
+        }
+
+        assert((current_x << 1) == value && "EllipticCurve::find_y : wrong implementation");
+        return current_x;
     }
 
 }   // namespace ECG
