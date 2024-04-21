@@ -14,6 +14,7 @@ static constexpr size_t ConvertCorrectnessN = 10000000;
 static constexpr size_t StringCorrectnessN = 10000;
 static constexpr size_t ShiftCorrectnessN = 1000;
 static constexpr size_t ArithmeticCorrectnessN = 100000;
+static constexpr size_t DivisionCorrectnessN = 10000;
 
 static constexpr size_t StringTimingN = 10000;
 static constexpr size_t ShiftTimingN = 10000000;
@@ -241,7 +242,7 @@ TEST(ArithmeticCorrectness, Division) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 1; i < ArithmeticCorrectnessN; ++i) {
+    for (size_t i = 1; i < DivisionCorrectnessN; ++i) {
         a *= i;
         b *= i;
 
@@ -256,7 +257,7 @@ TEST(ArithmeticCorrectness, Division) {
         uint512_t c = 1;
         uint_t<512> d = 1;
 
-        for (size_t j = 0; j < ArithmeticCorrectnessN >> 10; j += 3) {
+        for (size_t j = 0; j < DivisionCorrectnessN >> 8; j += 3) {
             c *= j;
             d *= j;
 

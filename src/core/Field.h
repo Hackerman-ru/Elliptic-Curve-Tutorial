@@ -41,11 +41,33 @@ namespace ECG {
         FieldElement& operator/=(const FieldElement& other);
         FieldElement& operator<<=(const uint& shift);
 
+        friend bool operator==(const FieldElement& lhs, const FieldElement& rhs);
+
+#ifdef ECG_USE_BOOST
+        friend bool operator<(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value < rhs.m_value;
+        }
+
+        friend bool operator>(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value > rhs.m_value;
+        }
+
+        friend bool operator<=(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value <= rhs.m_value;
+        }
+
+        friend bool operator>=(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value >= rhs.m_value;
+        }
+
+        friend bool operator!=(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value != rhs.m_value;
+        }
+#else
         friend std::strong_ordering operator<=>(const FieldElement& lhs, const FieldElement& rhs) {
             return lhs.m_value <=> rhs.m_value;
         }
-
-        friend bool operator==(const FieldElement& lhs, const FieldElement& rhs);
+#endif
 
         bool is_invertible() const;
         FieldElement pow(const uint& power) const;
@@ -64,6 +86,10 @@ namespace ECG {
 
     class Field {
     public:
+#ifdef ECG_USE_BOOST
+        Field(const char* str);
+        FieldElement element(const char* str) const;
+#endif
         Field(const uint& modulus);
         FieldElement element(const uint& value) const;
         const uint& modulus() const;

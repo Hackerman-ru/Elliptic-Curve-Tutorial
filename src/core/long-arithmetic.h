@@ -1,9 +1,9 @@
 #ifndef ECG_LONG_ARITHMETIC_H
 #define ECG_LONG_ARITHMETIC_H
 
-#include "fft.h"
-#include "string-parser.h"
-#include "util.h"
+#include "utils/concepts.h"
+#include "utils/fft.h"
+#include "utils/string-parser.h"
 
 #include <array>
 #include <cassert>
@@ -94,7 +94,14 @@ namespace ECG {
 
         // operator*
         friend uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
-            return multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
+            uint_t result;
+
+            for (size_t i = 0; i < c_block_number; ++i) {
+                result += (lhs * rhs[i]) << (c_block_size * i);
+            }
+
+            return result;
+            //return multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks); until FFT works
         }
 
         // operator/

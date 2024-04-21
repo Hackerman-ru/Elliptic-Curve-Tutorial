@@ -1,7 +1,7 @@
 #ifndef ECG_STRING_PARSER_H
 #define ECG_STRING_PARSER_H
 
-#include "util.h"
+#include "concepts.h"
 
 #include <cassert>
 

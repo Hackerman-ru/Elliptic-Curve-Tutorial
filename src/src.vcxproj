@@ -265,23 +265,20 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="core\fft.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="core\field.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\long-arithmetic.h" />
-    <ClInclude Include="core\random.h" />
     <ClInclude Include="core\uint.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="core\util.h" />
-    <ClInclude Include="core\string-parser.h" />
+    <ClInclude Include="core\utils\fft.h" />
+    <ClInclude Include="core\utils\naf.h" />
+    <ClInclude Include="core\utils\random.h" />
+    <ClInclude Include="core\utils\string-parser.h" />
+    <ClInclude Include="core\utils\concepts.h" />
     <ClInclude Include="Encryption\ecdsa.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
@@ -305,7 +302,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="core\long-arithmetic.cpp" />
-    <ClCompile Include="core\random.cpp" />
+    <ClCompile Include="core\utils\naf.cpp" />
+    <ClCompile Include="core\utils\random.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,19 +3,40 @@
   <ItemGroup>
     <ClInclude Include="Encryption\el-gamal.h" />
     <ClInclude Include="Encryption\ecdsa.h" />
-    <ClInclude Include="core\util.h" />
     <ClInclude Include="core\long-arithmetic.h" />
     <ClInclude Include="core\field.h" />
     <ClInclude Include="core\elliptic-curve.h" />
-    <ClInclude Include="core\string-parser.h" />
-    <ClInclude Include="core\fft.h" />
     <ClInclude Include="core\uint.h" />
-    <ClInclude Include="core\random.h" />
+    <ClInclude Include="core\utils\fft.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\string-parser.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\concepts.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\random.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\naf.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\long-arithmetic.cpp" />
-    <ClCompile Include="core\random.cpp" />
+    <ClCompile Include="core\utils\random.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\naf.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="utils">
+      <UniqueIdentifier>{7af97bf8-3024-44b7-88c5-358175296e7c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

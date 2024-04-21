@@ -227,6 +227,13 @@ namespace ECG {
     bool FieldElement::is_valid() const {
         return m_value < *m_modulus;
     }
+#ifdef ECG_USE_BOOST
+    Field::Field(const char* str) : Field(uint(str)) {}
+
+    FieldElement Field::element(const char* str) const {
+        return FieldElement(uint(str), m_modulus);
+    }
+#endif
 
     Field::Field(const uint& modulus) : m_modulus(std::make_shared<const uint>(modulus)) {};
 

@@ -101,7 +101,11 @@ namespace ECG {
                            std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F) :
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F)),
             m_x {std::move(x)},
-            m_y {std::move(y)} {};
+            m_y {std::move(y)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
 
     public:
         friend EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -201,6 +205,8 @@ namespace ECG {
             m_y = k * (m_x - x) - m_y;
             m_x = x;
 
+            assert(is_valid()
+                   && "EllipticCurvePoint<CoordinatesType::Normal>::operator+= : invalid coordinates");
             return *this;
         }
 
@@ -215,23 +221,49 @@ namespace ECG {
             return *this += other;
         }
 
-        EllipticCurvePoint& operator*=(const uint& value);
+        EllipticCurvePoint& operator*=(const uint& value) {
+            // TODO
+        }
 
         friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
             return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
         }
 
     private:
+        static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
+            assert(P != Q && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
+
+            // Algorithm implementation, no common sense.
+            // See https://www.mathnet.ru/links/1e701a4b8a067ae27f9cdf3f310ea269/tdm187.pdf, page 17.
+            FieldElement a = Q.m_x - P.m_x;
+            FieldElement b = a.pow(2);
+            FieldElement c = Q.m_y - P.m_y;
+            FieldElement d = a.pow(2) * ((P.m_x << 1) + Q.m_x) - c.pow(2);
+            FieldElement D = d * a;
+            FieldElement I = D;
+            I.inverse();
+            FieldElement A = d * I;
+            FieldElement B = b * a * I;
+            FieldElement l1 = c * A;
+            FieldElement l2 = (P.m_y << 1) * B - l1;
+            FieldElement x = (l2 - l1) * (l2 + l1) + Q.m_x;
+            FieldElement y = -P.m_y + l2 * (P.m_x - x);
+
+            return EllipticCurvePoint(x, y, P.m_a, P.m_b, P.m_F);
+            // TODO
+        }
+
         void negative() {
             m_y = -m_y;
         }
 
+        bool is_valid() const {
+            FieldElement value = m_x.pow(3) + *m_a * m_x + *m_b;
+            return m_y.pow(2) == value;
+        }
+
         FieldElement m_x;
         FieldElement m_y;
-
-        static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
-            assert(P != Q && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
-        }
     };
 }   // namespace ECG
 

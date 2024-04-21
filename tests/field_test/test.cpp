@@ -36,7 +36,7 @@ TEST(SimpleTesting, ArithmeticInversion) {
     FieldElement inverse = a * b;
     inverse.inverse();
     uint result = inverse.value();
-    uint correct_result = "437500003";
+    uint correct_result("437500003");
     ASSERT_EQ(result, correct_result);
 }
 
@@ -50,8 +50,8 @@ TEST(SimpleTesting, Comparison) {
 TEST(SimpleTesting, Shift) {
     Field g("1000000007");
     FieldElement a = g.element("999999999");
-    FieldElement b = a << "30";
+    FieldElement b = a << uint("30");
     uint result = b.value();
-    uint correct_result = "410065471";
+    uint correct_result("410065471");
     ASSERT_EQ(result, correct_result);
 }
