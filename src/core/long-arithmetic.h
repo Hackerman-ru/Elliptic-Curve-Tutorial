@@ -32,7 +32,15 @@ namespace ECG {
 
         constexpr uint_t(const char* str) : m_blocks(parse_into<uint_t>(str).m_blocks) {};
 
-        constexpr uint_t& operator=(const char* str) {
+        constexpr uint_t& operator=(const uint_t& value) = default;
+
+        template<typename T>
+        constexpr uint_t& operator=(const T& value) {
+            m_blocks = split_into_blocks<T>(value);
+            return *this;
+        }
+
+        constexpr uint_t& operator=(const char*& str) {
             return *this = parse_into<uint_t>(str);
         }
 

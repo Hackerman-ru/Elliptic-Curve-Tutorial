@@ -158,33 +158,34 @@ namespace ECG {
         return *this;
     }
 
-    auto operator<=>(const FieldElement& lhs, const FieldElement& rhs) {
-        return lhs.m_value == rhs.m_value;
-    }
-
     bool operator==(const FieldElement& lhs, const FieldElement& rhs) {
         return lhs.m_value == rhs.m_value;
     }
 
-    static uint gcdex(const uint& a, const uint& b, uint& x, uint& y) {
-        if (a == 0) {
-            x = 0;
-            y = 1;
-            return b;
+    static uint extended_modular_gcd(const uint& a, const uint& b, uint& x, uint& y, const uint& modulus) {
+        if (b == 0) {
+            x = 1;
+            y = 0;
+            return a;
         }
 
         uint x1, y1;
-        uint d = gcdex(b % a, a, x1, y1);
-        x = y1 - (b / a) * x1;
-        y = x1;
+        uint d = extended_modular_gcd(b, a % b, x1, y1, modulus);
+        x = y1;
+        uint temp = y1 * (a / b);
+
+        while (x1 < temp) {
+            x1 += modulus;
+        }
+
+        y = x1 - y1 * (a / b);
         return d;
     }
 
     void FieldElement::inverse() {
         uint x, y;
-        gcdex(m_value, *m_modulus, x, y);
+        extended_modular_gcd(m_value, *m_modulus, x, y, *m_modulus);
         m_value = x;
-
         assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
     }
 

@@ -27,29 +27,35 @@ namespace ECG {
         return uint();
     }
 
-    static std::map<uint, FieldElement> b_cache;
+    namespace {
+        struct Cache {
+            uint degree;   // (p - 1) / 2
+            size_t power_of_two;
+            uint residue;                                // p - 1 = 2.pow(power_of_two) * residue
+            FieldElement b;                              // quadratic nonresidue
+            FieldElement inverse_two;                    // 1/2 mod p
+            std::vector<FieldElement> b_second_powers;   // b.pow(2) ... b.pow(2.pow(power_of_two - 1))
+            std::vector<FieldElement>
+                b_second_u_powers;   // b.pow(residue), b.pow(2 * residue), ... , b.pow(2.pow(power_of_two - 1) * residue)
+        };
+
+        struct Decomposition {
+            size_t power_of_two;
+            uint residue;
+        };
+    }   // namespace
+
+    static std::map<uint, Cache> p_cache;
 
     static FieldElement find_b(const FieldElement& one, const uint& degree) {
-        if (b_cache.contains(degree)) {
-            return b_cache.at(degree);
-        }
-
         FieldElement b = one + one;
 
         while (b.pow(degree) == one) {
             b += one;
         }
 
-        b_cache.insert({degree, b});
         return b;
     }
-
-    namespace {
-        struct Decomposition {
-            size_t power_of_two;
-            uint residue;
-        };
-    }   // namespace
 
     static Decomposition decompose(const uint& value) {
         size_t power_of_two = 0;
@@ -63,16 +69,6 @@ namespace ECG {
         return {power_of_two, residue};
     }
 
-    static size_t order_of_two(uint value) {
-        size_t power_of_two = 0;
-
-        while (value != 0 && (value & 0b1) == 0) {
-            ++power_of_two;
-        }
-
-        return power_of_two;
-    }
-
     std::optional<FieldElement> EllipticCurve::find_y(const FieldElement& x) const {
         FieldElement value = x.pow(3) + *m_a * x + *m_b;
 
@@ -83,7 +79,7 @@ namespace ECG {
         const uint& p = m_F->modulus();
         const FieldElement one = m_F->element(1);
 
-        if (!m_cache) {
+        if (!p_cache.contains(p)) {
             uint degree = (p - 1) >> 1;
             Decomposition decomposition = decompose(p - 1);
             FieldElement b = find_b(one, degree);
@@ -104,18 +100,19 @@ namespace ECG {
                 second_u_powers.emplace_back(second_u_powers[i - 1] << 1);
             }
 
-            Cache cache = {.degree = std::move(degree),
-                           .power_of_two = std::move(decomposition.power_of_two),
-                           .residue = std::move(decomposition.residue),
-                           .b = std::move(b),
-                           .inverse_two = std::move(inverse_two),
-                           .b_second_powers = std::move(second_powers),
-                           .b_second_u_powers = std::move(second_u_powers)};
-
-            m_cache.emplace(std::move(cache));
+            p_cache.insert({
+                p,
+                {.degree = std::move(degree),
+                  .power_of_two = std::move(decomposition.power_of_two),
+                  .residue = std::move(decomposition.residue),
+                  .b = std::move(b),
+                  .inverse_two = std::move(inverse_two),
+                  .b_second_powers = std::move(second_powers),
+                  .b_second_u_powers = std::move(second_u_powers)}
+            });
         }
 
-        const Cache& cache = m_cache.value();
+        const Cache& cache = p_cache.at(p);
         FieldElement current_z_u_2 = value.pow(cache.degree);
 
         if (current_z_u_2 != one) {

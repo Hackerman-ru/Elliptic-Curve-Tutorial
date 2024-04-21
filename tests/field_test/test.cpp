@@ -7,41 +7,51 @@
 using namespace ECG;
 
 TEST(SimpleTesting, Creating) {
-    uint p("7");
-    Field f(p);
-    FieldElement a = f(10);
+    Field f("7");
+    FieldElement a = f.element(10);
     ASSERT_EQ(a.value(), 3);
-    a = f(99);
+    a = f.element(99);
     ASSERT_EQ(a.value(), 1);
 }
 
 TEST(SimpleTesting, Arithmetic) {
-    uint p("7");
-    Field f(p);
-    FieldElement a = f(3);
+    Field f("7");
+    FieldElement a = f.element(3);
     FieldElement b = a;
     uint c = (a * b).value();
     ASSERT_EQ(c, 2);
 }
 
 TEST(SimpleTesting, ArithmeticNegotiation) {
-    uint p("7");
-    Field f(p);
-    FieldElement a = -f(3);
+    Field f("7");
+    FieldElement a = -f.element(3);
     uint c = a.pow(10).value();
     ASSERT_EQ(c, 4);
 }
 
 TEST(SimpleTesting, ArithmeticInversion) {
-    uint p = uint("1000000007");
-    Field g(p);
-    uint a_("999999999");
-    uint b_ = 2;
-    FieldElement a = g(a_);
-    FieldElement b = g(b_);
+    Field g("1000000007");
+    FieldElement a = g.element("999999999");
+    FieldElement b = g.element(2);
     FieldElement inverse = a * b;
     inverse.inverse();
     uint result = inverse.value();
-    uint correct_result("437500003");
+    uint correct_result = "437500003";
+    ASSERT_EQ(result, correct_result);
+}
+
+TEST(SimpleTesting, Comparison) {
+    Field g("1000000007");
+    FieldElement a = g.element("999999999");
+    FieldElement b = g.element(2);
+    ASSERT_EQ(a < b, false);
+}
+
+TEST(SimpleTesting, Shift) {
+    Field g("1000000007");
+    FieldElement a = g.element("999999999");
+    FieldElement b = a << "30";
+    uint result = b.value();
+    uint correct_result = "410065471";
     ASSERT_EQ(result, correct_result);
 }

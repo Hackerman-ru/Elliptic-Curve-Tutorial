@@ -41,7 +41,10 @@ namespace ECG {
         FieldElement& operator/=(const FieldElement& other);
         FieldElement& operator<<=(const uint& shift);
 
-        friend auto operator<=>(const FieldElement& lhs, const FieldElement& rhs);
+        friend std::strong_ordering operator<=>(const FieldElement& lhs, const FieldElement& rhs) {
+            return lhs.m_value <=> rhs.m_value;
+        }
+
         friend bool operator==(const FieldElement& lhs, const FieldElement& rhs);
 
         bool is_invertible() const;
