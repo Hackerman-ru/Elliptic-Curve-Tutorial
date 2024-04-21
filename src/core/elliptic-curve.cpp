@@ -3,7 +3,22 @@
 #include "map"
 
 namespace ECG {
-    EllipticCurve::EllipticCurve(FieldElement a, FieldElement b, Field F) :
+    EllipticCurve::EllipticCurve(const FieldElement& a, const FieldElement& b, Field F) :
+        m_a {std::make_shared<const FieldElement>(a)},
+        m_b {std::make_shared<const FieldElement>(b)},
+        m_F {std::make_shared<const Field>(std::move(F))} {}
+
+    EllipticCurve::EllipticCurve(FieldElement&& a, const FieldElement& b, Field F) :
+        m_a {std::make_shared<const FieldElement>(std::move(a))},
+        m_b {std::make_shared<const FieldElement>(b)},
+        m_F {std::make_shared<const Field>(std::move(F))} {}
+
+    EllipticCurve::EllipticCurve(const FieldElement& a, FieldElement&& b, Field F) :
+        m_a {std::make_shared<const FieldElement>(a)},
+        m_b {std::make_shared<const FieldElement>(std::move(b))},
+        m_F {std::make_shared<const Field>(std::move(F))} {}
+
+    EllipticCurve::EllipticCurve(FieldElement&& a, FieldElement&& b, Field F) :
         m_a {std::make_shared<const FieldElement>(std::move(a))},
         m_b {std::make_shared<const FieldElement>(std::move(b))},
         m_F {std::make_shared<const Field>(std::move(F))} {}
@@ -130,25 +145,22 @@ namespace ECG {
         FieldElement current_z = value;
 
         while (current_r != 0) {
-            FieldElement next_z = current_z * cache.b_second_powers[e - current_r];
-            FieldElement next_z_u_2 = current_z_u_2 * cache.b_second_u_powers[e - 1];
-            size_t next_r = current_r - 1;
+            current_z *= cache.b_second_powers[e - current_r];
+            current_z_u_2 *= cache.b_second_u_powers[e - 1];
+            current_r -= 1;
 
-            assert(next_z_u_2 == one && "EllipticCurve::find_y : wrong implementation");
+            assert(current_z_u_2 == one && "EllipticCurve::find_y : wrong implementation");
 
-            while (next_r > 0 && next_z_u_2 == one) {
-                next_z_u_2 *= inverse_two;
-                --next_r;
+            while (current_r > 0 && current_z_u_2 == one) {
+                current_z_u_2 *= inverse_two;
+                --current_r;
             }
 
-            if (next_z_u_2 != one) {
-                ++next_r;
+            if (current_z_u_2 != one) {
+                ++current_r;
             }
-            two_orders.emplace_back(next_r);
 
-            current_z = next_z;
-            current_z_u_2 = next_z_u_2;
-            current_r = next_r;
+            two_orders.emplace_back(current_r);
         }
 
         FieldElement current_x = current_z.pow((cache.residue + 1) >> 1);
@@ -161,5 +173,4 @@ namespace ECG {
         assert((current_x << 1) == value && "EllipticCurve::find_y : wrong implementation");
         return current_x;
     }
-
 }   // namespace ECG

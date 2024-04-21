@@ -10,10 +10,12 @@
     <ClInclude Include="core\string-parser.h" />
     <ClInclude Include="core\fft.h" />
     <ClInclude Include="core\uint.h" />
+    <ClInclude Include="core\random.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\long-arithmetic.cpp" />
+    <ClCompile Include="core\random.cpp" />
   </ItemGroup>
 </Project>

@@ -43,12 +43,12 @@ namespace ECG {
 
     template<size_t size>
     static constexpr std::array<size_t, size> get_reverse() {
-        constexpr size_t shift = bit_size(size);
+        constexpr size_t c_shift = bit_size(size);
         std::array<size_t, size> reverse;
         reverse[0] = 0;
 
         for (size_t i = 1; i < size; ++i) {
-            reverse[i] = (reverse[i >> 1] | ((i & 1) << shift)) >> 1;
+            reverse[i] = (reverse[i >> 1] | ((i & 1) << c_shift)) >> 1;
         }
 
         return reverse;
@@ -60,11 +60,11 @@ namespace ECG {
             return;
         }
 
-        static constexpr std::array<size_t, size> reverse = get_reverse<size>();
+        static constexpr std::array<size_t, size> c_reverse = get_reverse<size>();
 
         for (size_t i = 0; i < size; ++i) {
-            if (i < reverse[i]) {
-                std::swap(a[i], a[reverse[i]]);
+            if (i < c_reverse[i]) {
+                std::swap(a[i], a[c_reverse[i]]);
             }
         }
 
@@ -93,8 +93,8 @@ namespace ECG {
     }
 
     template<size_t size>
-    constexpr std::array<uint32_t, size> multiply(std::array<uint32_t, size> lhs,
-                                                  std::array<uint32_t, size> rhs) {
+    constexpr std::array<uint32_t, size>
+        multiply(std::array<uint32_t, size> lhs, std::array<uint32_t, size> rhs) {
         std::array<complex, size> in;
 
         for (size_t i = 0; i < size; ++i) {

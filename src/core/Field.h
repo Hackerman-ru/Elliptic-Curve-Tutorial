@@ -66,7 +66,7 @@ namespace ECG {
         const uint& modulus() const;
 
     private:
-        const std::shared_ptr<const uint> m_modulus;
+        std::shared_ptr<const uint> m_modulus;
     };
 }   // namespace ECG
 
