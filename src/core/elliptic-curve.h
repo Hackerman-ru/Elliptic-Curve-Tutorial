@@ -51,7 +51,7 @@ namespace ECG {
                 return std::nullopt;
             }
 
-            return EllipticCurvePoint<type>(x, std::move(y), m_a, m_b, m_F);
+            return EllipticCurvePoint<type>(x, std::move(y.value()), m_a, m_b, m_F);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
@@ -63,6 +63,30 @@ namespace ECG {
             }
 
             return EllipticCurvePoint<type>(std::move(x), std::move(y.value()), m_a, m_b, m_F);
+        }
+
+        template<CoordinatesType type = CoordinatesType::Normal>
+        std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, const FieldElement& y) const {
+            EllipticCurvePoint<type> point(x, y, m_a, m_b, m_F, true);
+            return point.is_valid() ? point : std::nullopt;
+        }
+
+        template<CoordinatesType type = CoordinatesType::Normal>
+        std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, const FieldElement& y) const {
+            EllipticCurvePoint<type> point(std::move(x), y, m_a, m_b, m_F, true);
+            return point.is_valid() ? point : std::nullopt;
+        }
+
+        template<CoordinatesType type = CoordinatesType::Normal>
+        std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, FieldElement&& y) const {
+            EllipticCurvePoint<type> point(x, std::move(y), m_a, m_b, m_F, true);
+            return point.is_valid() ? point : std::nullopt;
+        }
+
+        template<CoordinatesType type = CoordinatesType::Normal>
+        std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, FieldElement&& y) const {
+            EllipticCurvePoint<type> point(std::move(x), std::move(y), m_a, m_b, m_F, true);
+            return point.is_valid() ? point : std::nullopt;
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
@@ -152,6 +176,10 @@ namespace ECG {
             return point;
         }
 
+        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+            return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
+        }
+
         EllipticCurvePoint operator-() const {
             EllipticCurvePoint result = *this;
             result.negative();
@@ -218,7 +246,7 @@ namespace ECG {
                     *this = two_p_plus_q(*this, -*this);
                     break;
                 case Bit::Zero :
-                    *this = double_point(*this);
+                    *this += *this;
                     break;
                 }
 
@@ -228,14 +256,18 @@ namespace ECG {
             return *this;
         }
 
-        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
+        const FieldElement& get_x() const {
+            return m_x;
+        }
+
+        const FieldElement& get_y() const {
+            return m_y;
         }
 
     private:
         static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
             // P != +- Q, and P != +-(P + Q) <=> Q != 0 && 2P != Q
-            assert(P.m_x != Q.m_x && !Q.m_is_null && double_point(P) != Q
+            assert(P.m_x != Q.m_x && !Q.m_is_null && (P + P) != Q
                    && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
 
             // Algorithm implementation, no common sense.
@@ -257,10 +289,6 @@ namespace ECG {
             return EllipticCurvePoint(x, y, P.m_a, P.m_b, P.m_F);
         }
 
-        static EllipticCurvePoint double_point(const EllipticCurvePoint& point) {
-            return point + point;
-        }
-
         static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
                                              std::shared_ptr<const FieldElement>
                                                  b,
@@ -271,21 +299,26 @@ namespace ECG {
 
         EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
                            std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
-                           std::shared_ptr<const Field> F) :
+                           std::shared_ptr<const Field> F, bool may_invalid = false) :
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F)), m_x {x}, m_y {y} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+            if (!may_invalid) {
+                assert(
+                    is_valid()
+                    && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+            }
         }
 
         EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
-                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F) :
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool may_invalid = false) :
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F)),
             m_x {std::move(x)},
             m_y {std::move(y)} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+            if (!may_invalid) {
+                assert(
+                    is_valid()
+                    && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+            }
         }
 
         EllipticCurvePoint null_point() const {
