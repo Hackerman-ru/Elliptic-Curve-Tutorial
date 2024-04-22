@@ -10,6 +10,8 @@ namespace ECG {
         FieldElement(const uint& value, std::shared_ptr<const uint> modulus);
 
     public:
+        static FieldElement inverse(const FieldElement& element);
+
         friend FieldElement operator+(const FieldElement& lhs, const FieldElement& rhs);
         friend FieldElement operator+(FieldElement&& lhs, const FieldElement& rhs);
         friend FieldElement operator+(const FieldElement& lhs, FieldElement&& rhs);
@@ -71,7 +73,6 @@ namespace ECG {
 
         bool is_invertible() const;
         FieldElement pow(const uint& power) const;
-        static FieldElement inverse(const FieldElement& element);
         void inverse();
         const uint& modulus() const;
         const uint& value() const;

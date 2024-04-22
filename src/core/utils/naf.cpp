@@ -20,12 +20,14 @@ namespace ECG {
         return *this;
     }
 
-    bool NAF::negative_bit() const {
-        return (m_negative_bits & 0b1) == 1;
-    }
+    Bit NAF::bit() const {
+        if ((m_positive_bits & 0b1) == 1) {
+            return Bit::Positive;
+        } else if ((m_negative_bits & 0b1) == 1) {
+            return Bit::Negative;
+        }
 
-    bool NAF::positive_bit() const {
-        return (m_positive_bits & 0b1) == 1;
+        return Bit::Zero;
     }
 
     static uint reverse(uint value) {

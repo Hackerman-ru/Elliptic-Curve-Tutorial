@@ -4,6 +4,12 @@
 #include "uint.h"
 
 namespace ECG {
+    enum class Bit {
+        Positive,
+        Negative,
+        Zero,
+    };
+
     class NAF {
     public:
         NAF(const uint& positive_bits, const uint& negative_bits);
@@ -12,8 +18,7 @@ namespace ECG {
         NAF& operator>>=(const size_t& shift);
 
         bool empty() const;
-        bool negative_bit() const;
-        bool positive_bit() const;
+        Bit bit() const;
 
     private:
         uint m_positive_bits;
