@@ -264,6 +264,10 @@ namespace ECG {
             return m_y;
         }
 
+        bool is_zero() const {
+            return m_is_null;
+        }
+
     private:
         static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
             // P != +- Q, and P != +-(P + Q) <=> Q != 0 && 2P != Q

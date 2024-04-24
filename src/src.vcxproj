@@ -383,6 +383,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="Encryption\ecdsa.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

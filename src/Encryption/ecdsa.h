@@ -1,28 +1,44 @@
 #ifndef ECG_ECDSA_H
 #define ECG_ECDSA_H
 
-#include "../EllipticCurve/elliptic-curve.h"
+#include "elliptic-curve.h"
+#include "utils/random.h"s
 
 namespace ECG {
+    namespace {
+        struct Parameters {
+            Field m_F;
+            EllipticCurve m_E;
+            EllipticCurvePoint<> m_generator;
+            uint m_n;
+            uint m_order;
+        };
+    }   // namespace
+
+    struct Keys {
+        EllipticCurvePoint<> public_key;
+        FieldElement private_key;
+    };
+
+    struct Signature {
+        FieldElement r;
+        FieldElement s;
+    };
+
     class ECDSA {
     public:
-        ECDSA(const uint& field_order, const uint& security_level) {
-            Field F(field_order);
-            FieldElement a = F(0);
-            FieldElement b = F(0);
+        static std::optional<ECDSA> generate(const uint& field_order, const uint& security_level);
 
-            do {
-                a = generate_random_element(F);
-                b = generate_random_element(F);
-            } while (!((F(4) * a.fast_pow(3) + F(27) * b.fast_pow(2)).is_inversible()));
+        ECDSA(const Field& F, const EllipticCurve& E, const EllipticCurvePoint<>& generator, uint n, uint h) :
+            m_parameters {F, E, generator, n, h} {}
 
-            EllipticCurve E(a, b);
-            uint N = E.points_number();
-            // TODO
-        }
+        Keys generate_keys() const;
+        Signature generate_signature(const FieldElement& private_key, const uint& message) const;
+        bool is_correct_signature(const EllipticCurvePoint<>& public_key, const uint& message,
+                                  const Signature& signature) const;
 
     private:
-        FieldElement generate_random_element(const Field& F) const;
+        Parameters m_parameters;
     };
 }   // namespace ECG
 #endif
