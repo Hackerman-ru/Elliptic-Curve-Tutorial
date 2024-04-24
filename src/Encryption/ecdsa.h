@@ -2,7 +2,7 @@
 #define ECG_ECDSA_H
 
 #include "elliptic-curve.h"
-#include "utils/random.h"s
+#include "utils/random.h"
 
 namespace ECG {
     namespace {
