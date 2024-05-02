@@ -25,7 +25,7 @@ TEST(SimpleTesting, Arithmetic) {
 TEST(SimpleTesting, ArithmeticNegotiation) {
     Field f("7");
     FieldElement a = -f.element(3);
-    uint c = a.pow(10).value();
+    uint c = FieldElement::pow(a, 10).value();
     ASSERT_EQ(c, 4);
 }
 

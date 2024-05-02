@@ -111,7 +111,7 @@ namespace ECG {
     FieldElement& FieldElement::operator+=(const FieldElement& other) {
         m_value += other.m_value;
 
-        if (m_value > *m_modulus) {
+        if (m_value >= *m_modulus) {
             m_value -= *m_modulus;
         }
 
@@ -133,7 +133,7 @@ namespace ECG {
     FieldElement& FieldElement::operator*=(const FieldElement& other) {
         m_value *= other.m_value;
 
-        if (m_value > *m_modulus) {
+        if (m_value >= *m_modulus) {
             m_value %= *m_modulus;
         }
 
@@ -193,23 +193,27 @@ namespace ECG {
         return m_value != 0;
     }
 
-    FieldElement FieldElement::pow(const uint& power) const {
-        if ((power & 1) != 0) {
-            if (power == 1) {
-                return *this;
-            }
-
-            return *this * pow(power - 1);
-        }
-
-        FieldElement temp = pow(power >> 1);
-        return temp * temp;
+    void FieldElement::pow(const uint& power) {
+        *this = pow(*this, power);
     }
 
     FieldElement FieldElement::inverse(const FieldElement& element) {
         FieldElement result = element;
         result.inverse();
         return result;
+    }
+
+    FieldElement FieldElement::pow(const FieldElement& element, const uint& power) {
+        if ((power & 1) != 0) {
+            if (power == 1) {
+                return element;
+            }
+
+            return element * pow(element, power - 1);
+        }
+
+        FieldElement temp = pow(element, power >> 1);
+        return temp * temp;
     }
 
     const uint& FieldElement::modulus() const {

@@ -10,16 +10,16 @@ using boost::multiprecision::uint512_t;
 
 using namespace ECG;
 
-static constexpr size_t ConvertCorrectnessN = 10000000;
-static constexpr size_t StringCorrectnessN = 10000;
-static constexpr size_t ShiftCorrectnessN = 1000;
-static constexpr size_t ArithmeticCorrectnessN = 100000;
-static constexpr size_t DivisionCorrectnessN = 10000;
+static constexpr size_t convert_correctness_n = 10000000;
+static constexpr size_t string_correctness_n = 10000;
+static constexpr size_t shift_correctness_n = 1000;
+static constexpr size_t arithmetic_correctness_n = 100000;
+static constexpr size_t division_correctness_n = 10000;
 
-static constexpr size_t StringTimingN = 10000;
-static constexpr size_t ShiftTimingN = 10000000;
-static constexpr size_t ArithmeticTimingN = 1000000;
-static constexpr size_t DivisionTimingN = 100000;
+static constexpr size_t string_timing_n = 10000;
+static constexpr size_t shift_timin_n = 10000000;
+static constexpr size_t arithmetic_timing_n = 1000000;
+static constexpr size_t division_timing_n = 100000;
 
 template<typename From, typename To>
 static To conv(const From& value) {
@@ -41,7 +41,7 @@ static void comp(uint512_t boost_value, uint_t<512> my_value_) {
 TEST(StringConversionCorrectness, DecimalStringConversion) {
     uint512_t boost_value = 1;
 
-    for (size_t i = 1; i < StringCorrectnessN; ++i) {
+    for (size_t i = 1; i < string_correctness_n; ++i) {
         boost_value *= i;
 
         if (boost_value == 0) {
@@ -58,7 +58,7 @@ TEST(StringConversionCorrectness, DecimalStringConversion) {
 TEST(StringConversionTiming, DecimalStringConversionBoost) {
     uint512_t a = 1;
 
-    for (size_t i = 1; i < StringTimingN; ++i) {
+    for (size_t i = 1; i < string_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -72,7 +72,7 @@ TEST(StringConversionTiming, DecimalStringConversionBoost) {
 TEST(StringConversionTiming, DecimalStringConversion) {
     uint_t<512> a = 1;
 
-    for (size_t i = 1; i < StringTimingN; ++i) {
+    for (size_t i = 1; i < string_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -88,7 +88,7 @@ TEST(StringConversionTiming, DecimalStringConversion) {
 TEST(IntConversionCorrectness, uint32_t) {
     std::mt19937 gen;
 
-    for (size_t i = 0; i < ConvertCorrectnessN; ++i) {
+    for (size_t i = 0; i < convert_correctness_n; ++i) {
         uint32_t a = gen();
         uint_t<512> b(a);
         ASSERT_EQ(a, b.convert_to<uint32_t>());
@@ -98,7 +98,7 @@ TEST(IntConversionCorrectness, uint32_t) {
 TEST(IntConversionCorrectness, size_t) {
     std::mt19937_64 gen;
 
-    for (size_t i = 0; i < ConvertCorrectnessN; ++i) {
+    for (size_t i = 0; i < convert_correctness_n; ++i) {
         size_t a = gen();
         uint_t<512> b(a);
         ASSERT_EQ(a, b.convert_to<size_t>());
@@ -110,7 +110,7 @@ TEST(IntConversionCorrectness, size_t) {
 TEST(ShiftCorrectness, LeftShift) {
     uint512_t a("9999999999999999999999999999999999");
 
-    for (size_t i = 1; i < ShiftCorrectnessN; ++i) {
+    for (size_t i = 1; i < shift_correctness_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -134,7 +134,7 @@ TEST(ShiftCorrectness, LeftShift) {
 TEST(ShiftCorrectness, RightShift) {
     uint512_t a("9999999999999999999999999999999999");
 
-    for (size_t i = 1; i < ShiftCorrectnessN; ++i) {
+    for (size_t i = 1; i < shift_correctness_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -158,7 +158,7 @@ TEST(ShiftCorrectness, RightShift) {
 TEST(ShiftTiming, LeftShift) {
     uint_t<512> a("9999999999999999999999999999999999");
 
-    for (size_t i = 0; i < ShiftTimingN; ++i) {
+    for (size_t i = 0; i < shift_timin_n; ++i) {
         auto b = a << i;
     }
 }
@@ -166,7 +166,7 @@ TEST(ShiftTiming, LeftShift) {
 TEST(ShiftTiming, LeftShiftBoost) {
     uint512_t a("9999999999999999999999999999999999");
 
-    for (size_t i = 0; i < ShiftTimingN; ++i) {
+    for (size_t i = 0; i < shift_timin_n; ++i) {
         auto b = a << i;
     }
 }
@@ -174,7 +174,7 @@ TEST(ShiftTiming, LeftShiftBoost) {
 TEST(ShiftTiming, RightShift) {
     uint_t<512> a("9999999999999999999999999999999999");
 
-    for (size_t i = 0; i < ShiftTimingN; ++i) {
+    for (size_t i = 0; i < shift_timin_n; ++i) {
         auto b = a >> i;
     }
 }
@@ -182,7 +182,7 @@ TEST(ShiftTiming, RightShift) {
 TEST(ShiftTiming, RightShiftBoost) {
     uint512_t a("9999999999999999999999999999999999");
 
-    for (size_t i = 0; i < ShiftTimingN; ++i) {
+    for (size_t i = 0; i < shift_timin_n; ++i) {
         auto b = a >> i;
     }
 }
@@ -192,7 +192,7 @@ TEST(ArithmeticCorrectness, Addition) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticCorrectnessN; ++i) {
+    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
         a += i;
         b += i;
 
@@ -206,7 +206,7 @@ TEST(ArithmeticCorrectness, Subtraction) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticCorrectnessN; ++i) {
+    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
         a -= i;
         b -= i;
 
@@ -220,7 +220,7 @@ TEST(ArithmeticCorrectness, Multiplication) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 1; i < ArithmeticCorrectnessN; ++i) {
+    for (size_t i = 1; i < arithmetic_correctness_n; ++i) {
         a *= i;
         b *= i;
 
@@ -242,7 +242,7 @@ TEST(ArithmeticCorrectness, Division) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 1; i < DivisionCorrectnessN; ++i) {
+    for (size_t i = 1; i < division_correctness_n; ++i) {
         a *= i;
         b *= i;
 
@@ -257,7 +257,7 @@ TEST(ArithmeticCorrectness, Division) {
         uint512_t c = 1;
         uint_t<512> d = 1;
 
-        for (size_t j = 0; j < DivisionCorrectnessN >> 8; j += 3) {
+        for (size_t j = 0; j < division_correctness_n >> 8; j += 3) {
             c *= j;
             d *= j;
 
@@ -279,7 +279,7 @@ TEST(ArithmeticCorrectness, Division) {
 TEST(ArithmeticTiming, Addition) {
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
         b += i;
     }
 }
@@ -288,7 +288,7 @@ TEST(ArithmeticTiming, AdditionBoost) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
         a += i;
     }
 }
@@ -296,7 +296,7 @@ TEST(ArithmeticTiming, AdditionBoost) {
 TEST(ArithmeticTiming, Subtraction) {
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
         b -= i;
     }
 }
@@ -305,7 +305,7 @@ TEST(ArithmeticTiming, SubtractionBoost) {
     uint512_t a = 1;
     uint_t<512> b = 1;
 
-    for (size_t i = 0; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
         a -= i;
     }
 }
@@ -313,7 +313,7 @@ TEST(ArithmeticTiming, SubtractionBoost) {
 TEST(ArithmeticTiming, Multiplication) {
     uint_t<512> a = 1;
 
-    for (size_t i = 1; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 1; i < arithmetic_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -325,7 +325,7 @@ TEST(ArithmeticTiming, Multiplication) {
 TEST(ArithmeticTiming, MultiplicationBoost) {
     uint512_t a = 1;
 
-    for (size_t i = 1; i < ArithmeticTimingN; ++i) {
+    for (size_t i = 1; i < arithmetic_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -337,7 +337,7 @@ TEST(ArithmeticTiming, MultiplicationBoost) {
 TEST(ArithmeticTiming, Division) {
     uint_t<512> a = 1;
 
-    for (size_t i = 1; i < DivisionTimingN; ++i) {
+    for (size_t i = 1; i < division_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -346,7 +346,7 @@ TEST(ArithmeticTiming, Division) {
 
         uint_t<512> b = 1;
 
-        for (size_t j = 93; j < DivisionTimingN >> 10; j += 3) {
+        for (size_t j = 93; j < division_timing_n >> 10; j += 3) {
             b *= j;
 
             if (b == 0) {
@@ -361,7 +361,7 @@ TEST(ArithmeticTiming, Division) {
 TEST(ArithmeticTiming, DivisionBoost) {
     uint512_t a = 1;
 
-    for (size_t i = 1; i < DivisionTimingN; ++i) {
+    for (size_t i = 1; i < division_timing_n; ++i) {
         a *= i;
 
         if (a == 0) {
@@ -370,7 +370,7 @@ TEST(ArithmeticTiming, DivisionBoost) {
 
         uint512_t b = 1;
 
-        for (size_t j = 93; j < DivisionTimingN >> 10; j += 3) {
+        for (size_t j = 93; j < division_timing_n >> 10; j += 3) {
             b *= j;
 
             if (b == 0) {

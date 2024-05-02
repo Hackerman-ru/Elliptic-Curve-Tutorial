@@ -41,7 +41,7 @@ namespace ECG {
         EllipticCurve(const FieldElement& a, FieldElement&& b, Field F);
         EllipticCurve(FieldElement&& a, FieldElement&& b, Field F);
 
-        uint points_number() const;   // SEA algorithm
+        uint points_number() const;   // Scoof's algorithm
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point_with_x_equal_to(const FieldElement& x) const {
@@ -203,12 +203,12 @@ namespace ECG {
                     return *this;
                 }
 
-                k = (m_F->element(3) * m_x.pow(2) + *m_a) / (m_y << 1);
+                k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
             } else {
                 k = (other.m_y - m_y) / (other.m_x - m_x);
             }
 
-            FieldElement x = k.pow(2) - m_x - other.m_x;
+            FieldElement x = FieldElement::pow(k, 2) - m_x - other.m_x;
             m_y = k * (m_x - x) - m_y;
             m_x = x;
 
@@ -277,9 +277,9 @@ namespace ECG {
             // Algorithm implementation, no common sense.
             // See https://www.mathnet.ru/links/1e701a4b8a067ae27f9cdf3f310ea269/tdm187.pdf, page 17.
             FieldElement a = Q.m_x - P.m_x;
-            FieldElement b = a.pow(2);
+            FieldElement b = FieldElement::pow(a, 2);
             FieldElement c = Q.m_y - P.m_y;
-            FieldElement d = a.pow(2) * ((P.m_x << 1) + Q.m_x) - c.pow(2);
+            FieldElement d = b * ((P.m_x << 1) + Q.m_x) - FieldElement::pow(c, 2);
             FieldElement D = d * a;
             FieldElement I = D;
             I.inverse();
@@ -298,35 +298,31 @@ namespace ECG {
                                                  b,
                                              std::shared_ptr<const Field>
                                                  F) {
-            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F);
+            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
         }
 
         EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
                            std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
-                           std::shared_ptr<const Field> F, bool may_invalid = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F)), m_x {x}, m_y {y} {
-            if (!may_invalid) {
-                assert(
-                    is_valid()
-                    && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-            }
+                           std::shared_ptr<const Field> F, bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null), m_x {x}, m_y {y} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
                            std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
-                           bool may_invalid = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F)),
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_x {std::move(x)},
             m_y {std::move(y)} {
-            if (!may_invalid) {
-                assert(
-                    is_valid()
-                    && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-            }
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F);
+            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
         }
 
         void negative() {
@@ -334,8 +330,12 @@ namespace ECG {
         }
 
         bool is_valid() const {
-            FieldElement value = m_x.pow(3) + *m_a * m_x + *m_b;
-            return m_y.pow(2) == value;
+            if (m_is_null) {
+                return true;
+            }
+
+            FieldElement value = FieldElement::pow(m_x, 3) + *m_a * m_x + *m_b;
+            return FieldElement::pow(m_y, 2) == value;
         }
 
         FieldElement m_x;

@@ -11,7 +11,7 @@ namespace ECG {
             EllipticCurve m_E;
             EllipticCurvePoint<> m_generator;
             uint m_n;
-            uint m_order;
+            uint m_h;
         };
     }   // namespace
 
@@ -29,7 +29,8 @@ namespace ECG {
     public:
         static std::optional<ECDSA> generate(const uint& field_order, const uint& security_level);
 
-        ECDSA(const Field& F, const EllipticCurve& E, const EllipticCurvePoint<>& generator, uint n, uint h) :
+        ECDSA(const Field& F, const EllipticCurve& E, const EllipticCurvePoint<>& generator, const uint& n,
+              const uint& h) :
             m_parameters {F, E, generator, n, h} {}
 
         Keys generate_keys() const;

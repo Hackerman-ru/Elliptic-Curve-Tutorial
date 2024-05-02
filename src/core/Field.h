@@ -11,6 +11,7 @@ namespace ECG {
 
     public:
         static FieldElement inverse(const FieldElement& element);
+        static FieldElement pow(const FieldElement& element, const uint& power);
 
         friend FieldElement operator+(const FieldElement& lhs, const FieldElement& rhs);
         friend FieldElement operator+(FieldElement&& lhs, const FieldElement& rhs);
@@ -72,7 +73,7 @@ namespace ECG {
 #endif
 
         bool is_invertible() const;
-        FieldElement pow(const uint& power) const;
+        void pow(const uint& power);
         void inverse();
         const uint& modulus() const;
         const uint& value() const;

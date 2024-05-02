@@ -1,14 +1,60 @@
 #include "ecdsa.h"
 
+#include "cthash/sha3/sha3-512.hpp"
+
 namespace ECG {
     namespace {
+        struct Coefficients {
+            FieldElement a;
+            FieldElement b;
+        };
+
         struct EllipticCurveParameters {
             FieldElement a;
             FieldElement b;
         };
     }   // namespace
 
-    static EllipticCurveParameters generate_random_a_b(const Field& F) {
+    static constexpr uint hash_length = 512;
+
+    static uint bit_size(uint value) {
+        uint result = 0;
+
+        while (value != 0) {
+            ++result;
+            value >>= 1;
+        }
+
+        return result;
+    }
+
+    static uint hash_value(const uint& value) {
+        const auto h = cthash::simple<cthash::sha3_512>(value.convert_to<std::string>());
+        const size_t shift = sizeof(h[0]) * 8;
+        uint result = 0;
+
+        for (const auto& byte : h) {
+            result <<= shift;
+            result += byte;
+        }
+
+        return result;
+    }
+
+    static EllipticCurveParameters generate_random_elliptic_curve(const uint& p) {
+        uint t = bit_size(p);
+        uint s = (t - 1) / hash_length;
+        size_t v = (t - (s << 9)).convert_to<size_t>();
+        uint S = generate_random_uint();
+        uint h = hash_value(S);
+        uint r0 = (h << (512 - v)) >> v;
+        uint R0 = (r0 << 1) >> 1;
+
+        for (uint i = 1; i < s; ++i) {
+        }
+    }
+
+    static Coefficients generate_random_a_b(const Field& F) {
         FieldElement a = F.element(0);
         FieldElement b = F.element(0);
         FieldElement zero = F.element(0);
@@ -20,17 +66,6 @@ namespace ECG {
         } while (!zero.is_invertible());
 
         return {a, b};
-    }
-
-    static uint bit_size(uint value) {
-        uint result = 0;
-
-        while (value != 0) {
-            ++result;
-            value >>= 1;
-        }
-
-        return result;
     }
 
     static uint get_greatest_divisor(uint value) {
@@ -69,19 +104,25 @@ namespace ECG {
     }
 
     std::optional<ECDSA> ECDSA::generate(const uint& field_order, const uint& security_level) {
-        if (security_level < 160 || security_level > bit_size(field_order)) {
+        uint bitsize = bit_size(field_order);
+
+        if (security_level < 160 || security_level > bitsize) {
+            return std::nullopt;
+        }
+
+        if (security_level < (2 + (bitsize >> 1))) {
             return std::nullopt;
         }
 
         Field F(field_order);
-        EllipticCurveParameters curve_parameters = generate_random_a_b(F);
-        EllipticCurve E(curve_parameters.a, curve_parameters.b, F);
+        Coefficients curve_coefficients = generate_random_a_b(F);
+        EllipticCurve E(curve_coefficients.a, curve_coefficients.b, F);
         uint N = E.points_number();
         uint n = get_greatest_divisor(N);
 
         while (!satisfies(n, field_order, security_level)) {
-            curve_parameters = generate_random_a_b(F);
-            E = EllipticCurve(curve_parameters.a, curve_parameters.b, F);
+            curve_coefficients = generate_random_a_b(F);
+            E = EllipticCurve(curve_coefficients.a, curve_coefficients.b, F);
             N = E.points_number();
             n = get_greatest_divisor(N);
         }

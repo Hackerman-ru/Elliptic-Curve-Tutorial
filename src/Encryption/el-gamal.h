@@ -4,7 +4,7 @@
 #include "elliptic-curve.h"
 
 namespace ECG {
-    class ElGamal;   // TODO
+    class ElGamal {};
 }   // namespace ECG
 
 #endif
