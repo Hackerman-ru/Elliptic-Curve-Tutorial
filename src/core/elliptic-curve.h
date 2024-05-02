@@ -34,6 +34,32 @@ namespace ECG {
     template<CoordinatesType type = CoordinatesType::Normal>
     class EllipticCurvePoint;
 
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator+(const EllipticCurvePoint<type>& lhs,
+                                       const EllipticCurvePoint<type>& rhs) {
+        EllipticCurvePoint result = lhs;
+        result += rhs;
+        return result;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator+(EllipticCurvePoint<type>&& lhs, const EllipticCurvePoint<type>& rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator+(const EllipticCurvePoint<type>& lhs, EllipticCurvePoint<type>&& rhs) {
+        rhs += lhs;
+        return rhs;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator+(EllipticCurvePoint<type>&& lhs, EllipticCurvePoint<type>&& rhs) {
+        lhs += rhs;
+        return lhs;
+    }
+
     class EllipticCurve {
     public:
         EllipticCurve(const FieldElement& a, const FieldElement& b, Field F);
@@ -95,7 +121,7 @@ namespace ECG {
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
-        EllipticCurvePoint<type> random_point() const;   // TODO
+        EllipticCurvePoint<type> random_point() const {}
 
     private:
         std::optional<FieldElement> find_y(const FieldElement& x) const;
@@ -111,27 +137,6 @@ namespace ECG {
         friend class EllipticCurve;
 
     public:
-        friend EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            EllipticCurvePoint result = lhs;
-            result += rhs;
-            return result;
-        }
-
-        friend EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
-            lhs += rhs;
-            return lhs;
-        }
-
-        friend EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
-            rhs += lhs;
-            return rhs;
-        }
-
-        friend EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
-            lhs += rhs;
-            return lhs;
-        }
-
         friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
             EllipticCurvePoint result = lhs;
             result -= rhs;
@@ -279,6 +284,28 @@ namespace ECG {
                            std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
                            std::shared_ptr<const Field> F, bool is_null = false) :
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null), m_x {x}, m_y {y} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_x {std::move(x)},
+            m_y {y} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_x {x},
+            m_y {std::move(y)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");

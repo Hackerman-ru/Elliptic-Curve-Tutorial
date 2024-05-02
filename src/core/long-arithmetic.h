@@ -380,6 +380,11 @@ namespace ECG {
         T convert_to() const {
             size_t shift_size = sizeof(T) * c_bits_in_byte;
             size_t blocks_number = shift_size / c_block_size;
+
+            if (blocks_number == 0) {
+                return static_cast<T>(m_blocks[0]);
+            }
+
             T result = 0;
 
             for (size_t i = 0; i < c_block_number && i < blocks_number; ++i) {

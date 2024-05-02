@@ -54,7 +54,7 @@ TEST(CorrectnessTest, kP) {
     FieldElement b = F.element(28);
     EllipticCurve E(a, b, F);
     EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-    size_t k = 1984;
+    size_t k = 1985;
     EllipticCurvePoint<> kP = P * k;
     EllipticCurvePoint<> right_kP = P;
     for (size_t i = 1; i < k; ++i) {
