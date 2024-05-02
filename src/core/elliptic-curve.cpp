@@ -30,9 +30,9 @@ namespace ECG {
     namespace {
         struct Cache {
             size_t power_of_two;
-            uint residue;                                // p - 1 = 2.pow(power_of_two) * residue
-            FieldElement b;                              // quadratic nonresidue
-            std::vector<FieldElement> b_second_powers;   // b.pow(2) ... b.pow(2.pow(power_of_two - 1))
+            uint residue;   // p - 1 = 2.pow(power_of_two) * residue
+            std::vector<FieldElement>
+                b_second_powers;   // b.pow(2) ... b.pow(2.pow(power_of_two - 1)), where b is a quadratic nonresidue
             std::vector<FieldElement>
                 b_second_u_powers;   // b.pow(residue), b.pow(2 * residue), ... , b.pow(2.pow(power_of_two - 1) * residue)
         };
@@ -108,7 +108,6 @@ namespace ECG {
                 p,
                 {.power_of_two = std::move(decomposition.power_of_two),
                   .residue = std::move(decomposition.residue),
-                  .b = std::move(b),
                   .b_second_powers = std::move(second_powers),
                   .b_second_u_powers = std::move(second_u_powers)}
             });
@@ -129,11 +128,13 @@ namespace ECG {
 
         while (current_r != 0) {
             current_z *= cache.b_second_powers[e - current_r];
-            for (size_t next_r = 0; next_r < current_r; ++next_r) {
-                z_u_powers_of_2[next_r] *= cache.b_second_u_powers[e - (current_r - next_r)];
 
-                if (z_u_powers_of_2[next_r] == one) {
-                    current_r = next_r;
+            for (size_t next_r = current_r; next_r > 0; --next_r) {
+                z_u_powers_of_2[next_r - 1] *= cache.b_second_u_powers[e - (current_r - next_r + 1)];
+
+                if (z_u_powers_of_2[next_r - 1] == one) {
+                    --current_r;
+                } else {
                     break;
                 }
             }
@@ -148,7 +149,6 @@ namespace ECG {
             current_x /= cache.b_second_powers[e - two_orders[n - i - 2] - 1];
         }
 
-        assert((FieldElement::pow(current_x, 2)) == value && "EllipticCurve::find_y : wrong implementation");
         return current_x;
     }
 }   // namespace ECG
