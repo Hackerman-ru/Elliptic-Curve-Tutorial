@@ -18,11 +18,31 @@ namespace ECG {
 
     namespace {
         class EllipticCurvePointConcept {
+        public:
+            virtual FieldElement get_x() const = 0;
+            virtual FieldElement get_y() const = 0;
+
+            bool is_zero() const {
+                return m_is_null;
+            }
+
         protected:
             EllipticCurvePointConcept(std::shared_ptr<const FieldElement> a,
                                       std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
                                       bool is_null = false) :
                 m_a {std::move(a)}, m_b {std::move(b)}, m_F {std::move(F)}, m_is_null(is_null) {};
+
+            virtual void negative() = 0;
+            virtual void twice() = 0;
+
+            bool is_valid() const {
+                if (m_is_null) {
+                    return true;
+                }
+
+                FieldElement value = FieldElement::pow(get_x(), 3) + *m_a * get_x() + *m_b;
+                return FieldElement::pow(get_y(), 2) == value;
+            }
 
             std::shared_ptr<const FieldElement> m_a;
             std::shared_ptr<const FieldElement> m_b;
@@ -59,6 +79,397 @@ namespace ECG {
         lhs += rhs;
         return lhs;
     }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator-(const EllipticCurvePoint<type>& lhs,
+                                       const EllipticCurvePoint<type>& rhs) {
+        EllipticCurvePoint result = lhs;
+        result -= rhs;
+        return result;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator-(EllipticCurvePoint<type>&& lhs, const EllipticCurvePoint<type>& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator-(const EllipticCurvePoint<type>& lhs, EllipticCurvePoint<type>&& rhs) {
+        rhs -= lhs;
+        rhs.negative();
+        return rhs;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator-(EllipticCurvePoint<type>&& lhs, EllipticCurvePoint<type>&& rhs) {
+        lhs -= rhs;
+        return lhs;
+    }
+
+    template<CoordinatesType type>
+    static void multiply(EllipticCurvePoint<type>& point, const uint& value) {
+        NAF::wnaf_form wnaf_form = NAF::get_wnaf(value);
+        EllipticCurvePoint<type> two_p = point + point;
+        std::vector<EllipticCurvePoint<type>> kp = {point};
+
+        for (size_t i = 1; i < NAF::c_kp_number; ++i) {
+            kp.emplace_back(kp.back() + two_p);
+        }
+
+        point.m_is_null = true;
+
+        for (size_t i = wnaf_form.size(); i > 0; --i) {
+            point.twice();
+
+            if (wnaf_form[i - 1].value != 0) {
+                if (!wnaf_form[i - 1].is_negative) {
+                    point += kp[wnaf_form[i - 1].value >> 1];
+                } else {
+                    point -= kp[wnaf_form[i - 1].value >> 1];
+                }
+            }
+        }
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator*(const EllipticCurvePoint<type>& point, const uint& value) {
+        EllipticCurvePoint<type> result = point;
+        result *= value;
+        return result;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator*(EllipticCurvePoint<type>&& point, const uint& value) {
+        point *= value;
+        return point;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator*(const uint& value, const EllipticCurvePoint<type>& point) {
+        EllipticCurvePoint<type> result = point;
+        result *= value;
+        return result;
+    }
+
+    template<CoordinatesType type>
+    EllipticCurvePoint<type> operator*(const uint& value, EllipticCurvePoint<type>&& point) {
+        point *= value;
+        return point;
+    }
+
+    template<>
+    class EllipticCurvePoint<CoordinatesType::Normal> : public EllipticCurvePointConcept {
+    private:
+        friend class EllipticCurve;
+        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
+        friend void multiply<CoordinatesType::Normal>(EllipticCurvePoint& point, const uint& value);
+
+    public:
+        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+            return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
+        }
+
+        EllipticCurvePoint operator-() const {
+            EllipticCurvePoint result = *this;
+            result.negative();
+            return result;
+        }
+
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+            if (m_is_null) {
+                return *this = other;
+            } else if (other.m_is_null) {
+                return *this;
+            }
+
+            if (m_x == other.m_x) {
+                if (m_y != other.m_y) {
+                    m_is_null = true;
+                } else {
+                    twice();
+                }
+
+                return *this;
+            }
+
+            FieldElement k = (other.m_y - m_y) / (other.m_x - m_x);
+            FieldElement x = FieldElement::pow(k, 2) - m_x - other.m_x;
+            m_y = k * (m_x - x) - m_y;
+            m_x = x;
+
+            assert(is_valid()
+                   && "EllipticCurvePoint<CoordinatesType::Normal>::operator+= : invalid coordinates");
+            return *this;
+        }
+
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+            EllipticCurvePoint temp = other;
+            temp.negative();
+            return *this += temp;
+        }
+
+        EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
+            other.negative();
+            return *this += other;
+        }
+
+        EllipticCurvePoint& operator*=(const uint& value) {
+            multiply<CoordinatesType::Normal>(*this, value);
+            return *this;
+        }
+
+        FieldElement get_x() const final {
+            return m_x;
+        }
+
+        FieldElement get_y() const final {
+            return m_y;
+        }
+
+    private:
+        static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
+                                             std::shared_ptr<const FieldElement>
+                                                 b,
+                                             std::shared_ptr<const Field>
+                                                 F) {
+            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
+        }
+
+        static EllipticCurvePoint null_point_from(const EllipticCurvePoint& point) {
+            return point.null_point();
+        }
+
+        EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
+                           std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
+                           std::shared_ptr<const Field> F, bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null), m_x {x}, m_y {y} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_x {std::move(x)},
+            m_y {y} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_x {x},
+            m_y {std::move(y)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_x {std::move(x)},
+            m_y {std::move(y)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint null_point() const {
+            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+        }
+
+        void negative() final {
+            m_y = -m_y;
+        }
+
+        void twice() final {
+            FieldElement k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
+            FieldElement x = FieldElement::pow(k, 2) - (m_x << 1);
+            m_y = k * (m_x - x) - m_y;
+            m_x = x;
+
+            assert(is_valid() && "EllipticCurvePoint<CoordinatesType::Normal>::twice : invalid coordinates");
+        }
+
+        FieldElement m_x;
+        FieldElement m_y;
+    };
+
+    template<>
+    class EllipticCurvePoint<CoordinatesType::Projective> : public EllipticCurvePointConcept {
+    private:
+        friend class EllipticCurve;
+        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
+        friend void multiply<CoordinatesType::Projective>(EllipticCurvePoint& point, const uint& value);
+
+    public:
+        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+            FieldElement X1Z2 = lhs.m_X * rhs.m_Z;
+            FieldElement X2Z1 = rhs.m_X * lhs.m_Z;
+            FieldElement Y1Z2 = lhs.m_Y * rhs.m_Z;
+            FieldElement Y2Z1 = rhs.m_Y * lhs.m_Z;
+            return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
+        }
+
+        EllipticCurvePoint operator-() const {
+            EllipticCurvePoint result = *this;
+            result.negative();
+            return result;
+        }
+
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+            if (m_is_null) {
+                return *this = other;
+            } else if (other.m_is_null) {
+                return *this;
+            }
+
+            const FieldElement X1Z2 = m_X * other.m_Z;
+            const FieldElement X2Z1 = other.m_X * m_Z;
+            const FieldElement Y1Z2 = m_Y * other.m_Z;
+            const FieldElement Y2Z1 = other.m_Y * m_Z;
+
+            if (X1Z2 == X2Z1) {
+                if (Y1Z2 != Y2Z1) {
+                    m_is_null = true;
+                } else {
+                    twice();
+                }
+
+                return *this;
+            }
+
+            FieldElement u = Y2Z1 - Y1Z2;
+            FieldElement v = X2Z1 - X1Z2;
+            FieldElement v2 = FieldElement::pow(v, 2);
+            FieldElement v3 = v2 * v;
+            const FieldElement Z1Z2 = m_Z * other.m_Z;
+            FieldElement A = FieldElement::pow(u, 2) * Z1Z2 - v3 - ((v2 * X1Z2) << 1);
+
+            m_X = v * A;
+            m_Y = u * (v2 * X1Z2 - A) - v3 * Y1Z2;
+            m_Z = v3 * Z1Z2;
+
+            assert(is_valid()
+                   && "EllipticCurvePoint<CoordinatesType::Projective>::operator+= : invalid coordinates");
+            return *this;
+        }
+
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+            EllipticCurvePoint temp = other;
+            temp.negative();
+            return *this += temp;
+        }
+
+        EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
+            other.negative();
+            return *this += other;
+        }
+
+        EllipticCurvePoint& operator*=(const uint& value) {
+            multiply<CoordinatesType::Projective>(*this, value);
+            return *this;
+        }
+
+        FieldElement get_x() const final {
+            return m_X / m_Z;
+        }
+
+        FieldElement get_y() const final {
+            return m_Y / m_Z;
+        }
+
+    private:
+        static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
+                                             std::shared_ptr<const FieldElement>
+                                                 b,
+                                             std::shared_ptr<const Field>
+                                                 F) {
+            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
+        }
+
+        EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
+                           std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
+                           std::shared_ptr<const Field> F, bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {y},
+            m_Z {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {y},
+            m_Z {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint null_point() const {
+            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+        }
+
+        void negative() final {
+            m_Y = -m_Y;
+        }
+
+        void twice() final {
+            FieldElement w = *m_a * FieldElement::pow(m_Z, 2) + m_F->element(3) * FieldElement::pow(m_X, 2);
+            FieldElement s = m_Y * m_Z;
+            FieldElement s2 = FieldElement::pow(s, 2);
+            FieldElement s3 = s2 * s;
+            FieldElement B = m_X * m_Y * s;
+            FieldElement h = FieldElement::pow(w, 2) - (B << 3);
+            m_X = (h * s) << 1;
+            m_Y = w * ((B << 2) - h) - ((FieldElement::pow(m_Y, 2) * s2) << 3);
+            m_Z = s3 << 3;
+            assert(is_valid()
+                   && "EllipticCurvePoint<CoordinatesType::Projective>::twice : invalid coordinates");
+        }
+
+        FieldElement m_X;
+        FieldElement m_Y;
+        FieldElement m_Z;
+    };
 
     class EllipticCurve {
     public:
@@ -129,218 +540,6 @@ namespace ECG {
         std::shared_ptr<const FieldElement> m_a;
         std::shared_ptr<const FieldElement> m_b;
         std::shared_ptr<const Field> m_F;
-    };
-
-    template<>
-    class EllipticCurvePoint<CoordinatesType::Normal> : private EllipticCurvePointConcept {
-    private:
-        friend class EllipticCurve;
-
-    public:
-        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            EllipticCurvePoint result = lhs;
-            result -= rhs;
-            return result;
-        }
-
-        friend EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
-            lhs -= rhs;
-            return lhs;
-        }
-
-        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
-            rhs -= lhs;
-            rhs.negative();
-            return rhs;
-        }
-
-        friend EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
-            lhs -= rhs;
-            return lhs;
-        }
-
-        friend EllipticCurvePoint operator*(const EllipticCurvePoint& point, const uint& value) {
-            EllipticCurvePoint result = point;
-            result *= value;
-            return result;
-        }
-
-        friend EllipticCurvePoint operator*(EllipticCurvePoint&& point, const uint& value) {
-            point *= value;
-            return point;
-        }
-
-        friend EllipticCurvePoint operator*(const uint& value, const EllipticCurvePoint& point) {
-            EllipticCurvePoint result = point;
-            result *= value;
-            return result;
-        }
-
-        friend EllipticCurvePoint operator*(const uint& value, EllipticCurvePoint&& point) {
-            point *= value;
-            return point;
-        }
-
-        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
-        }
-
-        EllipticCurvePoint operator-() const {
-            EllipticCurvePoint result = *this;
-            result.negative();
-            return result;
-        }
-
-        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
-            if (m_is_null) {
-                return *this = other;
-            } else if (other.m_is_null) {
-                return *this;
-            }
-
-            FieldElement k = m_F->element(0);
-
-            if (m_x == other.m_x) {
-                if (m_y == -other.m_y) {
-                    m_x = m_F->element(0);
-                    m_y = m_F->element(1);
-                    m_is_null = true;
-                    return *this;
-                }
-
-                k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
-            } else {
-                k = (other.m_y - m_y) / (other.m_x - m_x);
-            }
-
-            FieldElement x = FieldElement::pow(k, 2) - m_x - other.m_x;
-            m_y = k * (m_x - x) - m_y;
-            m_x = x;
-
-            assert(is_valid()
-                   && "EllipticCurvePoint<CoordinatesType::Normal>::operator+= : invalid coordinates");
-            return *this;
-        }
-
-        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
-            EllipticCurvePoint temp = other;
-            temp.negative();
-            return *this += temp;
-        }
-
-        EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
-            other.negative();
-            return *this += other;
-        }
-
-        EllipticCurvePoint& operator*=(const uint& value) {
-            NAF::wnaf_form wnaf_form = NAF::get_wnaf(value);
-            EllipticCurvePoint two_p = *this + *this;
-            std::vector<EllipticCurvePoint> kp = {*this};
-
-            for (size_t i = 1; i < NAF::c_kp_number; ++i) {
-                kp.emplace_back(kp.back() + two_p);
-            }
-
-            m_is_null = true;
-
-            for (size_t i = wnaf_form.size(); i > 0; --i) {
-                *this += *this;
-
-                if (wnaf_form[i - 1].value != 0) {
-                    if (!wnaf_form[i - 1].is_negative) {
-                        *this += kp[wnaf_form[i - 1].value >> 1];
-                    } else {
-                        *this -= kp[wnaf_form[i - 1].value >> 1];
-                    }
-                }
-            }
-
-            return *this;
-        }
-
-        const FieldElement& get_x() const {
-            return m_x;
-        }
-
-        const FieldElement& get_y() const {
-            return m_y;
-        }
-
-        bool is_zero() const {
-            return m_is_null;
-        }
-
-    private:
-        static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
-                                             std::shared_ptr<const FieldElement>
-                                                 b,
-                                             std::shared_ptr<const Field>
-                                                 F) {
-            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
-        }
-
-        EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
-                           std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
-                           std::shared_ptr<const Field> F, bool is_null = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null), m_x {x}, m_y {y} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-        }
-
-        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
-                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
-                           bool is_null = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
-            m_x {std::move(x)},
-            m_y {y} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-        }
-
-        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
-                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
-                           bool is_null = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
-            m_x {x},
-            m_y {std::move(y)} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-        }
-
-        EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
-                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
-                           bool is_null = false) :
-            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
-            m_x {std::move(x)},
-            m_y {std::move(y)} {
-            assert(
-                is_valid()
-                && "EllipticCurvePoint<CoordinatesType::Normal>::EllipticCurvePoint : invalid coordinates");
-        }
-
-        EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
-        }
-
-        void negative() {
-            m_y = -m_y;
-        }
-
-        bool is_valid() const {
-            if (m_is_null) {
-                return true;
-            }
-
-            FieldElement value = FieldElement::pow(m_x, 3) + *m_a * m_x + *m_b;
-            return FieldElement::pow(m_y, 2) == value;
-        }
-
-        FieldElement m_x;
-        FieldElement m_y;
     };
 }   // namespace ECG
 

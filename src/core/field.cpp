@@ -203,6 +203,11 @@ namespace ECG {
         return result;
     }
 
+    FieldElement FieldElement::inverse(FieldElement&& element) {
+        element.inverse();
+        return element;
+    }
+
     FieldElement FieldElement::pow(const FieldElement& element, const uint& power) {
         if ((power & 1) != 0) {
             if (power == 1) {

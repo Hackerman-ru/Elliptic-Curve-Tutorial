@@ -3,27 +3,10 @@
 #include <elliptic-curve.h>
 
 using namespace ECG;
+using enum CoordinatesType;
+
 static constexpr uint c_find_y_n = 53617;   // e = 4
 static constexpr size_t c_kp_timing_n = 2281337;
-
-TEST(CorrectnessTest, Creating) {
-    Field F(1000000007);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(17);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-}
-
-TEST(CorrectnessTest, Zero) {
-    Field F(1000000007);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(17);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> Z = E.null_point();
-    ASSERT_TRUE(Z.is_zero());
-    auto two_Z = Z + Z;
-    ASSERT_TRUE(two_Z.is_zero());
-}
 
 TEST(CorrectnessTest, FindY) {
     Field F(29);
@@ -33,55 +16,6 @@ TEST(CorrectnessTest, FindY) {
     auto opt = E.point_with_x_equal_to(F.element(4));
     ASSERT_TRUE(opt.has_value());
     ASSERT_EQ(opt.value().get_y().value(), 18);
-}
-
-TEST(CorrectnessTest, Addition) {
-    Field F(29);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(28);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-    EllipticCurvePoint<> Z = E.null_point();
-    ASSERT_EQ(P + Z, P);
-    auto twoP = P + P;
-    auto newP = twoP - P;
-    ASSERT_EQ(newP, P);
-}
-
-TEST(CorrectnessTest, kP) {
-    Field F(29);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(28);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-    size_t k = 1985;
-    EllipticCurvePoint<> kP = P * k;
-    EllipticCurvePoint<> right_kP = P;
-    for (size_t i = 1; i < k; ++i) {
-        right_kP += P;
-    }
-    ASSERT_EQ(kP, right_kP);
-}
-
-TEST(TimingTest, kPbyMultiplying) {
-    Field F(29);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(28);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-    EllipticCurvePoint<> kP = P * c_kp_timing_n;
-}
-
-TEST(TimingTest, kPbyAddition) {
-    Field F(29);
-    FieldElement a = F.element(0);
-    FieldElement b = F.element(28);
-    EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
-    EllipticCurvePoint<> kP = P;
-    for (size_t i = 1; i < c_kp_timing_n; ++i) {
-        kP += P;
-    }
 }
 
 TEST(StressTest, FindMultipleY) {
@@ -135,3 +69,145 @@ TEST(StressTest, FindMultipleY) {
 
     ASSERT_GE(point_number, 1);
 }
+
+// Normal
+TEST(NormalCorrectnessTest, Creating) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    FieldElement x = F.element(4);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(x).value();
+    ASSERT_EQ(P.get_x(), x);
+}
+
+TEST(NormalCorrectnessTest, Zero) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    auto Z = E.null_point<Normal>();
+    ASSERT_TRUE(Z.is_zero());
+    auto two_Z = Z + Z;
+    ASSERT_TRUE(two_Z.is_zero());
+}
+
+TEST(NormalCorrectnessTest, Addition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+    auto Z = E.null_point<Normal>();
+    ASSERT_EQ(P + Z, P);
+    auto twoP = P + P;
+    auto newP = twoP - P;
+    ASSERT_EQ(newP, P);
+}
+
+TEST(NormalCorrectnessTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+    size_t k = 1985;
+    auto kP = P * k;
+    EllipticCurvePoint<Normal> right_kP = P;
+    for (size_t i = 1; i < k; ++i) {
+        right_kP += P;
+    }
+    ASSERT_EQ(kP, right_kP);
+}
+
+TEST(NormalTimingTest, kPbyMultiplying) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+    auto kP = P * c_kp_timing_n;
+}
+
+TEST(NormalTimingTest, kPbyAddition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+    EllipticCurvePoint<Normal> kP = P;
+    for (size_t i = 1; i < c_kp_timing_n; ++i) {
+        kP += P;
+    }
+}
+
+// Projective
+TEST(ProjectiveCorrectnessTest, Creating) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    FieldElement x = F.element(4);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(x).value();
+    ASSERT_EQ(P.get_x(), x);
+}
+
+TEST(ProjectiveCorrectnessTest, Zero) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    auto Z = E.null_point<Projective>();
+    ASSERT_TRUE(Z.is_zero());
+    auto two_Z = Z + Z;
+    ASSERT_TRUE(two_Z.is_zero());
+}
+
+TEST(ProjectiveCorrectnessTest, Addition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+    auto Z = E.null_point<Projective>();
+    ASSERT_EQ(P + Z, P);
+    auto twoP = P + P;
+    auto newP = twoP - P;
+    ASSERT_EQ(newP, P);
+}
+
+//TEST(ProjectiveCorrectnessTest, kP) {
+//    Field F(29);
+//    FieldElement a = F.element(0);
+//    FieldElement b = F.element(28);
+//    EllipticCurve E(a, b, F);
+//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+//    size_t k = 1985;
+//    auto kP = P * k;
+//    EllipticCurvePoint<Projective> right_kP = P;
+//    for (size_t i = 1; i < k; ++i) {
+//        right_kP += P;
+//    }
+//    ASSERT_EQ(kP, right_kP);
+//}
+//
+//TEST(ProjectiveTimingTest, kPbyMultiplying) {
+//    Field F(29);
+//    FieldElement a = F.element(0);
+//    FieldElement b = F.element(28);
+//    EllipticCurve E(a, b, F);
+//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+//    auto kP = P * c_kp_timing_n;
+//}
+//
+//TEST(ProjectiveTimingTest, kPbyAddition) {
+//    Field F(29);
+//    FieldElement a = F.element(0);
+//    FieldElement b = F.element(28);
+//    EllipticCurve E(a, b, F);
+//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+//    EllipticCurvePoint<Projective> kP = P;
+//    for (size_t i = 1; i < c_kp_timing_n; ++i) {
+//        kP += P;
+//    }
+//}

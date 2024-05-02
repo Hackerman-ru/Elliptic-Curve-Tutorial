@@ -11,6 +11,7 @@ namespace ECG {
 
     public:
         static FieldElement inverse(const FieldElement& element);
+        static FieldElement inverse(FieldElement&& element);
         static FieldElement pow(const FieldElement& element, const uint& power);
 
         friend FieldElement operator+(const FieldElement& lhs, const FieldElement& rhs);

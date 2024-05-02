@@ -14,7 +14,7 @@ TEST(SimpleTesting, Creating) {
     ASSERT_EQ(a.value(), 1);
 }
 
-TEST(SimpleTesting, Arithmetic) {
+TEST(SimpleTesting, Multiplication) {
     Field f("7");
     FieldElement a = f.element(3);
     FieldElement b = a;
@@ -22,14 +22,14 @@ TEST(SimpleTesting, Arithmetic) {
     ASSERT_EQ(c, 2);
 }
 
-TEST(SimpleTesting, ArithmeticNegotiation) {
+TEST(SimpleTesting, Negotiation) {
     Field f("7");
     FieldElement a = -f.element(3);
     uint c = FieldElement::pow(a, 10).value();
     ASSERT_EQ(c, 4);
 }
 
-TEST(SimpleTesting, ArithmeticInversion) {
+TEST(SimpleTesting, Inversion) {
     Field g("1000000007");
     FieldElement a = g.element("999999999");
     FieldElement b = g.element(2);
