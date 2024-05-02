@@ -229,28 +229,26 @@ namespace ECG {
         }
 
         EllipticCurvePoint& operator*=(const uint& value) {
-            NAF naf = get_naf(value);
+            NAF::wnaf_form wnaf_form = NAF::get_wnaf(value);
+            EllipticCurvePoint two_p = *this + *this;
+            std::vector<EllipticCurvePoint> kp = {*this};
 
-            while (!naf.empty()) {
-                if (m_is_null) {
-                    return *this;
+            for (size_t i = 1; i < NAF::c_kp_number; ++i) {
+                kp.emplace_back(kp.back() + two_p);
+            }
+
+            m_is_null = true;
+
+            for (size_t i = wnaf_form.size(); i > 0; --i) {
+                *this += *this;
+
+                if (wnaf_form[i - 1].value != 0) {
+                    if (!wnaf_form[i - 1].is_negative) {
+                        *this += kp[wnaf_form[i - 1].value >> 1];
+                    } else {
+                        *this -= kp[wnaf_form[i - 1].value >> 1];
+                    }
                 }
-
-                Bit bit = naf.bit();
-
-                switch (bit) {
-                case Bit::Positive :
-                    *this = two_p_plus_q(*this, *this);
-                    break;
-                case Bit::Negative :
-                    *this = two_p_plus_q(*this, -*this);
-                    break;
-                case Bit::Zero :
-                    *this += *this;
-                    break;
-                }
-
-                naf >>= 1;
             }
 
             return *this;
@@ -269,30 +267,6 @@ namespace ECG {
         }
 
     private:
-        static EllipticCurvePoint two_p_plus_q(const EllipticCurvePoint& P, const EllipticCurvePoint& Q) {
-            // P != +- Q, and P != +-(P + Q) <=> Q != 0 && 2P != Q
-            assert(P.m_x != Q.m_x && !Q.m_is_null && (P + P) != Q
-                   && "EllipticCurvePoint<CoordinatesType::Normal>::two_p_plus_q : wrong arguments");
-
-            // Algorithm implementation, no common sense.
-            // See https://www.mathnet.ru/links/1e701a4b8a067ae27f9cdf3f310ea269/tdm187.pdf, page 17.
-            FieldElement a = Q.m_x - P.m_x;
-            FieldElement b = FieldElement::pow(a, 2);
-            FieldElement c = Q.m_y - P.m_y;
-            FieldElement d = b * ((P.m_x << 1) + Q.m_x) - FieldElement::pow(c, 2);
-            FieldElement D = d * a;
-            FieldElement I = D;
-            I.inverse();
-            FieldElement A = d * I;
-            FieldElement B = b * a * I;
-            FieldElement l1 = c * A;
-            FieldElement l2 = (P.m_y << 1) * B - l1;
-            FieldElement x = (l2 - l1) * (l2 + l1) + Q.m_x;
-            FieldElement y = -P.m_y + l2 * (P.m_x - x);
-
-            return EllipticCurvePoint(x, y, P.m_a, P.m_b, P.m_F);
-        }
-
         static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
                                              std::shared_ptr<const FieldElement>
                                                  b,

@@ -129,12 +129,11 @@ namespace ECG {
         while (current_r != 0) {
             current_z *= cache.b_second_powers[e - current_r];
 
-            for (size_t next_r = current_r; next_r > 0; --next_r) {
-                z_u_powers_of_2[next_r - 1] *= cache.b_second_u_powers[e - (current_r - next_r + 1)];
+            for (size_t next_r = 0; next_r < current_r; ++next_r) {
+                z_u_powers_of_2[next_r] *= cache.b_second_u_powers[e - (current_r - next_r)];
 
-                if (z_u_powers_of_2[next_r - 1] == one) {
-                    --current_r;
-                } else {
+                if (z_u_powers_of_2[next_r] == one) {
+                    current_r = next_r;
                     break;
                 }
             }

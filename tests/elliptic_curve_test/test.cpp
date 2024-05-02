@@ -3,9 +3,10 @@
 #include <elliptic-curve.h>
 
 using namespace ECG;
-static constexpr uint find_y_prime = 99371;
+static constexpr uint c_find_y_n = 53617;   // e = 4
+static constexpr size_t c_kp_timing_n = 2281337;
 
-TEST(SimpleTest, Creating) {
+TEST(CorrectnessTest, Creating) {
     Field F(1000000007);
     FieldElement a = F.element(0);
     FieldElement b = F.element(17);
@@ -13,16 +14,18 @@ TEST(SimpleTest, Creating) {
     EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
 }
 
-TEST(SimpleTest, Zero) {
+TEST(CorrectnessTest, Zero) {
     Field F(1000000007);
     FieldElement a = F.element(0);
     FieldElement b = F.element(17);
     EllipticCurve E(a, b, F);
-    EllipticCurvePoint<> P = E.null_point();
-    ASSERT_TRUE(P.is_zero());
+    EllipticCurvePoint<> Z = E.null_point();
+    ASSERT_TRUE(Z.is_zero());
+    auto two_Z = Z + Z;
+    ASSERT_TRUE(two_Z.is_zero());
 }
 
-TEST(SimpleTest, FindY) {
+TEST(CorrectnessTest, FindY) {
     Field F(29);
     FieldElement a = F.element(0);
     FieldElement b = F.element(28);
@@ -32,15 +35,64 @@ TEST(SimpleTest, FindY) {
     ASSERT_EQ(opt.value().get_y().value(), 18);
 }
 
-TEST(HardTest, FindMultipleY) {
-    Field F(find_y_prime);
+TEST(CorrectnessTest, Addition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
+    EllipticCurvePoint<> Z = E.null_point();
+    ASSERT_EQ(P + Z, P);
+    auto twoP = P + P;
+    auto newP = twoP - P;
+    ASSERT_EQ(newP, P);
+}
+
+TEST(CorrectnessTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
+    size_t k = 1984;
+    EllipticCurvePoint<> kP = P * k;
+    EllipticCurvePoint<> right_kP = P;
+    for (size_t i = 1; i < k; ++i) {
+        right_kP += P;
+    }
+    ASSERT_EQ(kP, right_kP);
+}
+
+TEST(TimingTest, kPbyMultiplying) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
+    EllipticCurvePoint<> kP = P * c_kp_timing_n;
+}
+
+TEST(TimingTest, kPbyAddition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<> P = E.point_with_x_equal_to(F.element(4)).value();
+    EllipticCurvePoint<> kP = P;
+    for (size_t i = 1; i < c_kp_timing_n; ++i) {
+        kP += P;
+    }
+}
+
+TEST(StressTest, FindMultipleY) {
+    Field F(c_find_y_n);
     static const FieldElement one = F.element(1);
     FieldElement a = F.element(1984);
     FieldElement b = F.element(1337);
     EllipticCurve E(a, b, F);
     uint point_number = 0;
 
-    for (uint i = 0; i < find_y_prime; ++i) {
+    for (uint i = 0; i < c_find_y_n; ++i) {
         FieldElement x = F.element(i);
         FieldElement value = FieldElement::pow(x, 3) + a * x + b;
         auto opt = E.point_with_x_equal_to(x);
@@ -52,7 +104,7 @@ TEST(HardTest, FindMultipleY) {
             ASSERT_EQ(y2, value);
             ++point_number;
         } else {
-            value.pow((find_y_prime - 1) >> 1);
+            value.pow((c_find_y_n - 1) >> 1);
             ASSERT_NE(value, one);
         }
     }
@@ -64,7 +116,7 @@ TEST(HardTest, FindMultipleY) {
     E = EllipticCurve(a, b, F);
     point_number = 0;
 
-    for (uint i = 0; i < find_y_prime; ++i) {
+    for (uint i = 0; i < c_find_y_n; ++i) {
         FieldElement x = F.element(i);
         FieldElement value = FieldElement::pow(x, 3) + a * x + b;
         auto opt = E.point_with_x_equal_to(x);
@@ -76,7 +128,7 @@ TEST(HardTest, FindMultipleY) {
             ASSERT_EQ(y2, value);
             ++point_number;
         } else {
-            value.pow((find_y_prime - 1) >> 1);
+            value.pow((c_find_y_n - 1) >> 1);
             ASSERT_NE(value, one);
         }
     }

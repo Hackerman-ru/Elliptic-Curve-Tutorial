@@ -4,27 +4,19 @@
 #include "uint.h"
 
 namespace ECG {
-    enum class Bit {
-        Positive,
-        Negative,
-        Zero,
-    };
+    namespace NAF {
+        constexpr size_t c_width = 3;
+        constexpr size_t c_kp_number = 1 << (c_width - 2);
+        constexpr uint16_t c_mask_modulo_2_pow_w = (1 << c_width) - 1;
 
-    class NAF {
-    public:
-        NAF(const uint& positive_bits, const uint& negative_bits);
+        struct Coefficient {
+            uint16_t value;
+            bool is_negative;
+        };
 
-        NAF operator>>(const size_t& shift) const;
-        NAF& operator>>=(const size_t& shift);
+        using wnaf_form = std::vector<Coefficient>;
 
-        bool empty() const;
-        Bit bit() const;
-
-    private:
-        uint m_positive_bits;
-        uint m_negative_bits;
-    };
-
-    NAF get_naf(const uint& value);
+        wnaf_form get_wnaf(uint value);
+    }   // namespace NAF
 }   // namespace ECG
 #endif
