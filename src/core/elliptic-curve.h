@@ -287,10 +287,16 @@ namespace ECG {
                 return;
             }
 
+            if (!m_y.is_invertible()) {
+                m_is_null = true;
+                return;
+            }
+
             FieldElement k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
             FieldElement x = FieldElement::pow(k, 2) - (m_x << 1);
             m_y = k * (m_x - x) - m_y;
             m_x = x;
+            assert(is_valid() && "EllipticCurvePoint<CoordinatesType::Normal>::twice : invalid coordinates");
         }
 
         bool is_valid() const final {
@@ -458,6 +464,11 @@ namespace ECG {
 
         void twice() final {
             if (m_is_null) {
+                return;
+            }
+
+            if (!m_Y.is_invertible()) {
+                m_is_null = true;
                 return;
             }
 
@@ -643,6 +654,11 @@ namespace ECG {
                 return;
             }
 
+            if (!m_Y.is_invertible()) {
+                m_is_null = true;
+                return;
+            }
+
             FieldElement Y2 = FieldElement::pow(m_Y, 2);
             FieldElement Y4 = FieldElement::pow(Y2, 2);
             FieldElement V = (m_X * Y2) << 2;
@@ -825,6 +841,11 @@ namespace ECG {
 
         void twice() final {
             if (m_is_null) {
+                return;
+            }
+
+            if (!m_Y.is_invertible()) {
+                m_is_null = true;
                 return;
             }
 
