@@ -178,7 +178,7 @@ namespace ECG {
             x1 += modulus;
         }
 
-        y = x1 - y1 * (a / b);
+        y = x1 - temp;
         return d;
     }
 

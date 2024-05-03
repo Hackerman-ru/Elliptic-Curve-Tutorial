@@ -6,6 +6,8 @@
 
 using namespace ECG;
 
+static const uint inversion_hard_n = 1599827;
+
 TEST(SimpleTesting, Creating) {
     Field f("7");
     FieldElement a = f.element(10);
@@ -30,9 +32,9 @@ TEST(SimpleTesting, Negotiation) {
 }
 
 TEST(SimpleTesting, Inversion) {
-    Field g("1000000007");
-    FieldElement a = g.element("999999999");
-    FieldElement b = g.element(2);
+    Field f("1000000007");
+    FieldElement a = f.element("999999999");
+    FieldElement b = f.element(2);
     FieldElement inverse = a * b;
     inverse.inverse();
     uint result = inverse.value();
@@ -41,17 +43,28 @@ TEST(SimpleTesting, Inversion) {
 }
 
 TEST(SimpleTesting, Comparison) {
-    Field g("1000000007");
-    FieldElement a = g.element("999999999");
-    FieldElement b = g.element(2);
+    Field f("1000000007");
+    FieldElement a = f.element("999999999");
+    FieldElement b = f.element(2);
     ASSERT_EQ(a < b, false);
 }
 
 TEST(SimpleTesting, Shift) {
-    Field g("1000000007");
-    FieldElement a = g.element("999999999");
+    Field f("1000000007");
+    FieldElement a = f.element("999999999");
     FieldElement b = a << uint("30");
     uint result = b.value();
     uint correct_result("410065471");
     ASSERT_EQ(result, correct_result);
+}
+
+TEST(HardTest, Inversion) {
+    Field f(inversion_hard_n);
+    const FieldElement one = f.element(1);
+    for (uint i = 1; i < inversion_hard_n; ++i) {
+        FieldElement a = f.element(i);
+        FieldElement inv_a = FieldElement::inverse(a);
+        FieldElement result = a * inv_a;
+        ASSERT_EQ(result, one);
+    }
 }

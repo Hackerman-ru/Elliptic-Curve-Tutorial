@@ -18,11 +18,11 @@ namespace ECG {
         static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
         static constexpr size_t c_block_number = c_bits / c_block_size;
 
-        using blocks = std::array<block_t, c_block_number>;
-        blocks m_blocks = {};
-
         template<size_t V>
         friend class uint_t;
+
+        using blocks = std::array<block_t, c_block_number>;
+        blocks m_blocks = {};
 
     public:
         constexpr uint_t() = default;
@@ -44,8 +44,19 @@ namespace ECG {
             return *this = parse_into<uint_t>(str);
         }
 
-        // operator<=>
-        friend auto operator<=>(const uint_t& lhs, const uint_t& rhs) = default;
+        friend std::strong_ordering operator<=>(const uint_t& lhs, const uint_t& rhs) {
+            for (size_t i = c_block_number; i > 0; --i) {
+                if (lhs[i - 1] != rhs[i - 1]) {
+                    return lhs[i - 1] <=> rhs[i - 1];
+                }
+            }
+
+            return std::strong_ordering::equal;
+        }
+
+        friend bool operator==(const uint_t& lhs, const uint_t& rhs) {
+            return lhs.m_blocks == rhs.m_blocks;
+        }
 
         // operator+
         friend uint_t operator+(const uint_t& lhs, const uint_t& rhs) {

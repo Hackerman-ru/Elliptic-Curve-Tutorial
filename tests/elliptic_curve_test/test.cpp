@@ -6,7 +6,9 @@ using namespace ECG;
 using enum CoordinatesType;
 
 static constexpr uint c_find_y_n = 53617;   // e = 4
-static constexpr size_t c_kp_timing_n = 2281337;
+static const uint c_kp_timing_n("0xFFFFFFFFF00FFFFFFFFFFF1FFFFFFFFFFFFFF9FFFFAFFFFFFFFFFFFFFFF");
+static constexpr size_t c_kp_comparison_timing_n = 228133;
+static constexpr size_t c_doubling_timing_n = 228133;
 
 TEST(CorrectnessTest, FindY) {
     Field F(29);
@@ -126,7 +128,7 @@ TEST(NormalTimingTest, kPbyMultiplying) {
     FieldElement b = F.element(28);
     EllipticCurve E(a, b, F);
     EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
-    auto kP = P * c_kp_timing_n;
+    auto kP = P * c_kp_comparison_timing_n;
 }
 
 TEST(NormalTimingTest, kPbyAddition) {
@@ -136,8 +138,29 @@ TEST(NormalTimingTest, kPbyAddition) {
     EllipticCurve E(a, b, F);
     EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
     EllipticCurvePoint<Normal> kP = P;
-    for (size_t i = 1; i < c_kp_timing_n; ++i) {
+    for (size_t i = 1; i < c_kp_comparison_timing_n; ++i) {
         kP += P;
+    }
+}
+
+TEST(NormalTimingTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+    auto kP = P * c_kp_timing_n;
+}
+
+TEST(NormalTimingTest, Doubling) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(F.element(4)).value();
+
+    for (size_t i = 0; i < c_doubling_timing_n; ++i) {
+        P += P;
     }
 }
 
@@ -176,38 +199,243 @@ TEST(ProjectiveCorrectnessTest, Addition) {
     ASSERT_EQ(newP, P);
 }
 
-//TEST(ProjectiveCorrectnessTest, kP) {
-//    Field F(29);
-//    FieldElement a = F.element(0);
-//    FieldElement b = F.element(28);
-//    EllipticCurve E(a, b, F);
-//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
-//    size_t k = 1985;
-//    auto kP = P * k;
-//    EllipticCurvePoint<Projective> right_kP = P;
-//    for (size_t i = 1; i < k; ++i) {
-//        right_kP += P;
-//    }
-//    ASSERT_EQ(kP, right_kP);
-//}
-//
-//TEST(ProjectiveTimingTest, kPbyMultiplying) {
-//    Field F(29);
-//    FieldElement a = F.element(0);
-//    FieldElement b = F.element(28);
-//    EllipticCurve E(a, b, F);
-//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
-//    auto kP = P * c_kp_timing_n;
-//}
-//
-//TEST(ProjectiveTimingTest, kPbyAddition) {
-//    Field F(29);
-//    FieldElement a = F.element(0);
-//    FieldElement b = F.element(28);
-//    EllipticCurve E(a, b, F);
-//    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
-//    EllipticCurvePoint<Projective> kP = P;
-//    for (size_t i = 1; i < c_kp_timing_n; ++i) {
-//        kP += P;
-//    }
-//}
+TEST(ProjectiveCorrectnessTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+    size_t k = 1985;
+    auto kP = P * k;
+    EllipticCurvePoint<Projective> right_kP = P;
+    for (size_t i = 1; i < k; ++i) {
+        right_kP += P;
+    }
+    ASSERT_EQ(kP, right_kP);
+}
+
+TEST(ProjectiveTimingTest, kPbyMultiplying) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+    auto kP = P * c_kp_comparison_timing_n;
+}
+
+TEST(ProjectiveTimingTest, kPbyAddition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+    EllipticCurvePoint<Projective> kP = P;
+    for (size_t i = 1; i < c_kp_comparison_timing_n; ++i) {
+        kP += P;
+    }
+}
+
+TEST(ProjectiveTimingTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+    auto kP = P * c_kp_timing_n;
+}
+
+TEST(ProjectiveTimingTest, Doubling) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Projective> P = E.point_with_x_equal_to<Projective>(F.element(4)).value();
+
+    for (size_t i = 0; i < c_doubling_timing_n; ++i) {
+        P += P;
+    }
+}
+
+// Jacobi
+TEST(JacobiCorrectnessTest, Creating) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    FieldElement x = F.element(4);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(x).value();
+    ASSERT_EQ(P.get_x(), x);
+}
+
+TEST(JacobiCorrectnessTest, Zero) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    auto Z = E.null_point<Jacobi>();
+    ASSERT_TRUE(Z.is_zero());
+    auto two_Z = Z + Z;
+    ASSERT_TRUE(two_Z.is_zero());
+}
+
+TEST(JacobiCorrectnessTest, Addition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+    auto Z = E.null_point<Jacobi>();
+    ASSERT_EQ(P + Z, P);
+    auto twoP = P + P;
+    auto newP = twoP - P;
+    ASSERT_EQ(newP, P);
+}
+
+TEST(JacobiCorrectnessTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+    size_t k = 1985;
+    auto kP = P * k;
+    EllipticCurvePoint<Jacobi> right_kP = P;
+    for (size_t i = 1; i < k; ++i) {
+        right_kP += P;
+    }
+    ASSERT_EQ(kP, right_kP);
+}
+
+TEST(JacobiTimingTest, kPbyMultiplying) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+    auto kP = P * c_kp_comparison_timing_n;
+}
+
+TEST(JacobiTimingTest, kPbyAddition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+    EllipticCurvePoint<Jacobi> kP = P;
+    for (size_t i = 1; i < c_kp_comparison_timing_n; ++i) {
+        kP += P;
+    }
+}
+
+TEST(JacobiTimingTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+    auto kP = P * c_kp_timing_n;
+}
+
+TEST(JacobiTimingTest, Doubling) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<Jacobi> P = E.point_with_x_equal_to<Jacobi>(F.element(4)).value();
+
+    for (size_t i = 0; i < c_doubling_timing_n; ++i) {
+        P += P;
+    }
+}
+
+// ModifiedJacobi
+TEST(ModifiedJacobiCorrectnessTest, Creating) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    FieldElement x = F.element(4);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(x).value();
+    ASSERT_EQ(P.get_x(), x);
+}
+
+TEST(ModifiedJacobiCorrectnessTest, Zero) {
+    Field F(1000000007);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(17);
+    EllipticCurve E(a, b, F);
+    auto Z = E.null_point<ModifiedJacobi>();
+    ASSERT_TRUE(Z.is_zero());
+    auto two_Z = Z + Z;
+    ASSERT_TRUE(two_Z.is_zero());
+}
+
+TEST(ModifiedJacobiCorrectnessTest, Addition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+    auto Z = E.null_point<ModifiedJacobi>();
+    ASSERT_EQ(P + Z, P);
+    auto twoP = P + P;
+    auto newP = twoP - P;
+    ASSERT_EQ(newP, P);
+}
+
+TEST(ModifiedJacobiCorrectnessTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+    size_t k = 1985;
+    auto kP = P * k;
+    EllipticCurvePoint<ModifiedJacobi> right_kP = P;
+    for (size_t i = 1; i < k; ++i) {
+        right_kP += P;
+    }
+    ASSERT_EQ(kP, right_kP);
+}
+
+TEST(ModifiedJacobiTimingTest, kPbyMultiplying) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+    auto kP = P * c_kp_comparison_timing_n;
+}
+
+TEST(ModifiedJacobiTimingTest, kPbyAddition) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+    EllipticCurvePoint<ModifiedJacobi> kP = P;
+    for (size_t i = 1; i < c_kp_comparison_timing_n; ++i) {
+        kP += P;
+    }
+}
+
+TEST(ModifiedJacobiTimingTest, kP) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+    auto kP = P * c_kp_timing_n;
+}
+
+TEST(ModifiedJacobiTimingTest, Doubling) {
+    Field F(29);
+    FieldElement a = F.element(0);
+    FieldElement b = F.element(28);
+    EllipticCurve E(a, b, F);
+    EllipticCurvePoint<ModifiedJacobi> P = E.point_with_x_equal_to<ModifiedJacobi>(F.element(4)).value();
+
+    for (size_t i = 0; i < c_doubling_timing_n; ++i) {
+        P += P;
+    }
+}
