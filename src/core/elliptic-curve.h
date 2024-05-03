@@ -185,8 +185,8 @@ namespace ECG {
                 return *this;
             }
 
-            FieldElement k = (other.m_y - m_y) / (other.m_x - m_x);
-            FieldElement x = FieldElement::pow(k, 2) - m_x - other.m_x;
+            const FieldElement k = (other.m_y - m_y) / (other.m_x - m_x);
+            const FieldElement x = FieldElement::pow(k, 2) - m_x - other.m_x;
             m_y = k * (m_x - x) - m_y;
             m_x = x;
 
@@ -292,8 +292,8 @@ namespace ECG {
                 return;
             }
 
-            FieldElement k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
-            FieldElement x = FieldElement::pow(k, 2) - (m_x << 1);
+            const FieldElement k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
+            const FieldElement x = FieldElement::pow(k, 2) - (m_x << 1);
             m_y = k * (m_x - x) - m_y;
             m_x = x;
             assert(is_valid() && "EllipticCurvePoint<CoordinatesType::Normal>::twice : invalid coordinates");
@@ -304,8 +304,8 @@ namespace ECG {
                 return true;
             }
 
-            FieldElement lhs = FieldElement::pow(m_y, 2);
-            FieldElement rhs = FieldElement::pow(m_x, 3) + *m_a * m_x + *m_b;
+            const FieldElement lhs = FieldElement::pow(m_y, 2);
+            const FieldElement rhs = FieldElement::pow(m_x, 3) + *m_a * m_x + *m_b;
             return lhs == rhs;
         }
 
@@ -322,10 +322,10 @@ namespace ECG {
 
     public:
         friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            FieldElement X1Z2 = lhs.m_X * rhs.m_Z;
-            FieldElement X2Z1 = rhs.m_X * lhs.m_Z;
-            FieldElement Y1Z2 = lhs.m_Y * rhs.m_Z;
-            FieldElement Y2Z1 = rhs.m_Y * lhs.m_Z;
+            const FieldElement X1Z2 = lhs.m_X * rhs.m_Z;
+            const FieldElement X2Z1 = rhs.m_X * lhs.m_Z;
+            const FieldElement Y1Z2 = lhs.m_Y * rhs.m_Z;
+            const FieldElement Y2Z1 = rhs.m_Y * lhs.m_Z;
             return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
         }
 
@@ -357,12 +357,12 @@ namespace ECG {
                 return *this;
             }
 
-            FieldElement u = Y2Z1 - Y1Z2;
-            FieldElement v = X2Z1 - X1Z2;
-            FieldElement v2 = FieldElement::pow(v, 2);
-            FieldElement v3 = v2 * v;
+            const FieldElement u = Y2Z1 - Y1Z2;
+            const FieldElement v = X2Z1 - X1Z2;
+            const FieldElement v2 = FieldElement::pow(v, 2);
+            const FieldElement v3 = v2 * v;
             const FieldElement Z1Z2 = m_Z * other.m_Z;
-            FieldElement A = FieldElement::pow(u, 2) * Z1Z2 - v3 - ((v2 * X1Z2) << 1);
+            const FieldElement A = FieldElement::pow(u, 2) * Z1Z2 - v3 - ((v2 * X1Z2) << 1);
 
             m_X = v * A;
             m_Y = u * (v2 * X1Z2 - A) - v3 * Y1Z2;
@@ -472,12 +472,13 @@ namespace ECG {
                 return;
             }
 
-            FieldElement w = *m_a * FieldElement::pow(m_Z, 2) + m_F->element(3) * FieldElement::pow(m_X, 2);
-            FieldElement s = m_Y * m_Z;
-            FieldElement s2 = FieldElement::pow(s, 2);
-            FieldElement s3 = s2 * s;
-            FieldElement B = m_X * m_Y * s;
-            FieldElement h = FieldElement::pow(w, 2) - (B << 3);
+            const FieldElement w =
+                *m_a * FieldElement::pow(m_Z, 2) + m_F->element(3) * FieldElement::pow(m_X, 2);
+            const FieldElement s = m_Y * m_Z;
+            const FieldElement s2 = FieldElement::pow(s, 2);
+            const FieldElement s3 = s2 * s;
+            const FieldElement B = m_X * m_Y * s;
+            const FieldElement h = FieldElement::pow(w, 2) - (B << 3);
             m_X = (h * s) << 1;
             m_Y = w * ((B << 2) - h) - ((FieldElement::pow(m_Y, 2) * s2) << 3);
             m_Z = s3 << 3;
@@ -490,10 +491,10 @@ namespace ECG {
                 return true;
             }
 
-            FieldElement Z2 = FieldElement::pow(m_Z, 2);
-            FieldElement Z3 = m_Z * Z2;
-            FieldElement lhs = FieldElement::pow(m_Y, 2) * m_Z;
-            FieldElement rhs = FieldElement::pow(m_X, 3) + *m_a * m_X * Z2 + *m_b * Z3;
+            const FieldElement Z2 = FieldElement::pow(m_Z, 2);
+            const FieldElement Z3 = m_Z * Z2;
+            const FieldElement lhs = FieldElement::pow(m_Y, 2) * m_Z;
+            const FieldElement rhs = FieldElement::pow(m_X, 3) + *m_a * m_X * Z2 + *m_b * Z3;
             return lhs == rhs;
         }
 
@@ -511,10 +512,10 @@ namespace ECG {
 
     public:
         friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            FieldElement X1Z2 = lhs.m_X * FieldElement::pow(rhs.m_Z, 2);
-            FieldElement X2Z1 = rhs.m_X * FieldElement::pow(lhs.m_Z, 2);
-            FieldElement Y1Z2 = lhs.m_Y * FieldElement::pow(rhs.m_Z, 3);
-            FieldElement Y2Z1 = rhs.m_Y * FieldElement::pow(lhs.m_Z, 3);
+            const FieldElement X1Z2 = lhs.m_X * FieldElement::pow(rhs.m_Z, 2);
+            const FieldElement X2Z1 = rhs.m_X * FieldElement::pow(lhs.m_Z, 2);
+            const FieldElement Y1Z2 = lhs.m_Y * FieldElement::pow(rhs.m_Z, 3);
+            const FieldElement Y2Z1 = rhs.m_Y * FieldElement::pow(lhs.m_Z, 3);
             return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
         }
 
@@ -546,10 +547,10 @@ namespace ECG {
                 return *this;
             }
 
-            FieldElement H = X2Z1 - X1Z2;
-            FieldElement H2 = FieldElement::pow(H, 2);
-            FieldElement H3 = H2 * H;
-            FieldElement r = Y2Z1 - Y1Z2;
+            const FieldElement H = X2Z1 - X1Z2;
+            const FieldElement H2 = FieldElement::pow(H, 2);
+            const FieldElement H3 = H2 * H;
+            const FieldElement r = Y2Z1 - Y1Z2;
 
             m_X = -H3 - ((X1Z2 * H2) << 1) + FieldElement::pow(r, 2);
             m_Y = -Y1Z2 * H3 + r * (X1Z2 * H2 - m_X);
@@ -659,10 +660,11 @@ namespace ECG {
                 return;
             }
 
-            FieldElement Y2 = FieldElement::pow(m_Y, 2);
-            FieldElement Y4 = FieldElement::pow(Y2, 2);
-            FieldElement V = (m_X * Y2) << 2;
-            FieldElement W = m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z, 4);
+            const FieldElement Y2 = FieldElement::pow(m_Y, 2);
+            const FieldElement Y4 = FieldElement::pow(Y2, 2);
+            const FieldElement V = (m_X * Y2) << 2;
+            const FieldElement W =
+                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z, 4);
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -674,16 +676,216 @@ namespace ECG {
                 return true;
             }
 
-            FieldElement Z2 = FieldElement::pow(m_Z, 2);
-            FieldElement Z4 = FieldElement::pow(Z2, 2);
-            FieldElement Z6 = Z4 * Z2;
-            FieldElement value = FieldElement::pow(m_X, 3) + *m_a * m_X * Z4 + *m_b * Z6;
+            const FieldElement Z2 = FieldElement::pow(m_Z, 2);
+            const FieldElement Z4 = FieldElement::pow(Z2, 2);
+            const FieldElement Z6 = Z4 * Z2;
+            const FieldElement value = FieldElement::pow(m_X, 3) + *m_a * m_X * Z4 + *m_b * Z6;
             return FieldElement::pow(m_Y, 2) == value;
         }
 
         FieldElement m_X;
         FieldElement m_Y;
         FieldElement m_Z;
+    };
+
+    template<>
+    class EllipticCurvePoint<CoordinatesType::JacobiChudnovski> : public EllipticCurvePointConcept {
+    private:
+        friend class EllipticCurve;
+        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
+        friend void multiply<CoordinatesType::JacobiChudnovski>(EllipticCurvePoint& point, const uint& value);
+
+    public:
+        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+            const FieldElement X1Z2 = lhs.m_X * rhs.m_Z2;
+            const FieldElement X2Z1 = rhs.m_X * lhs.m_Z2;
+            const FieldElement Y1Z2 = lhs.m_Y * rhs.m_Z3;
+            const FieldElement Y2Z1 = rhs.m_Y * lhs.m_Z3;
+            return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
+        }
+
+        EllipticCurvePoint operator-() const {
+            EllipticCurvePoint result = *this;
+            result.negative();
+            return result;
+        }
+
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+            if (m_is_null) {
+                return *this = other;
+            } else if (other.m_is_null) {
+                return *this;
+            }
+
+            const FieldElement X1Z2 = m_X * other.m_Z2;
+            const FieldElement X2Z1 = other.m_X * m_Z2;
+            const FieldElement Y1Z2 = m_Y * other.m_Z3;
+            const FieldElement Y2Z1 = other.m_Y * m_Z3;
+
+            if (X1Z2 == X2Z1) {
+                if (Y1Z2 != Y2Z1) {
+                    m_is_null = true;
+                } else {
+                    twice();
+                }
+
+                return *this;
+            }
+
+            const FieldElement H = X2Z1 - X1Z2;
+            const FieldElement H2 = FieldElement::pow(H, 2);
+            const FieldElement H3 = H2 * H;
+            const FieldElement r = Y2Z1 - Y1Z2;
+
+            m_X = -H3 - ((X1Z2 * H2) << 1) + FieldElement::pow(r, 2);
+            m_Y = -Y1Z2 * H3 + r * (X1Z2 * H2 - m_X);
+            m_Z = m_Z * other.m_Z * H;
+            m_Z2 = FieldElement::pow(m_Z, 2);
+            m_Z3 = m_Z * m_Z2;
+
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::operator+= : invalid coordinates");
+            return *this;
+        }
+
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+            EllipticCurvePoint temp = other;
+            temp.negative();
+            return *this += temp;
+        }
+
+        EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
+            other.negative();
+            return *this += other;
+        }
+
+        EllipticCurvePoint& operator*=(const uint& value) {
+            multiply<CoordinatesType::JacobiChudnovski>(*this, value);
+            return *this;
+        }
+
+        FieldElement get_x() const final {
+            return m_X / m_Z2;
+        }
+
+        FieldElement get_y() const final {
+            return m_Y / m_Z3;
+        }
+
+    private:
+        static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
+                                             std::shared_ptr<const FieldElement>
+                                                 b,
+                                             std::shared_ptr<const Field>
+                                                 F) {
+            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
+        }
+
+        EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
+                           std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
+                           std::shared_ptr<const Field> F, bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {y},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)},
+            m_Z3 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {y},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)},
+            m_Z3 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)},
+            m_Z3 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)},
+            m_Z3 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint null_point() const {
+            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+        }
+
+        void negative() final {
+            m_Y = -m_Y;
+        }
+
+        void twice() final {
+            if (m_is_null) {
+                return;
+            }
+
+            if (!m_Y.is_invertible()) {
+                m_is_null = true;
+                return;
+            }
+
+            const FieldElement Y2 = FieldElement::pow(m_Y, 2);
+            const FieldElement Y4 = FieldElement::pow(Y2, 2);
+            const FieldElement V = (m_X * Y2) << 2;
+            const FieldElement W =
+                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
+            m_X = -(V << 1) + FieldElement::pow(W, 2);
+            m_Z = (m_Y * m_Z) << 1;
+            m_Y = -(Y4 << 3) + W * (V - m_X);
+            m_Z2 = FieldElement::pow(m_Z, 2);
+            m_Z3 = m_Z * m_Z2;
+            assert(is_valid()
+                   && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::twice : invalid coordinates");
+        }
+
+        bool is_valid() const final {
+            if (m_is_null) {
+                return true;
+            }
+
+            const FieldElement Z4 = FieldElement::pow(m_Z2, 2);
+            const FieldElement Z6 = FieldElement::pow(m_Z3, 2);
+            const FieldElement value = FieldElement::pow(m_X, 3) + *m_a * m_X * Z4 + *m_b * Z6;
+            return FieldElement::pow(m_Y, 2) == value;
+        }
+
+        FieldElement m_X;
+        FieldElement m_Y;
+        FieldElement m_Z;
+        FieldElement m_Z2;
+        FieldElement m_Z3;
     };
 
     template<>
@@ -695,10 +897,10 @@ namespace ECG {
 
     public:
         friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
-            FieldElement X1Z2 = lhs.m_X * FieldElement::pow(rhs.m_Z, 2);
-            FieldElement X2Z1 = rhs.m_X * FieldElement::pow(lhs.m_Z, 2);
-            FieldElement Y1Z2 = lhs.m_Y * FieldElement::pow(rhs.m_Z, 3);
-            FieldElement Y2Z1 = rhs.m_Y * FieldElement::pow(lhs.m_Z, 3);
+            const FieldElement X1Z2 = lhs.m_X * FieldElement::pow(rhs.m_Z, 2);
+            const FieldElement X2Z1 = rhs.m_X * FieldElement::pow(lhs.m_Z, 2);
+            const FieldElement Y1Z2 = lhs.m_Y * FieldElement::pow(rhs.m_Z, 3);
+            const FieldElement Y2Z1 = rhs.m_Y * FieldElement::pow(lhs.m_Z, 3);
             return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
         }
 
@@ -730,10 +932,10 @@ namespace ECG {
                 return *this;
             }
 
-            FieldElement H = X2Z1 - X1Z2;
-            FieldElement H2 = FieldElement::pow(H, 2);
-            FieldElement H3 = H2 * H;
-            FieldElement r = Y2Z1 - Y1Z2;
+            const FieldElement H = X2Z1 - X1Z2;
+            const FieldElement H2 = FieldElement::pow(H, 2);
+            const FieldElement H3 = H2 * H;
+            const FieldElement r = Y2Z1 - Y1Z2;
 
             m_X = -H3 - ((X1Z2 * H2) << 1) + FieldElement::pow(r, 2);
             m_Y = -Y1Z2 * H3 + r * (X1Z2 * H2 - m_X);
@@ -849,10 +1051,10 @@ namespace ECG {
                 return;
             }
 
-            FieldElement Y2 = FieldElement::pow(m_Y, 2);
-            FieldElement V = (m_X * Y2) << 2;
-            FieldElement U = FieldElement::pow(Y2, 2) << 3;
-            FieldElement W = m_F->element(3) * FieldElement::pow(m_X, 2) + m_aZ4;
+            const FieldElement Y2 = FieldElement::pow(m_Y, 2);
+            const FieldElement V = (m_X * Y2) << 2;
+            const FieldElement U = FieldElement::pow(Y2, 2) << 3;
+            const FieldElement W = m_F->element(3) * FieldElement::pow(m_X, 2) + m_aZ4;
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = W * (V - m_X) - U;
@@ -866,10 +1068,10 @@ namespace ECG {
                 return true;
             }
 
-            FieldElement Z2 = FieldElement::pow(m_Z, 2);
-            FieldElement Z4 = FieldElement::pow(Z2, 2);
-            FieldElement Z6 = Z4 * Z2;
-            FieldElement value = FieldElement::pow(m_X, 3) + m_X * m_aZ4 + *m_b * Z6;
+            const FieldElement Z2 = FieldElement::pow(m_Z, 2);
+            const FieldElement Z4 = FieldElement::pow(Z2, 2);
+            const FieldElement Z6 = Z4 * Z2;
+            const FieldElement value = FieldElement::pow(m_X, 3) + m_X * m_aZ4 + *m_b * Z6;
             return m_aZ4 == (*m_a * Z4) && FieldElement::pow(m_Y, 2) == value;
         }
 
@@ -877,6 +1079,201 @@ namespace ECG {
         FieldElement m_Y;
         FieldElement m_Z;
         FieldElement m_aZ4;
+    };
+
+    template<>
+    class EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski> : public EllipticCurvePointConcept {
+    private:
+        friend class EllipticCurve;
+        friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
+        friend void multiply<CoordinatesType::SimplifiedJacobiChudnovski>(EllipticCurvePoint& point,
+                                                                          const uint& value);
+
+    public:
+        friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+            const FieldElement X1Z2 = lhs.m_X * rhs.m_Z2;
+            const FieldElement X2Z1 = rhs.m_X * lhs.m_Z2;
+            const FieldElement Y1Z2 = lhs.m_Y * rhs.m_Z2 * rhs.m_Z;
+            const FieldElement Y2Z1 = rhs.m_Y * lhs.m_Z2 * lhs.m_Z;
+            return (lhs.m_is_null && rhs.m_is_null) || (X1Z2 == X2Z1 && Y1Z2 == Y2Z1);
+        }
+
+        EllipticCurvePoint operator-() const {
+            EllipticCurvePoint result = *this;
+            result.negative();
+            return result;
+        }
+
+        EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+            if (m_is_null) {
+                return *this = other;
+            } else if (other.m_is_null) {
+                return *this;
+            }
+
+            const FieldElement X1Z2 = m_X * other.m_Z2;
+            const FieldElement X2Z1 = other.m_X * m_Z2;
+            const FieldElement Y1Z2 = m_Y * other.m_Z2 * other.m_Z;
+            const FieldElement Y2Z1 = other.m_Y * m_Z2 * m_Z;
+
+            if (X1Z2 == X2Z1) {
+                if (Y1Z2 != Y2Z1) {
+                    m_is_null = true;
+                } else {
+                    twice();
+                }
+
+                return *this;
+            }
+
+            const FieldElement H = X2Z1 - X1Z2;
+            const FieldElement H2 = FieldElement::pow(H, 2);
+            const FieldElement H3 = H2 * H;
+            const FieldElement r = Y2Z1 - Y1Z2;
+
+            m_X = -H3 - ((X1Z2 * H2) << 1) + FieldElement::pow(r, 2);
+            m_Y = -Y1Z2 * H3 + r * (X1Z2 * H2 - m_X);
+            m_Z = m_Z * other.m_Z * H;
+            m_Z2 = FieldElement::pow(m_Z, 2);
+
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::operator+= : invalid coordinates");
+            return *this;
+        }
+
+        EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+            EllipticCurvePoint temp = other;
+            temp.negative();
+            return *this += temp;
+        }
+
+        EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
+            other.negative();
+            return *this += other;
+        }
+
+        EllipticCurvePoint& operator*=(const uint& value) {
+            multiply<CoordinatesType::SimplifiedJacobiChudnovski>(*this, value);
+            return *this;
+        }
+
+        FieldElement get_x() const final {
+            return m_X / m_Z2;
+        }
+
+        FieldElement get_y() const final {
+            return m_Y / (m_Z * m_Z2);
+        }
+
+    private:
+        static EllipticCurvePoint null_point(std::shared_ptr<const FieldElement> a,
+                                             std::shared_ptr<const FieldElement>
+                                                 b,
+                                             std::shared_ptr<const Field>
+                                                 F) {
+            return EllipticCurvePoint(F->element(0), F->element(1), a, b, F, true);
+        }
+
+        EllipticCurvePoint(const FieldElement& x, const FieldElement& y,
+                           std::shared_ptr<const FieldElement> a, std::shared_ptr<const FieldElement> b,
+                           std::shared_ptr<const Field> F, bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {y},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, const FieldElement& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {y},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(const FieldElement& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {x},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint(FieldElement&& x, FieldElement&& y, std::shared_ptr<const FieldElement> a,
+                           std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
+                           bool is_null = false) :
+            EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
+            m_X {std::move(x)},
+            m_Y {std::move(y)},
+            m_Z {m_F->element(1)},
+            m_Z2 {m_F->element(1)} {
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
+        }
+
+        EllipticCurvePoint null_point() const {
+            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+        }
+
+        void negative() final {
+            m_Y = -m_Y;
+        }
+
+        void twice() final {
+            if (m_is_null) {
+                return;
+            }
+
+            if (!m_Y.is_invertible()) {
+                m_is_null = true;
+                return;
+            }
+
+            const FieldElement Y2 = FieldElement::pow(m_Y, 2);
+            const FieldElement Y4 = FieldElement::pow(Y2, 2);
+            const FieldElement V = (m_X * Y2) << 2;
+            const FieldElement W =
+                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
+            m_X = -(V << 1) + FieldElement::pow(W, 2);
+            m_Z = (m_Y * m_Z) << 1;
+            m_Y = -(Y4 << 3) + W * (V - m_X);
+            m_Z2 = FieldElement::pow(m_Z, 2);
+            assert(
+                is_valid()
+                && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::twice : invalid coordinates");
+        }
+
+        bool is_valid() const final {
+            if (m_is_null) {
+                return true;
+            }
+
+            const FieldElement Z4 = FieldElement::pow(m_Z2, 2);
+            const FieldElement Z6 = Z4 * m_Z2;
+            const FieldElement value = FieldElement::pow(m_X, 3) + *m_a * m_X * Z4 + *m_b * Z6;
+            return FieldElement::pow(m_Y, 2) == value;
+        }
+
+        FieldElement m_X;
+        FieldElement m_Y;
+        FieldElement m_Z;
+        FieldElement m_Z2;
     };
 
     class EllipticCurve {
