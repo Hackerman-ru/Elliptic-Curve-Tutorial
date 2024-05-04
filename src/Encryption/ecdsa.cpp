@@ -138,10 +138,10 @@ namespace ECG {
     }
 
     Keys ECDSA::generate_keys() const {
-        FieldElement d = m_parameters.m_F.element(generate_random_uint());
+        FieldElement d = m_parameters.m_Field.element(generate_random_uint());
 
         while (!d.is_invertible()) {
-            d = m_parameters.m_F.element(generate_random_uint());
+            d = m_parameters.m_Field.element(generate_random_uint());
         }
 
         EllipticCurvePoint<> Q = d.value() * m_parameters.m_generator;
@@ -149,7 +149,7 @@ namespace ECG {
     }
 
     Signature ECDSA::generate_signature(const FieldElement& private_key, const uint& message) const {
-        const Field& F = m_parameters.m_F;
+        const Field& F = m_parameters.m_Field;
         FieldElement k = F.element(generate_random_uint());
 
         while (!k.is_invertible()) {
@@ -200,7 +200,7 @@ namespace ECG {
             return false;
         }
 
-        const Field& F = m_parameters.m_F;
+        const Field& F = m_parameters.m_Field;
         FieldElement w = FieldElement::inverse(s);
         FieldElement e = F.element(message);
         FieldElement u1 = e * w;

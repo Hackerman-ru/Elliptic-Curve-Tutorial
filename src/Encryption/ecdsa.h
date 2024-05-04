@@ -7,7 +7,7 @@
 namespace ECG {
     namespace {
         struct Parameters {
-            Field m_F;
+            Field m_Field;
             EllipticCurve m_E;
             EllipticCurvePoint<> m_generator;
             uint m_n;

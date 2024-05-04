@@ -22,4 +22,8 @@ namespace ECG {
 
         return result;
     }
+
+    uint generate_random_uint_modulo(const uint& modulus) {
+        return generate_random_uint() % modulus;
+    }
 }   // namespace ECG

@@ -30,7 +30,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::shared_ptr<const FieldElement> a,
                                       std::shared_ptr<const FieldElement> b, std::shared_ptr<const Field> F,
                                       bool is_null = false) :
-                m_a {std::move(a)}, m_b {std::move(b)}, m_F {std::move(F)}, m_is_null(is_null) {};
+                m_a {std::move(a)}, m_b {std::move(b)}, m_Field {std::move(F)}, m_is_null(is_null) {};
 
             virtual void negative() = 0;
             virtual void twice() = 0;
@@ -38,7 +38,7 @@ namespace ECG {
 
             std::shared_ptr<const FieldElement> m_a;
             std::shared_ptr<const FieldElement> m_b;
-            std::shared_ptr<const Field> m_F;
+            std::shared_ptr<const Field> m_Field;
             bool m_is_null;
         };
     }   // namespace
@@ -275,7 +275,7 @@ namespace ECG {
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -292,7 +292,7 @@ namespace ECG {
                 return;
             }
 
-            const FieldElement k = (m_F->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
+            const FieldElement k = (m_Field->element(3) * FieldElement::pow(m_x, 2) + *m_a) / (m_y << 1);
             const FieldElement x = FieldElement::pow(k, 2) - (m_x << 1);
             m_y = k * (m_x - x) - m_y;
             m_x = x;
@@ -412,7 +412,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {y},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -424,7 +424,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {y},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -436,7 +436,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -448,14 +448,14 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -473,7 +473,7 @@ namespace ECG {
             }
 
             const FieldElement w =
-                *m_a * FieldElement::pow(m_Z, 2) + m_F->element(3) * FieldElement::pow(m_X, 2);
+                *m_a * FieldElement::pow(m_Z, 2) + m_Field->element(3) * FieldElement::pow(m_X, 2);
             const FieldElement s = m_Y * m_Z;
             const FieldElement s2 = FieldElement::pow(s, 2);
             const FieldElement s3 = s2 * s;
@@ -600,7 +600,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {y},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -612,7 +612,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {y},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -624,7 +624,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -636,14 +636,14 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)} {
+            m_Z {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -664,7 +664,7 @@ namespace ECG {
             const FieldElement Y4 = FieldElement::pow(Y2, 2);
             const FieldElement V = (m_X * Y2) << 2;
             const FieldElement W =
-                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z, 4);
+                m_Field->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z, 4);
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -788,9 +788,9 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {y},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)},
-            m_Z3 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)},
+            m_Z3 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -802,9 +802,9 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {y},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)},
-            m_Z3 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)},
+            m_Z3 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -816,9 +816,9 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)},
-            m_Z3 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)},
+            m_Z3 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -830,16 +830,16 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)},
-            m_Z3 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)},
+            m_Z3 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -860,7 +860,7 @@ namespace ECG {
             const FieldElement Y4 = FieldElement::pow(Y2, 2);
             const FieldElement V = (m_X * Y2) << 2;
             const FieldElement W =
-                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
+                m_Field->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -987,7 +987,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {y},
-            m_Z {m_F->element(1)},
+            m_Z {m_Field->element(1)},
             m_aZ4 {*m_a} {
             assert(
                 is_valid()
@@ -1000,7 +1000,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {y},
-            m_Z {m_F->element(1)},
+            m_Z {m_Field->element(1)},
             m_aZ4 {*m_a} {
             assert(
                 is_valid()
@@ -1013,7 +1013,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
+            m_Z {m_Field->element(1)},
             m_aZ4 {*m_a} {
             assert(
                 is_valid()
@@ -1026,7 +1026,7 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
+            m_Z {m_Field->element(1)},
             m_aZ4 {*m_a} {
             assert(
                 is_valid()
@@ -1034,7 +1034,7 @@ namespace ECG {
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -1054,7 +1054,7 @@ namespace ECG {
             const FieldElement Y2 = FieldElement::pow(m_Y, 2);
             const FieldElement V = (m_X * Y2) << 2;
             const FieldElement U = FieldElement::pow(Y2, 2) << 3;
-            const FieldElement W = m_F->element(3) * FieldElement::pow(m_X, 2) + m_aZ4;
+            const FieldElement W = m_Field->element(3) * FieldElement::pow(m_X, 2) + m_aZ4;
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = W * (V - m_X) - U;
@@ -1181,8 +1181,8 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {y},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1194,8 +1194,8 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {y},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1207,8 +1207,8 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {x},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1220,15 +1220,15 @@ namespace ECG {
             EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
             m_X {std::move(x)},
             m_Y {std::move(y)},
-            m_Z {m_F->element(1)},
-            m_Z2 {m_F->element(1)} {
+            m_Z {m_Field->element(1)},
+            m_Z2 {m_Field->element(1)} {
             assert(
                 is_valid()
                 && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
         }
 
         EllipticCurvePoint null_point() const {
-            return EllipticCurvePoint(m_F->element(0), m_F->element(1), m_a, m_b, m_F, true);
+            return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
         }
 
         void negative() final {
@@ -1249,7 +1249,7 @@ namespace ECG {
             const FieldElement Y4 = FieldElement::pow(Y2, 2);
             const FieldElement V = (m_X * Y2) << 2;
             const FieldElement W =
-                m_F->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
+                m_Field->element(3) * FieldElement::pow(m_X, 2) + *m_a * FieldElement::pow(m_Z2, 2);
             m_X = -(V << 1) + FieldElement::pow(W, 2);
             m_Z = (m_Y * m_Z) << 1;
             m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -1284,6 +1284,7 @@ namespace ECG {
         EllipticCurve(FieldElement&& a, FieldElement&& b, Field F);
 
         uint points_number() const;   // Scoof's algorithm
+        const Field& get_field() const;
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point_with_x_equal_to(const FieldElement& x) const {
@@ -1293,7 +1294,7 @@ namespace ECG {
                 return std::nullopt;
             }
 
-            return EllipticCurvePoint<type>(x, std::move(y.value()), m_a, m_b, m_F);
+            return EllipticCurvePoint<type>(x, std::move(y.value()), m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
@@ -1304,36 +1305,36 @@ namespace ECG {
                 return std::nullopt;
             }
 
-            return EllipticCurvePoint<type>(std::move(x), std::move(y.value()), m_a, m_b, m_F);
+            return EllipticCurvePoint<type>(std::move(x), std::move(y.value()), m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, const FieldElement& y) const {
-            EllipticCurvePoint<type> point(x, y, m_a, m_b, m_F, true);
+            EllipticCurvePoint<type> point(x, y, m_a, m_b, m_Field, true);
             return point.is_valid() ? point : std::nullopt;
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, const FieldElement& y) const {
-            EllipticCurvePoint<type> point(std::move(x), y, m_a, m_b, m_F, true);
+            EllipticCurvePoint<type> point(std::move(x), y, m_a, m_b, m_Field, true);
             return point.is_valid() ? point : std::nullopt;
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, FieldElement&& y) const {
-            EllipticCurvePoint<type> point(x, std::move(y), m_a, m_b, m_F, true);
+            EllipticCurvePoint<type> point(x, std::move(y), m_a, m_b, m_Field, true);
             return point.is_valid() ? point : std::nullopt;
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, FieldElement&& y) const {
-            EllipticCurvePoint<type> point(std::move(x), std::move(y), m_a, m_b, m_F, true);
+            EllipticCurvePoint<type> point(std::move(x), std::move(y), m_a, m_b, m_Field, true);
             return point.is_valid() ? point : std::nullopt;
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         EllipticCurvePoint<type> null_point() const {
-            return EllipticCurvePoint<type>::null_point(m_a, m_b, m_F);
+            return EllipticCurvePoint<type>::null_point(m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
@@ -1344,7 +1345,7 @@ namespace ECG {
 
         std::shared_ptr<const FieldElement> m_a;
         std::shared_ptr<const FieldElement> m_b;
-        std::shared_ptr<const Field> m_F;
+        std::shared_ptr<const Field> m_Field;
     };
 }   // namespace ECG
 

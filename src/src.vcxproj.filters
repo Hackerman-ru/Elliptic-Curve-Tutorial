@@ -22,6 +22,9 @@
     <ClInclude Include="core\utils\naf.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="core\utils\bitsize.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
@@ -34,6 +37,10 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="Encryption\ecdsa.cpp" />
+    <ClCompile Include="encryption\el-gamal.cpp" />
+    <ClCompile Include="core\utils\bitsize.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">

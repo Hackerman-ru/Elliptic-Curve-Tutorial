@@ -6,25 +6,29 @@ namespace ECG {
     EllipticCurve::EllipticCurve(const FieldElement& a, const FieldElement& b, Field F) :
         m_a {std::make_shared<const FieldElement>(a)},
         m_b {std::make_shared<const FieldElement>(b)},
-        m_F {std::make_shared<const Field>(std::move(F))} {}
+        m_Field {std::make_shared<const Field>(std::move(F))} {}
 
     EllipticCurve::EllipticCurve(FieldElement&& a, const FieldElement& b, Field F) :
         m_a {std::make_shared<const FieldElement>(std::move(a))},
         m_b {std::make_shared<const FieldElement>(b)},
-        m_F {std::make_shared<const Field>(std::move(F))} {}
+        m_Field {std::make_shared<const Field>(std::move(F))} {}
 
     EllipticCurve::EllipticCurve(const FieldElement& a, FieldElement&& b, Field F) :
         m_a {std::make_shared<const FieldElement>(a)},
         m_b {std::make_shared<const FieldElement>(std::move(b))},
-        m_F {std::make_shared<const Field>(std::move(F))} {}
+        m_Field {std::make_shared<const Field>(std::move(F))} {}
 
     EllipticCurve::EllipticCurve(FieldElement&& a, FieldElement&& b, Field F) :
         m_a {std::make_shared<const FieldElement>(std::move(a))},
         m_b {std::make_shared<const FieldElement>(std::move(b))},
-        m_F {std::make_shared<const Field>(std::move(F))} {}
+        m_Field {std::make_shared<const Field>(std::move(F))} {}
 
     uint EllipticCurve::points_number() const {   // TODO
         return uint();
+    }
+
+    const Field& EllipticCurve::get_field() const {
+        return *m_Field;
     }
 
     namespace {
@@ -74,8 +78,8 @@ namespace ECG {
             return std::nullopt;
         }
 
-        const uint& p = m_F->modulus();
-        const FieldElement one = m_F->element(1);
+        const uint& p = m_Field->modulus();
+        const FieldElement one = m_Field->element(1);
 
         if (FieldElement::pow(value, (p - 1) >> 1) != one) {
             return std::nullopt;
