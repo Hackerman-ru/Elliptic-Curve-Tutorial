@@ -31,7 +31,13 @@ namespace ECG {
         return *m_Field;
     }
 
-    bool EllipticCurve::is_zero(const FieldElement& x, const FieldElement& y) {
+    bool EllipticCurve::is_valid_coordinates(const FieldElement& x, const FieldElement& y) const {
+        const FieldElement lhs = FieldElement::pow(y, 2);
+        const FieldElement rhs = FieldElement::pow(x, 3) + *m_a * x + *m_b;
+        return lhs == rhs;
+    }
+
+    bool EllipticCurve::is_null_coordinates(const FieldElement& x, const FieldElement& y) {
         return x.value() == 0 && y.value() == 1;
     }
 

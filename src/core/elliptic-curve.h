@@ -1310,42 +1310,54 @@ namespace ECG {
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, const FieldElement& y) const {
-            if (is_zero(x, y)) {
+            if (is_null_coordinates(x, y)) {
                 return null_point();
             }
 
-            EllipticCurvePoint<type> point(x, y, m_a, m_b, m_Field);
-            return point.is_valid() ? std::optional(point) : std::nullopt;
+            if (!is_valid_coordinates(x, y)) {
+                return std::nullopt;
+            }
+
+            return EllipticCurvePoint<type>(x, y, m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, const FieldElement& y) const {
-            if (is_zero(x, y)) {
+            if (is_null_coordinates(x, y)) {
                 return null_point();
             }
 
-            EllipticCurvePoint<type> point(std::move(x), y, m_a, m_b, m_Field);
-            return point.is_valid() ? std::optional(point) : std::nullopt;
+            if (!is_valid_coordinates(x, y)) {
+                return std::nullopt;
+            }
+
+            return EllipticCurvePoint<type>(std::move(x), y, m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(const FieldElement& x, FieldElement&& y) const {
-            if (is_zero(x, y)) {
+            if (is_null_coordinates(x, y)) {
                 return null_point();
             }
 
-            EllipticCurvePoint<type> point(x, std::move(y), m_a, m_b, m_Field);
-            return point.is_valid() ? std::optional(point) : std::nullopt;
+            if (!is_valid_coordinates(x, y)) {
+                return std::nullopt;
+            }
+
+            return EllipticCurvePoint<type>(x, std::move(y), m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
         std::optional<EllipticCurvePoint<type>> point(FieldElement&& x, FieldElement&& y) const {
-            if (is_zero(x, y)) {
+            if (is_null_coordinates(x, y)) {
                 return null_point();
             }
 
-            EllipticCurvePoint<type> point(std::move(x), std::move(y), m_a, m_b, m_Field);
-            return point.is_valid() ? std::optional(point) : std::nullopt;
+            if (!is_valid_coordinates(x, y)) {
+                return std::nullopt;
+            }
+
+            return EllipticCurvePoint<type>(std::move(x), std::move(y), m_a, m_b, m_Field);
         }
 
         template<CoordinatesType type = CoordinatesType::Normal>
@@ -1357,7 +1369,8 @@ namespace ECG {
         EllipticCurvePoint<type> random_point() const {}
 
     private:
-        static bool is_zero(const FieldElement& x, const FieldElement& y);
+        static bool is_null_coordinates(const FieldElement& x, const FieldElement& y);
+        bool is_valid_coordinates(const FieldElement& x, const FieldElement& y) const;
         std::optional<FieldElement> find_y(const FieldElement& x) const;
 
         std::shared_ptr<const FieldElement> m_a;

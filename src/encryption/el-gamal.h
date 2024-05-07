@@ -2,6 +2,7 @@
 #define ECG_EL_GAMAL_H
 
 #include "elliptic-curve.h"
+#include "functional"
 
 namespace ECG {
     class ElGamal {
