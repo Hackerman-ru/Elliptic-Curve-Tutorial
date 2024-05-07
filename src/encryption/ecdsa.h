@@ -17,24 +17,24 @@ namespace ECG {
 
     struct Keys {
         EllipticCurvePoint<> public_key;
-        FieldElement private_key;
+        uint private_key;
     };
 
     struct Signature {
-        FieldElement r;
-        FieldElement s;
+        uint r;
+        uint s;
     };
 
     class ECDSA {
     public:
-        static std::optional<ECDSA> generate(const uint& field_order, const uint& security_level);
+        static ECDSA generate(const uint& field_order, const uint& security_level);
 
         ECDSA(const Field& F, const EllipticCurve& E, const EllipticCurvePoint<>& generator, const uint& n,
               const uint& h) :
             m_parameters {F, E, generator, n, h} {}
 
         Keys generate_keys() const;
-        Signature generate_signature(const FieldElement& private_key, const uint& message) const;
+        Signature generate_signature(const uint& private_key, const uint& message) const;
         bool is_correct_signature(const EllipticCurvePoint<>& public_key, const uint& message,
                                   const Signature& signature) const;
 

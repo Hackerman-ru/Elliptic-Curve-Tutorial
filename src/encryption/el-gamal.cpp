@@ -6,15 +6,11 @@
 #include <map>
 
 namespace ECG {
-    static uint generate_non_zero_uint_modulo(const uint& modulus) {
-        return generate_random_uint_modulo(modulus - 1) + 1;
-    }
-
     ElGamal::ElGamal(const Curve& curve, const Point& generator, const uint& generator_order) :
         m_curve(curve), m_generator(generator), m_generator_order(generator_order) {}
 
     ElGamal::Keys ElGamal::generate_keys() const {
-        uint private_key = generate_non_zero_uint_modulo(m_generator_order);
+        uint private_key = generate_random_non_zero_uint_modulo(m_generator_order);
         Point public_key = private_key * m_generator;
         return Keys {.private_key = private_key, .public_key = public_key};
     }
@@ -27,7 +23,7 @@ namespace ECG {
 
     ElGamal::EncryptedMessage<ElGamal::EncryptionType::Standard>
         ElGamal::encrypt(const Point& message, const Point& public_key) const {
-        const uint k = generate_non_zero_uint_modulo(m_generator_order);
+        const uint k = generate_random_non_zero_uint_modulo(m_generator_order);
         const Point generator_degree = k * m_generator;
         const Point message_with_salt = message + k * public_key;
         return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
@@ -36,7 +32,7 @@ namespace ECG {
     ElGamal::EncryptedMessage<ElGamal::EncryptionType::Hashed>
         ElGamal::encrypt(const uint& message, const Point& public_key,
                          const std::function<uint(const Point&)>& hash_function) const {
-        const uint k = generate_non_zero_uint_modulo(m_generator_order);
+        const uint k = generate_random_non_zero_uint_modulo(m_generator_order);
         const Point generator_degree = k * m_generator;
         const uint message_with_salt = message ^ hash_function(k * public_key);
         return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};

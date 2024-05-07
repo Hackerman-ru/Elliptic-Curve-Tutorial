@@ -1,6 +1,6 @@
 #include "random.h"
 
-#include "duthomhas/csprng.hpp"
+#include "utils/csprng/csprng.hpp"
 
 #include <random>
 
@@ -25,5 +25,9 @@ namespace ECG {
 
     uint generate_random_uint_modulo(const uint& modulus) {
         return generate_random_uint() % modulus;
+    }
+
+    uint generate_random_non_zero_uint_modulo(const uint& modulus) {
+        return generate_random_uint_modulo(modulus - 1) + 1;
     }
 }   // namespace ECG

@@ -1,6 +1,8 @@
+// clang-format off
 #include "pch.h"
+// clang-format on
 
-#include <elliptic-curve.h>
+#include "elliptic-curve.h"
 
 using namespace ECG;
 using enum CoordinatesType;

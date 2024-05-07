@@ -1,8 +1,10 @@
+// clang-format off
 #include "pch.h"
+// clang-format on
+#include "field.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/fwd.hpp>
-#include <field.h>
 
 using namespace ECG;
 

@@ -16,23 +16,29 @@
     <ClInclude Include="core\utils\concepts.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\random.h">
-      <Filter>utils</Filter>
-    </ClInclude>
     <ClInclude Include="core\utils\naf.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\bitsize.h">
       <Filter>utils</Filter>
     </ClInclude>
+    <ClInclude Include="core\utils\random.h">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\csprng.h">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\csprng.hpp">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\is_iterable.hpp">
+      <Filter>utils\random</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\long-arithmetic.cpp" />
-    <ClCompile Include="core\utils\random.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="core\utils\naf.cpp">
       <Filter>utils</Filter>
     </ClCompile>
@@ -41,10 +47,22 @@
     <ClCompile Include="core\utils\bitsize.cpp">
       <Filter>utils</Filter>
     </ClCompile>
+    <ClCompile Include="core\utils\random.cpp">
+      <Filter>utils\random</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\csprng\csprng.c">
+      <Filter>utils\random</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\csprng\csprng.cpp">
+      <Filter>utils\random</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="utils">
       <UniqueIdentifier>{7af97bf8-3024-44b7-88c5-358175296e7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\random">
+      <UniqueIdentifier>{0f2daa40-8ebc-4187-b0f9-af31ad6d3ab0}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

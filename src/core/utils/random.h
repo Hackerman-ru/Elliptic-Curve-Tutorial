@@ -6,5 +6,6 @@
 namespace ECG {
     uint generate_random_uint();
     uint generate_random_uint_modulo(const uint& modulus);
+    uint generate_random_non_zero_uint_modulo(const uint& modulus);
 }   // namespace ECG
 #endif

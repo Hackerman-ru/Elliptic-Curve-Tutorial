@@ -31,6 +31,10 @@ namespace ECG {
         return *m_Field;
     }
 
+    bool EllipticCurve::is_zero(const FieldElement& x, const FieldElement& y) {
+        return x.value() == 0 && y.value() == 1;
+    }
+
     namespace {
         struct Cache {
             size_t power_of_two;
