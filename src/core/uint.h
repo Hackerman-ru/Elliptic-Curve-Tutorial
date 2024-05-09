@@ -1,7 +1,7 @@
 #ifndef ECG_UINT_H
 #define ECG_UINT_H
 
-#define ECG_USE_BOOST
+//#define ECG_USE_BOOST
 
 #ifdef ECG_USE_BOOST
     #include "boost/multiprecision/cpp_int.hpp"

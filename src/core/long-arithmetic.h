@@ -235,9 +235,10 @@ namespace ECG {
             block_t remainder = 0;
 
             for (size_t i = 0; i < c_block_number; ++i) {
-                block_t temp = m_blocks[i];
-                m_blocks[i] -= other[i] + remainder;
-                remainder = (temp < m_blocks[i]);
+                block_t prev = m_blocks[i];
+                block_t sum = other[i] + remainder;
+                m_blocks[i] -= sum;
+                remainder = (m_blocks[i] > prev) || (sum < remainder);
             }
 
             return *this;
@@ -612,10 +613,8 @@ namespace ECG {
         }
 
         void constexpr increment() {
-            static constexpr block_t c_Carry = 1;
-
             for (size_t i = 0; i < c_block_number; ++i) {
-                m_blocks[i] += c_Carry;
+                m_blocks[i] += 1;
 
                 if (m_blocks[i] != 0) {
                     break;
@@ -624,11 +623,9 @@ namespace ECG {
         }
 
         void constexpr decrement() {
-            static constexpr block_t c_Remainder = 1;
-
             for (size_t i = 0; i < c_block_number; ++i) {
                 block_t temp = m_blocks[i];
-                m_blocks[i] -= c_Remainder;
+                m_blocks[i] -= 1;
 
                 if (temp >= m_blocks[i]) {
                     break;

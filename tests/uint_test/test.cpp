@@ -64,11 +64,12 @@ TEST(StringConversionCorrectness, SimpleConversions) {
     uint512_t boost_lhs = (boost_y * boost_y) % boost_p;
     comp(boost_lhs, my_lhs);
 
-    uint_t<512> my_rhs = ((((my_x * my_x) % my_p) * my_x) % my_p + (my_a * my_x) % my_p + my_b) % my_p;
-    uint512_t boost_rhs =
-        ((((boost_x * boost_x) % boost_p) * boost_x) % boost_p + (boost_a * boost_x) % boost_p + boost_b)
-        % boost_p;
+    uint_t<512> my_rhs = (((my_x * my_x) % my_p) * my_x) % my_p + (my_a * my_x) % my_p + my_b - my_p;
+    uint512_t boost_rhs = (((boost_x * boost_x) % boost_p) * boost_x) % boost_p
+                        + (boost_a * boost_x) % boost_p + boost_b - boost_p;
     comp(boost_rhs, my_rhs);
+    ASSERT_EQ(my_lhs, my_rhs);
+    ASSERT_EQ(boost_lhs, boost_rhs);
 }
 
 TEST(StringConversionCorrectness, DecimalStringConversion) {
