@@ -33,9 +33,9 @@ namespace ECG {
             if (*str >= '0' && *str <= '9') {
                 symbol_value = static_cast<uint16_t>(*str - '0');
             } else if (*str >= 'a' && *str <= 'f') {
-                symbol_value = static_cast<uint16_t>(*str - 'a');
+                symbol_value = static_cast<uint16_t>(*str - 'a') + 10;
             } else if (*str >= 'A' && *str <= 'F') {
-                symbol_value = static_cast<uint16_t>(*str - 'A');
+                symbol_value = static_cast<uint16_t>(*str - 'A') + 10;
             }
 
             if (symbol_value >= radix) {

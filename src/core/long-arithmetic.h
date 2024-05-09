@@ -40,7 +40,7 @@ namespace ECG {
             return *this;
         }
 
-        constexpr uint_t& operator=(const char*& str) {
+        constexpr uint_t& operator=(const char* str) {
             return *this = parse_into<uint_t>(str);
         }
 
@@ -118,9 +118,9 @@ namespace ECG {
         // operator/
         friend constexpr uint_t operator/(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
             uint_t result = divide(lhs, rhs);
-            assert(result * rhs <= lhs && result * (rhs + 1) > lhs
+            assert(result * rhs <= lhs && (result + 1) * rhs > lhs
                    && "uint_t::operator/ : remainder must be less than divisor");
-            return divide(lhs, rhs);
+            return result;
         }
 
         // operator%

@@ -1,8 +1,8 @@
 #include "pch.h"
 
-#include <core/elliptic-curve.h>
-#include <core/field.h>
-#include <encryption/ecdsa.h>
+#include <ecdsa.h>
+#include <elliptic-curve.h>
+#include <field.h>
 
 using namespace ECG;
 
@@ -14,7 +14,9 @@ TEST(SimpleTest, Creation) {
     const EllipticCurve E(F.element(a), F.element(b), F);
     const FieldElement G_x = F.element("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296");
     const FieldElement G_y = F.element("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5");
-    const EllipticCurvePoint<> G = E.point(G_x, G_y).value();
+    auto opt = E.point(G_x, G_y);
+    ASSERT_TRUE(opt.has_value());
+    const EllipticCurvePoint<>& G = opt.value();
     const uint n("0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551");
     const uint h("0x1");
     ECDSA sh(F, E, G, n, h);
@@ -28,7 +30,9 @@ TEST(SimpleTest, SignGeneration) {
     const EllipticCurve E(F.element(a), F.element(b), F);
     const FieldElement G_x = F.element("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296");
     const FieldElement G_y = F.element("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5");
-    const auto G = E.point(G_x, G_y).value();
+    auto opt = E.point(G_x, G_y);
+    ASSERT_TRUE(opt.has_value());
+    const EllipticCurvePoint<>& G = opt.value();
     const uint n("0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551");
     const uint h("0x1");
     ECDSA sh(F, E, G, n, h);
@@ -45,7 +49,9 @@ TEST(SimpleTest, SignCorrectness) {
     const EllipticCurve E(F.element(a), F.element(b), F);
     const FieldElement G_x = F.element("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296");
     const FieldElement G_y = F.element("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5");
-    const auto G = E.point(G_x, G_y).value();
+    auto opt = E.point(G_x, G_y);
+    ASSERT_TRUE(opt.has_value());
+    const EllipticCurvePoint<>& G = opt.value();
     const uint n("0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551");
     const uint h("0x1");
     ECDSA sh(F, E, G, n, h);

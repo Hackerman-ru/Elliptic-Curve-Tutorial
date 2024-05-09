@@ -50,9 +50,6 @@
     <ClCompile Include="core\utils\random.cpp">
       <Filter>utils\random</Filter>
     </ClCompile>
-    <ClCompile Include="core\utils\csprng\csprng.c">
-      <Filter>utils\random</Filter>
-    </ClCompile>
     <ClCompile Include="core\utils\csprng\csprng.cpp">
       <Filter>utils\random</Filter>
     </ClCompile>

@@ -40,6 +40,37 @@ static void comp(uint512_t boost_value, uint_t<512> my_value_) {
     ASSERT_EQ(my_value, boost_value);
 }
 
+TEST(StringConversionCorrectness, SimpleConversions) {
+    uint_t<512> my_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
+    uint512_t boost_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
+    comp(boost_p, my_p);
+    uint_t<512> my_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
+    uint512_t boost_a("0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc");
+    comp(boost_a, my_a);
+    uint_t<512> my_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
+    uint512_t boost_b("0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b");
+    comp(boost_b, my_b);
+    uint_t<512> my_x = "0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296";
+    uint512_t boost_x("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296");
+    comp(boost_x, my_x);
+    uint_t<512> my_y = "0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5";
+    uint512_t boost_y("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5");
+    comp(boost_y, my_y);
+    uint_t<512> my_n = "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
+    uint512_t boost_n("0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551");
+    comp(boost_n, my_n);
+
+    uint_t<512> my_lhs = (my_y * my_y) % my_p;
+    uint512_t boost_lhs = (boost_y * boost_y) % boost_p;
+    comp(boost_lhs, my_lhs);
+
+    uint_t<512> my_rhs = ((((my_x * my_x) % my_p) * my_x) % my_p + (my_a * my_x) % my_p + my_b) % my_p;
+    uint512_t boost_rhs =
+        ((((boost_x * boost_x) % boost_p) * boost_x) % boost_p + (boost_a * boost_x) % boost_p + boost_b)
+        % boost_p;
+    comp(boost_rhs, my_rhs);
+}
+
 TEST(StringConversionCorrectness, DecimalStringConversion) {
     uint512_t boost_value = 1;
 
