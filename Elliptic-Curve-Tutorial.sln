@@ -124,15 +124,12 @@ Global
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.Release|x86.ActiveCfg = Release|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.Release|x86.Build.0 = Release|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - ellitpic curve|x64.ActiveCfg = Debug|x64
-		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - ellitpic curve|x64.Build.0 = Debug|x64
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - ellitpic curve|x86.ActiveCfg = Debug|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - ellitpic curve|x86.Build.0 = Debug|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - field|x64.ActiveCfg = Debug|x64
-		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - field|x64.Build.0 = Debug|x64
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - field|x86.ActiveCfg = Debug|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - field|x86.Build.0 = Debug|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - uint|x64.ActiveCfg = Debug|x64
-		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - uint|x64.Build.0 = Debug|x64
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
 		{519ADC6D-3F92-4FD0-9F7D-E4F3C33E0A25}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
 	EndGlobalSection

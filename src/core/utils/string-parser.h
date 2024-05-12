@@ -8,7 +8,7 @@
 namespace ECG {
     // Parsing invalid string of unsigned integer is UB
     template<typename T>
-    requires is_integral<T>
+    requires Concepts::is_integral<T>
     T parse_into(const char* str) {
         assert(str != nullptr && "parse_into got nullptr");
 

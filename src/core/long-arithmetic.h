@@ -105,19 +105,24 @@ namespace ECG {
 
         // operator*
         friend constexpr uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
-            uint_t result;
+            /*uint_t result;
 
             for (size_t i = 0; i < c_block_number; ++i) {
                 result += (lhs * rhs[i]) << (c_block_size * i);
             }
 
-            return result;
-            //return multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks); until FFT works
+            return result;*/
+            return FFT::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
         friend constexpr uint_t operator/(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
             uint_t result = divide(lhs, rhs);
+            uint_t less = result * rhs;
+            uint_t greater = (result + 1) * rhs;
+            if (less > lhs || greater <= lhs) {
+                result = 0;
+            }
             assert(result * rhs <= lhs && (result + 1) * rhs > lhs
                    && "uint_t::operator/ : remainder must be less than divisor");
             return result;
@@ -391,7 +396,7 @@ namespace ECG {
         constexpr T convert_to() const;
 
         template<typename T>
-        requires is_convertible_to<T, block_t>
+        requires Concepts::is_convertible_to<T, block_t>
         constexpr T convert_to() const {
             size_t shift_size = sizeof(T) * c_bits_in_byte;
             size_t blocks_number = shift_size / c_block_size;
@@ -430,13 +435,13 @@ namespace ECG {
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, block_t>
+        requires std::numeric_limits<T>::is_integer && Concepts::is_upcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
             return {static_cast<block_t>(value)};
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, block_t>
+        requires std::numeric_limits<T>::is_integer && Concepts::is_downcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
             blocks result = {};
 
@@ -453,7 +458,7 @@ namespace ECG {
         }
 
         template<typename T>
-        requires is_convertible_container<T, block_t> || requires(T x) {
+        requires Concepts::is_convertible_container<T, block_t> || requires(T x) {
             { ECG::uint_t {x} } -> std::same_as<T>;
         }
         static constexpr blocks split_into_blocks(const T& other) {

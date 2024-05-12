@@ -258,11 +258,10 @@ TEST(ArithmeticCorrectness, Multiplication) {
         a *= i;
         b *= i;
 
-        if (a == 0) {
+        if (a == 0 || b == 0) {
+            ASSERT_EQ(a, 0);
+            ASSERT_EQ(b, 0);
             a = 1;
-        }
-
-        if (b == 0) {
             b = 1;
         }
 

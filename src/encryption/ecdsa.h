@@ -5,33 +5,23 @@
 #include "utils/random.h"
 
 namespace ECG {
-    namespace {
-        struct Parameters {
-            Field m_Field;
-            EllipticCurve m_E;
-            EllipticCurvePoint<> m_generator;
-            uint m_n;
-            uint m_h;
-        };
-    }   // namespace
-
-    struct Keys {
-        EllipticCurvePoint<> public_key;
-        uint private_key;
-    };
-
-    struct Signature {
-        uint r;
-        uint s;
-    };
-
     class ECDSA {
     public:
+        struct Keys {
+            EllipticCurvePoint<> public_key;
+            uint private_key;
+        };
+
+        struct Signature {
+            uint r;
+            uint s;
+        };
+
         static ECDSA generate(const uint& field_order, const uint& security_level);
 
-        ECDSA(const Field& F, const EllipticCurve& E, const EllipticCurvePoint<>& generator, const uint& n,
-              const uint& h) :
-            m_parameters {F, E, generator, n, h} {}
+        ECDSA(const Field& field, const EllipticCurve& elliptic_curve, const EllipticCurvePoint<>& generator,
+              const uint& n, const uint& h) :
+            m_field(field), m_elliptic_curve(elliptic_curve), m_generator(generator), m_n(n), m_h(h) {}
 
         Keys generate_keys() const;
         Signature generate_signature(const uint& private_key, const uint& message) const;
@@ -39,7 +29,11 @@ namespace ECG {
                                   const Signature& signature) const;
 
     private:
-        Parameters m_parameters;
+        Field m_field;
+        EllipticCurve m_elliptic_curve;
+        EllipticCurvePoint<> m_generator;
+        uint m_n;
+        uint m_h;
     };
 }   // namespace ECG
 #endif

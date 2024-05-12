@@ -3,15 +3,7 @@
 #include "utils/random.h"
 
 namespace ECG {
-    namespace {
-        struct Coefficients {
-            FieldElement a;
-            FieldElement b;
-        };
-    }   // namespace
-
-    static constexpr uint c_hash_length = 512;
-    static constexpr int c_attempts_number = 10000;
+    static constexpr size_t c_attempts_number = 100000;
 
     //static uint bit_size(uint value) {
     //    uint result = 0;
@@ -124,19 +116,19 @@ namespace ECG {
     //    return ECDSA(F, E, G, n, h);
     //}
 
-    Keys ECDSA::generate_keys() const {
-        uint d = generate_random_non_zero_uint_modulo(m_parameters.m_n);
-        EllipticCurvePoint<> Q = d * m_parameters.m_generator;
+    ECDSA::Keys ECDSA::generate_keys() const {
+        uint d = generate_random_non_zero_uint_modulo(m_n);
+        EllipticCurvePoint<> Q = d * m_generator;
         return {.public_key = Q, .private_key = d};
     }
 
-    Signature ECDSA::generate_signature(const uint& private_key, const uint& message) const {
-        const Field F = Field(m_parameters.m_n);
+    ECDSA::Signature ECDSA::generate_signature(const uint& private_key, const uint& message) const {
+        const Field F = Field(m_n);
 
-        for (int i = 0; i < c_attempts_number; ++i) {
-            const uint k = generate_random_non_zero_uint_modulo(m_parameters.m_n);
+        for (size_t i = 0; i < c_attempts_number; ++i) {
+            const uint k = generate_random_non_zero_uint_modulo(m_n);
 
-            const EllipticCurvePoint P = k * m_parameters.m_generator;
+            const EllipticCurvePoint P = k * m_generator;
             const uint& r = P.get_x().value();
 
             if (r == 0) {
@@ -158,7 +150,6 @@ namespace ECG {
 
     bool ECDSA::is_correct_signature(const EllipticCurvePoint<>& public_key, const uint& message,
                                      const Signature& signature) const {
-        const uint& n = m_parameters.m_n;
         const uint& r = signature.r;
         const uint& s = signature.s;
 
@@ -166,15 +157,15 @@ namespace ECG {
             return false;
         }
 
-        if (r >= n || s >= n) {
+        if (r >= m_n || s >= m_n) {
             return false;
         }
 
-        const Field F = Field(m_parameters.m_n);
+        const Field F = Field(m_n);
         const FieldElement w = FieldElement::inverse(F.element(s));
         const FieldElement u1 = F.element(message) * w;
         const FieldElement u2 = F.element(r) * w;
-        const EllipticCurvePoint<> X = u1.value() * m_parameters.m_generator + u2.value() * public_key;
+        const EllipticCurvePoint<> X = u1.value() * m_generator + u2.value() * public_key;
 
         if (X.is_zero()) {
             return false;

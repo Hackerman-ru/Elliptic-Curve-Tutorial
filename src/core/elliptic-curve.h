@@ -99,13 +99,15 @@ namespace ECG {
         return lhs;
     }
 
+    static constexpr size_t c_kp_number = static_cast<size_t>(1) << (NAF::c_width - 2);
+
     template<CoordinatesType type>
     static void multiply(EllipticCurvePoint<type>& point, const uint& value) {
         NAF::wnaf_form wnaf_form = NAF::get_wnaf(value);
         EllipticCurvePoint<type> two_p = point + point;
         std::vector<EllipticCurvePoint<type>> kp = {point};
 
-        for (size_t i = 1; i < NAF::c_kp_number; ++i) {
+        for (size_t i = 1; i < c_kp_number; ++i) {
             kp.emplace_back(kp.back() + two_p);
         }
 

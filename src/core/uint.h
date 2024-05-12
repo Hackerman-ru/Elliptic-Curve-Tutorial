@@ -3,6 +3,10 @@
 
 //#define ECG_USE_BOOST
 
+namespace ECG {
+    constexpr size_t uint_bits_number = 512;
+}   // namespace ECG
+
 #ifdef ECG_USE_BOOST
     #include "boost/multiprecision/cpp_int.hpp"
     #include "boost/multiprecision/fwd.hpp"
