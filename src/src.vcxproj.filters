@@ -6,7 +6,6 @@
     <ClInclude Include="core\long-arithmetic.h" />
     <ClInclude Include="core\field.h" />
     <ClInclude Include="core\elliptic-curve.h" />
-    <ClInclude Include="core\uint.h" />
     <ClInclude Include="core\utils\fft.h">
       <Filter>utils</Filter>
     </ClInclude>
@@ -34,6 +33,7 @@
     <ClInclude Include="core\utils\csprng\is_iterable.hpp">
       <Filter>utils\random</Filter>
     </ClInclude>
+    <ClInclude Include="core\uint.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />

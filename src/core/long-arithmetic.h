@@ -105,14 +105,14 @@ namespace ECG {
 
         // operator*
         friend constexpr uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
-            /*uint_t result;
+            uint_t result;
 
             for (size_t i = 0; i < c_block_number; ++i) {
                 result += (lhs * rhs[i]) << (c_block_size * i);
             }
 
-            return result;*/
-            return FFT::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
+            return result;
+            // return FFT::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/

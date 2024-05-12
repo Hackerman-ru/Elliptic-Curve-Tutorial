@@ -77,25 +77,10 @@ namespace duthomhas {
         };
 
     public:
-        // Runtime errors . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        struct exception : public std::runtime_error {
-            exception(const char* message) : std::runtime_error(message) {}
-
-            exception(const std::string& message) : std::runtime_error(message) {}
-        };
-
         // Constructors . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        csprng() : internal(csprng_create()), sseq(internal, 0) {
-            if (!internal) {
-                throw exception("duthomhas::CSPRNG: Failed to initialize the OS CSPRNG");
-            }
-        }
+        csprng() : internal(csprng_create()), sseq(internal, 0) {}
 
-        csprng(const csprng& that) : internal(csprng_create()), sseq(internal, that.sseq.seed_seq_size) {
-            if (!internal) {
-                throw exception("duthomhas::CSPRNG: Failed to initialize the OS CSPRNG");
-            }
-        }
+        csprng(const csprng& that) : internal(csprng_create()), sseq(internal, that.sseq.seed_seq_size) {}
 
         // Destructor . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         ~csprng() {
@@ -106,9 +91,7 @@ namespace duthomhas {
         //   int* xs = rng( new int[ 5 ], 5 );
         template<typename T>
         T* operator()(T* buffer, std::size_t n) {
-            if (!csprng_get(internal, (void*)buffer, n * sizeof(T))) {
-                throw exception("duthomhas::CSPRNG: Failed to read the OS CSPRNG");
-            }
+            csprng_get(internal, (void*)buffer, n * sizeof(T));
             return buffer;
         }
 

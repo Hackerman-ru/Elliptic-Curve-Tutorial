@@ -338,9 +338,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\long-arithmetic.h" />
-    <ClInclude Include="core\uint.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="core\uint.h" />
     <ClInclude Include="core\utils\bitsize.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
