@@ -34,8 +34,16 @@ TEST(StressTest, FindMultipleY) {
 
     for (uint i = 0; i < c_find_y_n; ++i) {
         FieldElement x = F.element(i);
-        FieldElement value = FieldElement::pow(x, 3) + a * x + b;
         auto opt = E.point_with_x_equal_to(x);
+
+        if (!x.is_invertible()) {
+            ASSERT_TRUE(opt.has_value());
+            const auto& P = opt.value();
+            ASSERT_TRUE(P.is_zero());
+            continue;
+        }
+
+        FieldElement value = FieldElement::pow(x, 3) + a * x + b;
 
         if (opt.has_value()) {
             const auto& P = opt.value();
@@ -58,8 +66,16 @@ TEST(StressTest, FindMultipleY) {
 
     for (uint i = 0; i < c_find_y_n; ++i) {
         FieldElement x = F.element(i);
-        FieldElement value = FieldElement::pow(x, 3) + a * x + b;
         auto opt = E.point_with_x_equal_to(x);
+
+        if (!x.is_invertible()) {
+            ASSERT_TRUE(opt.has_value());
+            const auto& P = opt.value();
+            ASSERT_TRUE(P.is_zero());
+            continue;
+        }
+
+        FieldElement value = FieldElement::pow(x, 3) + a * x + b;
 
         if (opt.has_value()) {
             const auto& P = opt.value();
@@ -85,6 +101,7 @@ TEST(NormalCorrectnessTest, Creating) {
     FieldElement x = F.element(4);
     EllipticCurvePoint<Normal> P = E.point_with_x_equal_to<Normal>(x).value();
     ASSERT_EQ(P.get_x(), x);
+    P = E.random_point();
 }
 
 TEST(NormalCorrectnessTest, Zero) {

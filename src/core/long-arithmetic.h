@@ -113,7 +113,7 @@ namespace elliptic_curve_guide {
             }
 
             return result;
-            // return fast_fourier_transform::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
+            //return algorithm::fast_fourier_transform::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/

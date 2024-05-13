@@ -3,6 +3,7 @@
 
 #include "field.h"
 #include "utils/naf.h"
+#include "utils/random.h"
 
 #include <optional>
 
@@ -1308,6 +1309,10 @@ namespace elliptic_curve_guide {
 
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point_with_x_equal_to(const Element& x) const {
+                if (!x.is_invertible()) {
+                    return null_point<type>();
+                }
+
                 std::optional<Element> y = find_y(x);
 
                 if (!y.has_value()) {
@@ -1319,6 +1324,10 @@ namespace elliptic_curve_guide {
 
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point_with_x_equal_to(Element&& x) const {
+                if (!x.is_invertible()) {
+                    return null_point<type>();
+                }
+
                 std::optional<Element> y = find_y(x);
 
                 if (!y.has_value()) {
@@ -1386,7 +1395,21 @@ namespace elliptic_curve_guide {
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
-            EllipticCurvePoint<type> random_point() const {}
+            EllipticCurvePoint<type> random_point() const {
+                static constexpr size_t c_repeat_number = 1000;
+                const uint& p = m_Field->modulus();
+
+                for (size_t i = 0; i < c_repeat_number; ++i) {
+                    uint x = algorithm::random::generate_random_uint_modulo(p);
+                    auto opt = point_with_x_equal_to<type>(m_Field->element(x));
+
+                    if (opt.has_value()) {
+                        return opt.value();
+                    }
+                }
+
+                return null_point<type>();
+            }
 
         private:
             static bool is_null_coordinates(const Element& x, const Element& y);
