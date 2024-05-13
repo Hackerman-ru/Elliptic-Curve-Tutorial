@@ -10,7 +10,7 @@ using boost::multiprecision::uint512_t;
 
 #include <random>
 
-using namespace ECG;
+using namespace elliptic_curve_guide;
 
 static constexpr size_t convert_correctness_n = 10000000;
 static constexpr size_t string_correctness_n = 10000;

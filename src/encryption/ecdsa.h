@@ -2,38 +2,50 @@
 #define ECG_ECDSA_H
 
 #include "elliptic-curve.h"
-#include "utils/random.h"
 
-namespace ECG {
-    class ECDSA {
-    public:
-        struct Keys {
-            EllipticCurvePoint<> public_key;
-            uint private_key;
-        };
+namespace elliptic_curve_guide {
+    namespace algorithm {
+        namespace encryption {
+            class ECDSA {
+                using Field = field::Field;
+                using Element = field::FieldElement;
+                using Curve = elliptic_curve::EllipticCurve;
+                using Point = elliptic_curve::EllipticCurvePoint<elliptic_curve::CoordinatesType::Normal>;
 
-        struct Signature {
-            uint r;
-            uint s;
-        };
+            public:
+                struct Keys {
+                    Point public_key;
+                    uint private_key;
+                };
 
-        static ECDSA generate(const uint& field_order, const uint& security_level);
+                struct Signature {
+                    uint r;
+                    uint s;
+                };
 
-        ECDSA(const Field& field, const EllipticCurve& elliptic_curve, const EllipticCurvePoint<>& generator,
-              const uint& n, const uint& h) :
-            m_field(field), m_elliptic_curve(elliptic_curve), m_generator(generator), m_n(n), m_h(h) {}
+                static ECDSA generate(const uint& field_order, const uint& security_level);
 
-        Keys generate_keys() const;
-        Signature generate_signature(const uint& private_key, const uint& message) const;
-        bool is_correct_signature(const EllipticCurvePoint<>& public_key, const uint& message,
-                                  const Signature& signature) const;
+                ECDSA(const Field& field, const Curve& elliptic_curve, const Point& generator, const uint& n,
+                      const uint& h) :
+                    m_field(field),
+                    m_elliptic_curve(elliptic_curve),
+                    m_generator(generator),
+                    m_n(n),
+                    m_h(h) {}
 
-    private:
-        Field m_field;
-        EllipticCurve m_elliptic_curve;
-        EllipticCurvePoint<> m_generator;
-        uint m_n;
-        uint m_h;
-    };
-}   // namespace ECG
+                Keys generate_keys() const;
+                Signature generate_signature(const uint& private_key, const uint& message) const;
+                bool is_correct_signature(const Point& public_key, const uint& message,
+                                          const Signature& signature) const;
+
+            private:
+                Field m_field;
+                Curve m_elliptic_curve;
+                Point m_generator;
+                uint m_n;
+                uint m_h;
+            };
+        }   // namespace encryption
+    }       // namespace algorithm
+}   // namespace elliptic_curve_guide
 #endif

@@ -6,140 +6,141 @@
 #include <numbers>
 #include <vector>
 
-namespace ECG {
-    namespace FFT {
-        using float_point_t = double;
-        using complex = std::complex<float_point_t>;
+namespace elliptic_curve_guide {
+    namespace algorithm {
+        namespace fast_fourier_transform {
+            using float_point_t = double;
+            using complex = std::complex<float_point_t>;
 
-        static constexpr size_t bit_size(size_t value) {
-            size_t result = 0;
+            static constexpr size_t bit_size(size_t value) {
+                size_t result = 0;
 
-            do {
-                value >>= 1;
-                ++result;
-            } while (value);
+                do {
+                    value >>= 1;
+                    ++result;
+                } while (value);
 
-            return result - 1;
-        }
-
-        template<size_t size>
-        static constexpr std::array<size_t, size> get_reverse() {
-            constexpr size_t c_shift = bit_size(size);
-            std::array<size_t, size> reverse;
-            reverse[0] = 0;
-
-            for (size_t i = 1; i < size; ++i) {
-                reverse[i] = (reverse[i >> 1] | ((i & 1) << c_shift)) >> 1;
+                return result - 1;
             }
 
-            return reverse;
-        }
+            template<size_t size>
+            static constexpr std::array<size_t, size> get_reverse() {
+                constexpr size_t c_shift = bit_size(size);
+                std::array<size_t, size> reverse;
+                reverse[0] = 0;
 
-        template<size_t size>
-        static const std::array<complex, size> get_roots() {
-            constexpr size_t c_log_size = bit_size(size);
-            std::array<complex, size> roots;
-            roots[1] = complex(1, 0);
-
-            for (size_t k = 1; k < c_log_size; ++k) {
-                float_point_t angle =
-                    2 * std::numbers::pi_v<float_point_t> / static_cast<float_point_t>((1ULL << (k + 1)));
-                complex z(std::cos(angle), std::sin(angle));
-
-                for (size_t i = 1ULL << (k - 1); i < (1ULL << k); ++i) {
-                    roots[i << 1] = roots[i];
-                    roots[(i << 1) + 1] = roots[i] * z;
+                for (size_t i = 1; i < size; ++i) {
+                    reverse[i] = (reverse[i >> 1] | ((i & 1) << c_shift)) >> 1;
                 }
+
+                return reverse;
             }
 
-            return roots;
-        }
+            template<size_t size>
+            static const std::array<complex, size> get_roots() {
+                constexpr size_t c_log_size = bit_size(size);
+                std::array<complex, size> roots;
+                roots[1] = complex(1, 0);
 
-        template<size_t size>
-        static constexpr size_t real_size(const std::array<uint32_t, size>& arr) {
-            size_t result = size;
+                for (size_t k = 1; k < c_log_size; ++k) {
+                    float_point_t angle =
+                        2 * std::numbers::pi_v<float_point_t> / static_cast<float_point_t>((1ULL << (k + 1)));
+                    complex z(std::cos(angle), std::sin(angle));
 
-            while (arr[result - 1] == 0) {
-                if (result == 1) {
-                    return 0;
-                }
-
-                --result;
-            }
-
-            return result - 1;
-        }
-
-        template<size_t size>
-        static constexpr std::array<complex, size> fft(const std::array<complex, size>& arr) {
-            if constexpr (size <= 1) {
-                return arr;
-            } else {
-                static constexpr std::array<size_t, size> reverse = get_reverse<size>();
-                static const std::array<complex, size> roots = get_roots<size>();
-                std::array<complex, size> y;
-
-                for (size_t i = 0; i < size; ++i) {
-                    y[i] = arr[reverse[i]];
-                }
-
-                for (size_t k = 1; k < size; k <<= 1) {
-                    const size_t len = k << 1;
-                    for (size_t i = 0; i < size; i += len) {
-                        for (size_t j = 0; j < k; ++j) {
-                            complex z = roots[j + k] * y[i + j + k];
-                            y[i + j + k] = y[i + j] - z;
-                            y[i + j] = y[i + j] + z;
-                        }
+                    for (size_t i = 1ULL << (k - 1); i < (1ULL << k); ++i) {
+                        roots[i << 1] = roots[i];
+                        roots[(i << 1) + 1] = roots[i] * z;
                     }
                 }
 
-                return y;
-            }
-        }
-
-        template<size_t size>
-        constexpr std::array<uint32_t, size> multiply(std::array<uint32_t, size> lhs,
-                                                      std::array<uint32_t, size> rhs) {
-            static constexpr size_t double_size = size << 1;
-            std::array<complex, double_size> in_lhs;
-            std::array<complex, double_size> in_rhs;
-
-            for (size_t i = 0; i < size; ++i) {
-                in_lhs[i] = complex(lhs[i]);
-                in_rhs[i] = complex(rhs[i]);
+                return roots;
             }
 
-            std::array<complex, double_size> y_lhs = fft<double_size>(in_lhs);
-            std::array<complex, double_size> y_rhs = fft<double_size>(in_rhs);
+            template<size_t size>
+            static constexpr size_t real_size(const std::array<uint32_t, size>& arr) {
+                size_t result = size;
 
-            std::array<complex, double_size> y;
+                while (arr[result - 1] == 0) {
+                    if (result == 1) {
+                        return 0;
+                    }
 
-            for (size_t i = 0; i < double_size; ++i) {
-                y[i] = y_lhs[i] * y_rhs[i] / static_cast<complex>(double_size);
+                    --result;
+                }
+
+                return result - 1;
             }
 
-            std::reverse(y.begin(), y.end());
+            template<size_t size>
+            static constexpr std::array<complex, size> fft(const std::array<complex, size>& arr) {
+                if constexpr (size <= 1) {
+                    return arr;
+                } else {
+                    static constexpr std::array<size_t, size> reverse = get_reverse<size>();
+                    static const std::array<complex, size> roots = get_roots<size>();
+                    std::array<complex, size> y;
 
-            static constexpr uint64_t c_32_bit_mask = UINT32_MAX;
-            std::array<complex, double_size> out = fft<double_size>(y);
-            std::array<uint32_t, size> result = {};
-            uint64_t carry = 0;
+                    for (size_t i = 0; i < size; ++i) {
+                        y[i] = arr[reverse[i]];
+                    }
 
-            const size_t result_size = std::min(size, real_size<size>(lhs) + real_size<size>(rhs) + 2);
+                    for (size_t k = 1; k < size; k <<= 1) {
+                        const size_t len = k << 1;
+                        for (size_t i = 0; i < size; i += len) {
+                            for (size_t j = 0; j < k; ++j) {
+                                complex z = roots[j + k] * y[i + j + k];
+                                y[i + j + k] = y[i + j] - z;
+                                y[i + j] = y[i + j] + z;
+                            }
+                        }
+                    }
 
-            for (size_t i = 0; i < result_size; ++i) {
-                float_point_t val = std::abs(out[i]);
-                assert(val <= static_cast<float_point_t>(UINT64_MAX));
-                uint64_t value = static_cast<uint64_t>(std::round(val)) + carry;
-                carry = value >> 32;
-                result[i] = static_cast<uint32_t>(value & c_32_bit_mask);
+                    return y;
+                }
             }
 
-            return result;
-        }
+            template<size_t size>
+            constexpr std::array<uint32_t, size>
+                multiply(std::array<uint32_t, size> lhs, std::array<uint32_t, size> rhs) {
+                static constexpr size_t double_size = size << 1;
+                std::array<complex, double_size> in_lhs;
+                std::array<complex, double_size> in_rhs;
 
-        /*using complex = std::complex<long double>;
+                for (size_t i = 0; i < size; ++i) {
+                    in_lhs[i] = complex(lhs[i]);
+                    in_rhs[i] = complex(rhs[i]);
+                }
+
+                std::array<complex, double_size> y_lhs = fft<double_size>(in_lhs);
+                std::array<complex, double_size> y_rhs = fft<double_size>(in_rhs);
+
+                std::array<complex, double_size> y;
+
+                for (size_t i = 0; i < double_size; ++i) {
+                    y[i] = y_lhs[i] * y_rhs[i] / static_cast<complex>(double_size);
+                }
+
+                std::reverse(y.begin(), y.end());
+
+                static constexpr uint64_t c_32_bit_mask = UINT32_MAX;
+                std::array<complex, double_size> out = fft<double_size>(y);
+                std::array<uint32_t, size> result = {};
+                uint64_t carry = 0;
+
+                const size_t result_size = std::min(size, real_size<size>(lhs) + real_size<size>(rhs) + 2);
+
+                for (size_t i = 0; i < result_size; ++i) {
+                    float_point_t val = std::abs(out[i]);
+                    assert(val <= static_cast<float_point_t>(UINT64_MAX));
+                    uint64_t value = static_cast<uint64_t>(std::round(val)) + carry;
+                    carry = value >> 32;
+                    result[i] = static_cast<uint32_t>(value & c_32_bit_mask);
+                }
+
+                return result;
+            }
+
+            /*using complex = std::complex<long double>;
 
         static complex fast_pow(const complex& value, size_t power) {
             if (power == 0) {
@@ -256,7 +257,8 @@ namespace ECG {
 
             return result;
         }*/
-    }   // namespace FFT
-}   // namespace ECG
+        }   // namespace fast_fourier_transform
+    }       // namespace algorithm
+}   // namespace elliptic_curve_guide
 
 #endif

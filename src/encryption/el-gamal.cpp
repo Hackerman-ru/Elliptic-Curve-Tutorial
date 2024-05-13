@@ -5,12 +5,12 @@
 
 #include <map>
 
-namespace ECG {
+namespace elliptic_curve_guide::algorithm::encryption {
     ElGamal::ElGamal(const Curve& curve, const Point& generator, const uint& generator_order) :
         m_curve(curve), m_generator(generator), m_generator_order(generator_order) {}
 
     ElGamal::Keys ElGamal::generate_keys() const {
-        uint private_key = generate_random_non_zero_uint_modulo(m_generator_order);
+        uint private_key = random::generate_random_non_zero_uint_modulo(m_generator_order);
         Point public_key = private_key * m_generator;
         return Keys {.private_key = private_key, .public_key = public_key};
     }
@@ -23,7 +23,7 @@ namespace ECG {
 
     ElGamal::EncryptedMessage<ElGamal::EncryptionType::Standard>
         ElGamal::encrypt(const Point& message, const Point& public_key) const {
-        const uint k = generate_random_non_zero_uint_modulo(m_generator_order);
+        const uint k = random::generate_random_non_zero_uint_modulo(m_generator_order);
         const Point generator_degree = k * m_generator;
         const Point message_with_salt = message + k * public_key;
         return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
@@ -32,7 +32,7 @@ namespace ECG {
     ElGamal::EncryptedMessage<ElGamal::EncryptionType::Hashed>
         ElGamal::encrypt(const uint& message, const Point& public_key,
                          const std::function<uint(const Point&)>& hash_function) const {
-        const uint k = generate_random_non_zero_uint_modulo(m_generator_order);
+        const uint k = random::generate_random_non_zero_uint_modulo(m_generator_order);
         const Point generator_degree = k * m_generator;
         const uint message_with_salt = message ^ hash_function(k * public_key);
         return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
@@ -55,11 +55,11 @@ namespace ECG {
     static constexpr uint full_bits = uint(0) - 1;
 
     ElGamal::Point ElGamal::map_to_curve(const uint& message) const {
-        const Field& F = m_curve.get_field();
+        const field::Field& F = m_curve.get_field();
         const uint& p = F.modulus();
 
         if (!p_zero_mask.contains(p)) {
-            const size_t l = actual_bit_size(p) >> 1;
+            const size_t l = bit_size::actual_bit_size(p) >> 1;
             uint zero_mask = (full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }
@@ -68,7 +68,7 @@ namespace ECG {
 
         // Should take less than 3 iterations for large p: https://eprint.iacr.org/2013/373.pdf, page 5
         for (;;) {
-            uint x = generate_random_uint_modulo(p);
+            uint x = random::generate_random_uint_modulo(p);
             x &= zero_mask;
             x |= message ^ (message & zero_mask);
             auto opt = m_curve.point_with_x_equal_to(F.element(std::move(x)));
@@ -83,7 +83,7 @@ namespace ECG {
         const uint& p = m_curve.get_field().modulus();
 
         if (!p_zero_mask.contains(p)) {
-            const size_t l = actual_bit_size(p) >> 1;
+            const size_t l = bit_size::actual_bit_size(p) >> 1;
             uint zero_mask = (full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }
@@ -93,4 +93,4 @@ namespace ECG {
         x ^= (x & zero_mask);
         return x;
     }
-}   // namespace ECG
+}   // namespace elliptic_curve_guide::algorithm::encryption

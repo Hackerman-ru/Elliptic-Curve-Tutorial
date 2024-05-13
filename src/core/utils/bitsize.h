@@ -3,7 +3,11 @@
 
 #include "uint.h"
 
-namespace ECG {
-    size_t actual_bit_size(const uint& value);
-}   // namespace ECG
+namespace elliptic_curve_guide {
+    namespace algorithm {
+        namespace bit_size {
+            size_t actual_bit_size(const uint& value);
+        }   // namespace bit_size
+    }       // namespace algorithm
+}   // namespace elliptic_curve_guide
 #endif

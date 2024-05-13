@@ -2,42 +2,42 @@
 
 #include "map"
 
-namespace ECG {
-    EllipticCurve::EllipticCurve(const FieldElement& a, const FieldElement& b, Field F) :
-        m_a {std::make_shared<const FieldElement>(a)},
-        m_b {std::make_shared<const FieldElement>(b)},
+namespace elliptic_curve_guide::elliptic_curve {
+    EllipticCurve::EllipticCurve(const Element& a, const Element& b, Field F) :
+        m_a {std::make_shared<const Element>(a)},
+        m_b {std::make_shared<const Element>(b)},
         m_Field {std::make_shared<const Field>(std::move(F))} {}
 
-    EllipticCurve::EllipticCurve(FieldElement&& a, const FieldElement& b, Field F) :
-        m_a {std::make_shared<const FieldElement>(std::move(a))},
-        m_b {std::make_shared<const FieldElement>(b)},
+    EllipticCurve::EllipticCurve(Element&& a, const Element& b, Field F) :
+        m_a {std::make_shared<const Element>(std::move(a))},
+        m_b {std::make_shared<const Element>(b)},
         m_Field {std::make_shared<const Field>(std::move(F))} {}
 
-    EllipticCurve::EllipticCurve(const FieldElement& a, FieldElement&& b, Field F) :
-        m_a {std::make_shared<const FieldElement>(a)},
-        m_b {std::make_shared<const FieldElement>(std::move(b))},
+    EllipticCurve::EllipticCurve(const Element& a, Element&& b, Field F) :
+        m_a {std::make_shared<const Element>(a)},
+        m_b {std::make_shared<const Element>(std::move(b))},
         m_Field {std::make_shared<const Field>(std::move(F))} {}
 
-    EllipticCurve::EllipticCurve(FieldElement&& a, FieldElement&& b, Field F) :
-        m_a {std::make_shared<const FieldElement>(std::move(a))},
-        m_b {std::make_shared<const FieldElement>(std::move(b))},
+    EllipticCurve::EllipticCurve(Element&& a, Element&& b, Field F) :
+        m_a {std::make_shared<const Element>(std::move(a))},
+        m_b {std::make_shared<const Element>(std::move(b))},
         m_Field {std::make_shared<const Field>(std::move(F))} {}
 
     uint EllipticCurve::points_number() const {   // TODO
         return uint();
     }
 
-    const Field& EllipticCurve::get_field() const {
+    const EllipticCurve::Field& EllipticCurve::get_field() const {
         return *m_Field;
     }
 
-    bool EllipticCurve::is_valid_coordinates(const FieldElement& x, const FieldElement& y) const {
-        const FieldElement lhs = FieldElement::pow(y, 2);
-        const FieldElement rhs = FieldElement::pow(x, 3) + *m_a * x + *m_b;
+    bool EllipticCurve::is_valid_coordinates(const Element& x, const Element& y) const {
+        const Element lhs = Element::pow(y, 2);
+        const Element rhs = Element::pow(x, 3) + *m_a * x + *m_b;
         return lhs == rhs;
     }
 
-    bool EllipticCurve::is_null_coordinates(const FieldElement& x, const FieldElement& y) {
+    bool EllipticCurve::is_null_coordinates(const Element& x, const Element& y) {
         return x.value() == 0 && y.value() == 1;
     }
 
@@ -45,9 +45,9 @@ namespace ECG {
         struct Cache {
             size_t power_of_two;
             uint residue;   // p - 1 = 2.pow(power_of_two) * residue
-            std::vector<FieldElement>
+            std::vector<field::FieldElement>
                 b_second_powers;   // b.pow(2) ... b.pow(2.pow(power_of_two - 1)), where b is a quadratic nonresidue
-            std::vector<FieldElement>
+            std::vector<field::FieldElement>
                 b_second_u_powers;   // b.pow(residue), b.pow(2 * residue), ... , b.pow(2.pow(power_of_two - 1) * residue)
         };
 
@@ -59,10 +59,10 @@ namespace ECG {
 
     static std::map<uint, Cache> p_cache;
 
-    static FieldElement find_b(const FieldElement& one, const uint& degree) {
-        FieldElement b = one + one;
+    static field::FieldElement find_b(const field::FieldElement& one, const uint& degree) {
+        field::FieldElement b = one + one;
 
-        while (FieldElement::pow(b, degree) == one) {
+        while (field::FieldElement::pow(b, degree) == one) {
             b += one;
         }
 
@@ -81,41 +81,41 @@ namespace ECG {
         return {power_of_two, residue};
     }
 
-    std::optional<FieldElement> EllipticCurve::find_y(const FieldElement& x) const {
-        FieldElement value = FieldElement::pow(x, 3) + *m_a * x + *m_b;
+    std::optional<EllipticCurve::Element> EllipticCurve::find_y(const Element& x) const {
+        Element value = Element::pow(x, 3) + *m_a * x + *m_b;
 
         if (!value.is_invertible()) {
             return std::nullopt;
         }
 
         const uint& p = m_Field->modulus();
-        const FieldElement one = m_Field->element(1);
+        const Element one = m_Field->element(1);
 
-        if (FieldElement::pow(value, (p - 1) >> 1) != one) {
+        if (Element::pow(value, (p - 1) >> 1) != one) {
             return std::nullopt;
         }
 
         if ((p & 0b11) == 3) {
-            return FieldElement::pow(value, (p + 1) >> 2);
+            return Element::pow(value, (p + 1) >> 2);
         }
 
         if (!p_cache.contains(p)) {
             Decomposition decomposition = decompose(p - 1);
-            FieldElement b = find_b(one, (p - 1) >> 1);
+            Element b = find_b(one, (p - 1) >> 1);
             size_t e = decomposition.power_of_two;
 
-            std::vector<FieldElement> second_powers = {b};
+            std::vector<Element> second_powers = {b};
             second_powers.reserve(e - 1);
 
             for (size_t i = 1; i < e; ++i) {
-                second_powers.emplace_back(FieldElement::pow(second_powers[i - 1], 2));
+                second_powers.emplace_back(Element::pow(second_powers[i - 1], 2));
             }
 
-            std::vector<FieldElement> second_u_powers = {FieldElement::pow(b, decomposition.residue)};
+            std::vector<Element> second_u_powers = {Element::pow(b, decomposition.residue)};
             second_u_powers.reserve(e);
 
             for (size_t i = 1; i < e; ++i) {
-                second_u_powers.emplace_back(FieldElement::pow(second_u_powers[i - 1], 2));
+                second_u_powers.emplace_back(Element::pow(second_u_powers[i - 1], 2));
             }
 
             p_cache.insert({
@@ -128,17 +128,17 @@ namespace ECG {
         }
 
         const Cache& cache = p_cache.at(p);
-        std::vector<FieldElement> z_u_powers_of_2 = {FieldElement::pow(value, cache.residue)};
+        std::vector<Element> z_u_powers_of_2 = {Element::pow(value, cache.residue)};
         size_t current_r = 0;
 
         while (z_u_powers_of_2.back() != one) {
-            z_u_powers_of_2.emplace_back(FieldElement::pow(z_u_powers_of_2.back(), 2));
+            z_u_powers_of_2.emplace_back(Element::pow(z_u_powers_of_2.back(), 2));
             ++current_r;
         }
 
         const size_t& e = cache.power_of_two;
         std::vector<size_t> two_orders = {current_r};
-        FieldElement current_z = value;
+        Element current_z = value;
 
         while (current_r != 0) {
             current_z *= cache.b_second_powers[e - current_r];
@@ -155,7 +155,7 @@ namespace ECG {
             two_orders.emplace_back(current_r);
         }
 
-        FieldElement current_x = FieldElement::pow(current_z, (cache.residue + 1) >> 1);
+        Element current_x = Element::pow(current_z, (cache.residue + 1) >> 1);
         const size_t n = two_orders.size();
 
         for (size_t i = 0; i + 1 < n; ++i) {
@@ -164,4 +164,4 @@ namespace ECG {
 
         return current_x;
     }
-}   // namespace ECG
+}   // namespace elliptic_curve_guide::elliptic_curve

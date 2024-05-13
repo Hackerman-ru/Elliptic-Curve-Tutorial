@@ -4,7 +4,9 @@
 
 #include "elliptic-curve.h"
 
-using namespace ECG;
+using namespace elliptic_curve_guide;
+using namespace field;
+using namespace elliptic_curve;
 using enum CoordinatesType;
 
 static constexpr uint c_find_y_n = 53617;   // e = 4

@@ -1,6 +1,6 @@
 #include "field.h"
 
-namespace ECG {
+namespace elliptic_curve_guide::field {
     FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
         m_value(normalize(value, modulus)), m_modulus(modulus) {
         assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than p");
@@ -253,4 +253,4 @@ namespace ECG {
     const uint& Field::modulus() const {
         return *m_modulus;
     }
-}   // namespace ECG
+}   // namespace elliptic_curve_guide::field

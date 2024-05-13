@@ -3,8 +3,8 @@
 
 #include <concepts>
 
-namespace ECG {
-    namespace Concepts {
+namespace elliptic_curve_guide {
+    namespace concepts {
         template<typename From, typename To>
         concept is_convertible_to = requires(From f) {
             { static_cast<To>(f) } noexcept;
@@ -27,6 +27,6 @@ namespace ECG {
             f(0);
             p + t;
         };
-    }   // namespace Concepts
-}   // namespace ECG
+    }   // namespace concepts
+}   // namespace elliptic_curve_guide
 #endif

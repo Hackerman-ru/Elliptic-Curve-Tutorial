@@ -4,7 +4,10 @@
 #include <elliptic-curve.h>
 #include <field.h>
 
-using namespace ECG;
+using namespace elliptic_curve_guide;
+using namespace field;
+using namespace elliptic_curve;
+using namespace algorithm::encryption;
 
 TEST(SimpleTest, Creation) {
     const uint p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");

@@ -6,7 +6,8 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/fwd.hpp>
 
-using namespace ECG;
+using namespace elliptic_curve_guide;
+using namespace field;
 
 static const uint inversion_hard_n = 1599827;
 

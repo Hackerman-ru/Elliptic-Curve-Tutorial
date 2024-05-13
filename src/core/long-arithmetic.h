@@ -8,11 +8,11 @@
 #include <array>
 #include <cassert>
 
-namespace ECG {
+namespace elliptic_curve_guide {
     template<size_t c_bits>
     class uint_t {
         using block_t = uint32_t;
-        using double_block_t = uint64_t;   // FFT will delete this
+        using double_block_t = uint64_t;   // fast_fourier_transform will delete this
 
         static constexpr size_t c_bits_in_byte = 8;
         static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
@@ -30,7 +30,8 @@ namespace ECG {
         template<typename T>
         constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
-        constexpr uint_t(const char* str) : m_blocks(parse_into<uint_t>(str).m_blocks) {};
+        constexpr uint_t(const char* str) :
+            m_blocks(algorithm::string_parser::parse_into<uint_t>(str).m_blocks) {};
 
         constexpr uint_t& operator=(const uint_t& value) = default;
 
@@ -112,11 +113,12 @@ namespace ECG {
             }
 
             return result;
-            // return FFT::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
+            // return fast_fourier_transform::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
-        friend constexpr uint_t operator/(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
+        friend constexpr uint_t operator/(const uint_t& lhs,
+                                          const uint_t& rhs) {   // fast_fourier_transform will change this
             uint_t result = divide(lhs, rhs);
             uint_t less = result * rhs;
             uint_t greater = (result + 1) * rhs;
@@ -129,7 +131,8 @@ namespace ECG {
         }
 
         // operator%
-        friend constexpr uint_t operator%(const uint_t& lhs, const uint_t& rhs) {   // FFT will change this
+        friend constexpr uint_t operator%(const uint_t& lhs,
+                                          const uint_t& rhs) {   // fast_fourier_transform will change this
             uint_t remainder;
             divide(lhs, rhs, &remainder);
             assert(rhs > remainder && "uint_t::operator% : remainder must be less than divisor");
@@ -396,7 +399,7 @@ namespace ECG {
         constexpr T convert_to() const;
 
         template<typename T>
-        requires Concepts::is_convertible_to<T, block_t>
+        requires concepts::is_convertible_to<T, block_t>
         constexpr T convert_to() const {
             size_t shift_size = sizeof(T) * c_bits_in_byte;
             size_t blocks_number = shift_size / c_block_size;
@@ -435,13 +438,13 @@ namespace ECG {
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && Concepts::is_upcastable_to<T, block_t>
+        requires std::numeric_limits<T>::is_integer && concepts::is_upcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
             return {static_cast<block_t>(value)};
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && Concepts::is_downcastable_to<T, block_t>
+        requires std::numeric_limits<T>::is_integer && concepts::is_downcastable_to<T, block_t>
         static constexpr blocks split_into_blocks(T value) {
             blocks result = {};
 
@@ -458,8 +461,8 @@ namespace ECG {
         }
 
         template<typename T>
-        requires Concepts::is_convertible_container<T, block_t> || requires(T x) {
-            { ECG::uint_t {x} } -> std::same_as<T>;
+        requires concepts::is_convertible_container<T, block_t> || requires(T x) {
+            { elliptic_curve_guide::uint_t {x} } -> std::same_as<T>;
         }
         static constexpr blocks split_into_blocks(const T& other) {
             const size_t min_size = std::min(size(), other.size());
@@ -472,9 +475,10 @@ namespace ECG {
             return result;
         }
 
-        static constexpr uint_t divide(const uint_t& lhs,
-                                       const uint_t& rhs,
-                                       uint_t* remainder = nullptr) {   // FFT will delete this
+        static constexpr uint_t
+            divide(const uint_t& lhs,
+                   const uint_t& rhs,
+                   uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
@@ -496,9 +500,10 @@ namespace ECG {
             return d_divide(lhs, rhs, remainder);
         }
 
-        static constexpr uint_t divide(const uint_t& lhs,
-                                       const block_t& rhs,
-                                       uint_t* remainder = nullptr) {   // FFT will delete this
+        static constexpr uint_t
+            divide(const uint_t& lhs,
+                   const block_t& rhs,
+                   uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
             uint_t result;
             double_block_t part = 0;
 
@@ -520,9 +525,10 @@ namespace ECG {
             return result;
         }
 
-        static constexpr uint_t d_divide(const uint_t& lhs,
-                                         const uint_t& rhs,
-                                         uint_t* remainder = nullptr) {   // FFT will delete this
+        static constexpr uint_t
+            d_divide(const uint_t& lhs,
+                     const uint_t& rhs,
+                     uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
@@ -638,7 +644,7 @@ namespace ECG {
             }
         }
 
-        constexpr uint_t operator*(block_t other) const {   // FFT will delete this
+        constexpr uint_t operator*(block_t other) const {   // fast_fourier_transform will delete this
             block_t remainder = 0;
             uint_t result;
 
@@ -659,7 +665,7 @@ namespace ECG {
             return m_blocks[pos];
         }
 
-        constexpr size_t actual_size() const {   // FFT will delete this
+        constexpr size_t actual_size() const {   // fast_fourier_transform will delete this
             size_t result = c_block_number;
 
             while (result > 0 && m_blocks[result - 1] == 0) {
@@ -669,6 +675,6 @@ namespace ECG {
             return result;
         }
     };
-}   // namespace ECG
+}   // namespace elliptic_curve_guide
 
 #endif

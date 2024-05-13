@@ -1,6 +1,6 @@
 #include "bitsize.h"
 
-namespace ECG {
+namespace elliptic_curve_guide::algorithm::bit_size {
     size_t actual_bit_size(const uint& value) {
         size_t l = 1;
         size_t r = 513;
@@ -19,4 +19,4 @@ namespace ECG {
 
         return l;
     }
-}   // namespace ECG
+}   // namespace elliptic_curve_guide::algorithm::bit_size

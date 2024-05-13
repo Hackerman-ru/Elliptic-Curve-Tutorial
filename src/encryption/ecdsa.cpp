@@ -2,7 +2,7 @@
 
 #include "utils/random.h"
 
-namespace ECG {
+namespace elliptic_curve_guide::algorithm::encryption {
     static constexpr size_t c_attempts_number = 100000;
 
     //static uint bit_size(uint value) {
@@ -117,8 +117,8 @@ namespace ECG {
     //}
 
     ECDSA::Keys ECDSA::generate_keys() const {
-        uint d = generate_random_non_zero_uint_modulo(m_n);
-        EllipticCurvePoint<> Q = d * m_generator;
+        uint d = random::generate_random_non_zero_uint_modulo(m_n);
+        Point Q = d * m_generator;
         return {.public_key = Q, .private_key = d};
     }
 
@@ -126,17 +126,17 @@ namespace ECG {
         const Field F = Field(m_n);
 
         for (size_t i = 0; i < c_attempts_number; ++i) {
-            const uint k = generate_random_non_zero_uint_modulo(m_n);
+            const uint k = random::generate_random_non_zero_uint_modulo(m_n);
 
-            const EllipticCurvePoint P = k * m_generator;
+            const Point P = k * m_generator;
             const uint& r = P.get_x().value();
 
             if (r == 0) {
                 continue;
             }
 
-            const FieldElement edr = F.element(message) + F.element(private_key) * F.element(r);
-            const uint s = (FieldElement::inverse(F.element(k)) * edr).value();
+            const Element edr = F.element(message) + F.element(private_key) * F.element(r);
+            const uint s = (Element::inverse(F.element(k)) * edr).value();
 
             if (s == 0) {
                 continue;
@@ -148,7 +148,7 @@ namespace ECG {
         return {};
     }
 
-    bool ECDSA::is_correct_signature(const EllipticCurvePoint<>& public_key, const uint& message,
+    bool ECDSA::is_correct_signature(const Point& public_key, const uint& message,
                                      const Signature& signature) const {
         const uint& r = signature.r;
         const uint& s = signature.s;
@@ -162,10 +162,10 @@ namespace ECG {
         }
 
         const Field F = Field(m_n);
-        const FieldElement w = FieldElement::inverse(F.element(s));
-        const FieldElement u1 = F.element(message) * w;
-        const FieldElement u2 = F.element(r) * w;
-        const EllipticCurvePoint<> X = u1.value() * m_generator + u2.value() * public_key;
+        const Element w = Element::inverse(F.element(s));
+        const Element u1 = F.element(message) * w;
+        const Element u2 = F.element(r) * w;
+        const Point X = u1.value() * m_generator + u2.value() * public_key;
 
         if (X.is_zero()) {
             return false;
@@ -174,4 +174,4 @@ namespace ECG {
         const uint& v = X.get_x().value();
         return v == r;
     }
-}   // namespace ECG
+}   // namespace elliptic_curve_guide::algorithm::encryption
