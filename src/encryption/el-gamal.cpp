@@ -52,7 +52,8 @@ namespace elliptic_curve_guide::algorithm::encryption {
     }
 
     static std::map<uint, uint> p_zero_mask;
-    static constexpr uint full_bits = uint(0) - 1;
+    static constexpr uint c_full_bits = uint(0) - 1;
+    static constexpr size_t c_attempts_number = 10000;
 
     ElGamal::Point ElGamal::map_to_curve(const uint& message) const {
         const field::Field& F = m_curve.get_field();
@@ -60,14 +61,14 @@ namespace elliptic_curve_guide::algorithm::encryption {
 
         if (!p_zero_mask.contains(p)) {
             const size_t l = bit_size::actual_bit_size(p) >> 1;
-            uint zero_mask = (full_bits >> l) << l;
+            uint zero_mask = (c_full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }
 
         const uint& zero_mask = p_zero_mask.at(p);
 
         // Should take less than 3 iterations for large p: https://eprint.iacr.org/2013/373.pdf, page 5
-        for (;;) {
+        for (size_t i = 0; i < c_attempts_number; ++i) {
             uint x = random::generate_random_uint_modulo(p);
             x &= zero_mask;
             x |= message ^ (message & zero_mask);
@@ -77,6 +78,8 @@ namespace elliptic_curve_guide::algorithm::encryption {
                 return opt.value();
             }
         }
+
+        return m_curve.null_point();
     }
 
     uint ElGamal::map_to_uint(const Point& message) const {
@@ -84,7 +87,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
 
         if (!p_zero_mask.contains(p)) {
             const size_t l = bit_size::actual_bit_size(p) >> 1;
-            uint zero_mask = (full_bits >> l) << l;
+            uint zero_mask = (c_full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }
 

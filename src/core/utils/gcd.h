@@ -1,11 +1,10 @@
-#ifndef ECG_BITSIZE_H
-#define ECG_BITSIZE_H
-
-#include "uint.h"
+#ifndef ECG_GCD_H
+#define ECG_GCD_H
 
 namespace elliptic_curve_guide {
     namespace algorithm {
-        size_t actual_bit_size(const uint& value);
+        template<typename T>
+        T gcd(const T& lhs, const T& rhs) {}
     }   // namespace algorithm
 }   // namespace elliptic_curve_guide
 #endif

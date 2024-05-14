@@ -23,12 +23,20 @@ namespace elliptic_curve_guide::elliptic_curve {
         m_b {std::make_shared<const Element>(std::move(b))},
         m_Field {std::make_shared<const Field>(std::move(F))} {}
 
-    uint EllipticCurve::points_number() const {   // TODO
-        return uint();
+    uint EllipticCurve::points_number() const {
+        return algorithm::schoof::points_number(*this);
     }
 
     const EllipticCurve::Field& EllipticCurve::get_field() const {
         return *m_Field;
+    }
+
+    const EllipticCurve::Element& EllipticCurve::get_a() const {
+        return *m_a;
+    }
+
+    const EllipticCurve::Element& EllipticCurve::get_b() const {
+        return *m_b;
     }
 
     bool EllipticCurve::is_valid_coordinates(const Element& x, const Element& y) const {
@@ -37,7 +45,7 @@ namespace elliptic_curve_guide::elliptic_curve {
         return lhs == rhs;
     }
 
-    bool EllipticCurve::is_null_coordinates(const Element& x, const Element& y) {
+    bool EllipticCurve::is_null_coordinates(const Element& x, const Element& y) const {
         return x.value() == 0 && y.value() == 1;
     }
 

@@ -12,7 +12,7 @@ namespace elliptic_curve_guide {
     template<size_t c_bits>
     class uint_t {
         using block_t = uint32_t;
-        using double_block_t = uint64_t;   // fast_fourier_transform will delete this
+        using double_block_t = uint64_t;
 
         static constexpr size_t c_bits_in_byte = 8;
         static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
@@ -30,8 +30,7 @@ namespace elliptic_curve_guide {
         template<typename T>
         constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
-        constexpr uint_t(const char* str) :
-            m_blocks(algorithm::string_parser::parse_into<uint_t>(str).m_blocks) {};
+        constexpr uint_t(const char* str) : m_blocks(algorithm::parse_into<uint_t>(str).m_blocks) {};
 
         constexpr uint_t& operator=(const uint_t& value) = default;
 
@@ -265,15 +264,15 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator>>=(size_t shift_size) {
-            static constexpr size_t c_NewBucketSize = 64;
-            static constexpr size_t c_NewBucketNumber = c_bits / c_NewBucketSize;
+            static constexpr size_t c_double_bucket_size = sizeof(double_block_t) * c_bits_in_byte;
+            static constexpr size_t c_double_bucket_number = c_bits / c_double_bucket_size;
 
             size_t bucket_shift = shift_size >> 6;
             auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
             if (bucket_shift > 0) {
-                for (size_t i = 0; i < c_NewBucketNumber; ++i) {
-                    if (i + bucket_shift < c_NewBucketNumber) {
+                for (size_t i = 0; i < c_double_bucket_number; ++i) {
+                    if (i + bucket_shift < c_double_bucket_number) {
                         data[i] = data[i + bucket_shift];
                     } else {
                         data[i] = 0;
@@ -281,21 +280,21 @@ namespace elliptic_curve_guide {
                 }
             }
 
-            shift_size %= c_NewBucketSize;
+            shift_size %= c_double_bucket_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + bucket_shift < c_NewBucketNumber; ++i) {
+            for (size_t i = 0; i + bucket_shift < c_double_bucket_number; ++i) {
                 data[i] >>= shift_size;
 
-                if (i + 1 < c_NewBucketNumber) {
-                    data[i] |= data[i + 1] << (c_NewBucketSize - shift_size);
+                if (i + 1 < c_double_bucket_number) {
+                    data[i] |= data[i + 1] << (c_double_bucket_size - shift_size);
                 }
             }
 
-            if constexpr (c_bits % c_NewBucketSize != 0) {
+            if constexpr (c_bits % c_double_bucket_size != 0) {
                 if constexpr (c_block_number > 1) {
                     m_blocks[c_block_number - 2] |= m_blocks[c_block_number - 1]
                                                  << (c_block_size - shift_size);
@@ -475,10 +474,7 @@ namespace elliptic_curve_guide {
             return result;
         }
 
-        static constexpr uint_t
-            divide(const uint_t& lhs,
-                   const uint_t& rhs,
-                   uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
+        static constexpr uint_t divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
@@ -500,10 +496,7 @@ namespace elliptic_curve_guide {
             return d_divide(lhs, rhs, remainder);
         }
 
-        static constexpr uint_t
-            divide(const uint_t& lhs,
-                   const block_t& rhs,
-                   uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
+        static constexpr uint_t divide(const uint_t& lhs, const block_t& rhs, uint_t* remainder = nullptr) {
             uint_t result;
             double_block_t part = 0;
 
@@ -525,10 +518,7 @@ namespace elliptic_curve_guide {
             return result;
         }
 
-        static constexpr uint_t
-            d_divide(const uint_t& lhs,
-                     const uint_t& rhs,
-                     uint_t* remainder = nullptr) {   // fast_fourier_transform will delete this
+        static constexpr uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
@@ -577,8 +567,7 @@ namespace elliptic_curve_guide {
                 for (size_t j = 0; j < divisor_size; ++j) {
                     double_block_t product =
                         static_cast<block_t>(quotient_temp) * static_cast<double_block_t>(divisor[j]);
-                    widedigit =
-                        (static_cast<int64_t>(dividend[i + j - 1]) + carry) - (product & 0xffffffffLL);
+                    widedigit = (static_cast<int64_t>(dividend[i + j - 1]) + carry) - (product & UINT32_MAX);
                     dividend[i + j - 1] = static_cast<block_t>(widedigit);
                     carry = (widedigit >> c_block_size) - static_cast<int64_t>(product >> c_block_size);
                 }
@@ -644,7 +633,7 @@ namespace elliptic_curve_guide {
             }
         }
 
-        constexpr uint_t operator*(block_t other) const {   // fast_fourier_transform will delete this
+        constexpr uint_t operator*(block_t other) const {
             block_t remainder = 0;
             uint_t result;
 
@@ -665,7 +654,7 @@ namespace elliptic_curve_guide {
             return m_blocks[pos];
         }
 
-        constexpr size_t actual_size() const {   // fast_fourier_transform will delete this
+        constexpr size_t actual_size() const {
             size_t result = c_block_number;
 
             while (result > 0 && m_blocks[result - 1] == 0) {

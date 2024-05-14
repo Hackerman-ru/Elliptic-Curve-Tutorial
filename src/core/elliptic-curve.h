@@ -4,6 +4,7 @@
 #include "field.h"
 #include "utils/naf.h"
 #include "utils/random.h"
+#include "utils/schoof.h"
 
 #include <optional>
 
@@ -1304,8 +1305,10 @@ namespace elliptic_curve_guide {
             EllipticCurve(const Element& a, Element&& b, Field F);
             EllipticCurve(Element&& a, Element&& b, Field F);
 
-            uint points_number() const;   // Scoof's algorithm
+            uint points_number() const;
             const Field& get_field() const;
+            const Element& get_a() const;
+            const Element& get_b() const;
 
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point_with_x_equal_to(const Element& x) const {
@@ -1412,7 +1415,7 @@ namespace elliptic_curve_guide {
             }
 
         private:
-            static bool is_null_coordinates(const Element& x, const Element& y);
+            bool is_null_coordinates(const Element& x, const Element& y) const;
             bool is_valid_coordinates(const Element& x, const Element& y) const;
             std::optional<Element> find_y(const Element& x) const;
 

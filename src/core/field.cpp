@@ -1,9 +1,11 @@
 #include "field.h"
 
+#include "utils/fast-pow.h"
+
 namespace elliptic_curve_guide::field {
     FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
-        m_value(normalize(value, modulus)), m_modulus(modulus) {
-        assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than p");
+        m_value(normalize(value, modulus)), m_modulus(std::move(modulus)) {
+        assert(is_valid() && "FieldElement::FieldElement() : Field element value must be less than modulus");
     }
 
     FieldElement FieldElement::operator-() const {
@@ -115,7 +117,7 @@ namespace elliptic_curve_guide::field {
             m_value -= *m_modulus;
         }
 
-        assert(is_valid() && "FieldElement::operator+= : Field element value must be less than p");
+        assert(is_valid() && "FieldElement::operator+= : Field element value must be less than modulus");
         return *this;
     }
 
@@ -126,7 +128,7 @@ namespace elliptic_curve_guide::field {
 
         m_value -= other.m_value;
 
-        assert(is_valid() && "FieldElement::operator-= : Field element value must be less than p");
+        assert(is_valid() && "FieldElement::operator-= : Field element value must be less than modulus");
         return *this;
     }
 
@@ -137,7 +139,7 @@ namespace elliptic_curve_guide::field {
             m_value %= *m_modulus;
         }
 
-        assert(is_valid() && "FieldElement::operator*= : Field element value must be less than p");
+        assert(is_valid() && "FieldElement::operator*= : Field element value must be less than modulus");
         return *this;
     }
 
@@ -154,7 +156,7 @@ namespace elliptic_curve_guide::field {
             }
         }
 
-        assert(is_valid() && "FieldElement::operator<<= : Field element value must be less than p");
+        assert(is_valid() && "FieldElement::operator<<= : Field element value must be less than modulus");
         return *this;
     }
 
@@ -186,7 +188,7 @@ namespace elliptic_curve_guide::field {
         uint x, y;
         extended_modular_gcd(m_value, *m_modulus, x, y, *m_modulus);
         m_value = x;
-        assert(is_valid() && "FieldElement::inverse : Field element value must be less than p");
+        assert(is_valid() && "FieldElement::inverse : Field element value must be less than modulus");
     }
 
     bool FieldElement::is_invertible() const {
@@ -209,16 +211,7 @@ namespace elliptic_curve_guide::field {
     }
 
     FieldElement FieldElement::pow(const FieldElement& element, const uint& power) {
-        if ((power & 1) != 0) {
-            if (power == 1) {
-                return element;
-            }
-
-            return element * pow(element, power - 1);
-        }
-
-        FieldElement temp = pow(element, power >> 1);
-        return temp * temp;
+        return algorithm::fast_pow<FieldElement>(element, power);
     }
 
     const uint& FieldElement::modulus() const {

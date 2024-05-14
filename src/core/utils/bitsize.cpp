@@ -1,9 +1,9 @@
 #include "bitsize.h"
 
-namespace elliptic_curve_guide::algorithm::bit_size {
+namespace elliptic_curve_guide::algorithm {
     size_t actual_bit_size(const uint& value) {
         size_t l = 1;
-        size_t r = 513;
+        size_t r = uint_info::uint_bits_number + 1;
 
         while (r - l > 1) {
             size_t m = (l + r) / 2;
@@ -19,4 +19,4 @@ namespace elliptic_curve_guide::algorithm::bit_size {
 
         return l;
     }
-}   // namespace elliptic_curve_guide::algorithm::bit_size
+}   // namespace elliptic_curve_guide::algorithm
