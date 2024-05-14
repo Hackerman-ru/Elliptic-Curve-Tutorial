@@ -12,10 +12,10 @@ namespace elliptic_curve_guide {
                     return value;
                 }
 
-                return value * pow(value, power - 1);
+                return value * fast_pow<T>(value, power - 1);
             }
 
-            T temp = pow<T>(value, power >> 1);
+            T temp = fast_pow<T>(value, power >> 1);
             return temp * temp;
         }
 
@@ -26,10 +26,10 @@ namespace elliptic_curve_guide {
                     return value;
                 }
 
-                return value * pow(value, power - 1);
+                return value * fast_pow<T>(value, power - 1);
             }
 
-            T temp = pow<T>(value, power >> 1);
+            T temp = fast_pow<T>(value, power >> 1);
             return temp * temp;
         }
     }   // namespace algorithm

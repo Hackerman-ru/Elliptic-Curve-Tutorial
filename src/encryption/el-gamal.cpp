@@ -60,7 +60,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         const uint& p = F.modulus();
 
         if (!p_zero_mask.contains(p)) {
-            const size_t l = bit_size::actual_bit_size(p) >> 1;
+            const size_t l = actual_bit_size(p) >> 1;
             uint zero_mask = (c_full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }
@@ -86,7 +86,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         const uint& p = m_curve.get_field().modulus();
 
         if (!p_zero_mask.contains(p)) {
-            const size_t l = bit_size::actual_bit_size(p) >> 1;
+            const size_t l = actual_bit_size(p) >> 1;
             uint zero_mask = (c_full_bits >> l) << l;
             p_zero_mask.insert({p, zero_mask});
         }

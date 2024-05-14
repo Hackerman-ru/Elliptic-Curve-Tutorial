@@ -4,7 +4,7 @@
 #include "field.h"
 #include "utils/naf.h"
 #include "utils/random.h"
-#include "utils/schoof.h"
+//#include "utils/schoof.h"
 
 #include <optional>
 
@@ -1305,7 +1305,7 @@ namespace elliptic_curve_guide {
             EllipticCurve(const Element& a, Element&& b, Field F);
             EllipticCurve(Element&& a, Element&& b, Field F);
 
-            uint points_number() const;
+            //uint points_number() const;
             const Field& get_field() const;
             const Element& get_a() const;
             const Element& get_b() const;
