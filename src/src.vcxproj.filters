@@ -37,9 +37,6 @@
     <ClInclude Include="core\utils\primes.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\polynomial.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
     <ClInclude Include="core\utils\schoof.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
@@ -47,6 +44,9 @@
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\ring.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\polynomial.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
   </ItemGroup>
@@ -68,13 +68,13 @@
     <ClCompile Include="core\utils\csprng\csprng.cpp">
       <Filter>utils\random</Filter>
     </ClCompile>
-    <ClCompile Include="core\utils\polynomial.cpp">
-      <Filter>utils\schoof</Filter>
-    </ClCompile>
     <ClCompile Include="core\utils\schoof.cpp">
       <Filter>utils\schoof</Filter>
     </ClCompile>
     <ClCompile Include="core\utils\ring.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\polynomial.cpp">
       <Filter>utils\schoof</Filter>
     </ClCompile>
   </ItemGroup>

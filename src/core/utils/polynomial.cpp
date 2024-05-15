@@ -144,7 +144,7 @@ namespace elliptic_curve_guide::polynomial {
 
     Poly& Poly::operator-=(const Poly& other) {
         size_t other_len = other.len();
-        m_coeffs.resize(std::max(len(), other_len));
+        m_coeffs.resize(std::max(len(), other_len), m_field.element(0));
 
         for (size_t i = 0; i < other_len; ++i) {
             m_coeffs[i] -= other.m_coeffs[i];
