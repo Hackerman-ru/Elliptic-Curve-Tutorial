@@ -3,7 +3,6 @@
 #include "polynomial.h"
 #include "primes.h"
 #include "ring.h"
-#include "utils/gcd.h"
 
 namespace elliptic_curve_guide::algorithm::schoof {
     namespace {
@@ -50,20 +49,20 @@ namespace elliptic_curve_guide::algorithm::schoof {
         const size_t& L = primes_set.L;
         const uint& N = primes_set.N;
 
-        std::vector<uint32_t> modulo_list(L);
+        std::vector<uint32_t> modulo_list;
+        modulo_list.reserve(L);
 
         for (size_t i = 0; i < L; ++i) {
             const uint32_t& l = primes::prime_number_list[i];
 
             if (l == 2) {
-                Poly f(F, {curve.get_b(), curve.get_a(), F.element(1)});
-                Ring R(f);
-                Poly x_(F, {F.element(0), F.element(1)});
-                RingElement x = R.element(x_);
-                RingElement x_p_minus_x = RingElement::pow(x, p) - x;
-                Poly gcd = algorithm::gcd<Poly>(f, x_p_minus_x.value());
-            } else {
+                Poly f(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
+                bool has_2_torsion_points = has_root(f);
+                modulo_list.emplace_back(has_2_torsion_points ? 0 : 1);
+                continue;
             }
+
+
         }
     }
 }   // namespace elliptic_curve_guide::algorithm::schoof

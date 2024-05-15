@@ -49,9 +49,6 @@
     <ClInclude Include="core\utils\ring.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\gcd.h">
-      <Filter>utils</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />

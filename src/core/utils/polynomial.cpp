@@ -1,8 +1,10 @@
 #include "polynomial.h"
 
 #include "utils/fast-pow.h"
+#include "utils/ring.h"
 
 namespace elliptic_curve_guide::polynomial {
+
     Poly Poly::pow(const Poly& poly, const uint& power) {
         return algorithm::fast_pow<Poly>(poly, power);
     }
@@ -11,6 +13,21 @@ namespace elliptic_curve_guide::polynomial {
     Poly::Poly(const Field& field, const std::vector<Element>& coeffs) : m_field(field), m_coeffs(coeffs) {};
     Poly::Poly(const Field& field, std::vector<Element>&& coeffs) :
         m_field(field), m_coeffs(std::move(coeffs)) {};
+
+    static std::vector<field::FieldElement> convert_to_field_coeffs(const field::Field& field,
+                                                                    const std::vector<uint>& coeffs) {
+        std::vector<field::FieldElement> result;
+        result.reserve(coeffs.size());
+
+        for (const auto& coef : coeffs) {
+            result.emplace_back(field.element(coef));
+        }
+
+        return result;
+    }
+
+    Poly::Poly(const Field& field, const std::vector<uint>& coeffs) :
+        m_field(field), m_coeffs(convert_to_field_coeffs(field, coeffs)) {};
 
     Poly operator+(const Poly& lhs, const Poly& rhs) {
         Poly result = lhs;
@@ -233,4 +250,39 @@ namespace elliptic_curve_guide::polynomial {
     const Poly::Element& Poly::top_coef() const {
         return m_coeffs[degree()];
     }
+
 }   // namespace elliptic_curve_guide::polynomial
+
+namespace elliptic_curve_guide::algorithm {
+    polynomial::Poly gcd(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
+        size_t lhs_degree = lhs.degree();
+
+        if (lhs_degree == 0) {
+            return lhs;
+        }
+
+        size_t rhs_degree = rhs.degree();
+
+        if (rhs_degree == 0) {
+            return rhs;
+        }
+
+        if (lhs_degree >= rhs_degree) {
+            return gcd(lhs % rhs, rhs);
+        } else {
+            return gcd(lhs, rhs % lhs);
+        }
+    }
+
+    bool has_root(const polynomial::Poly& poly) {
+        const field::Field& F = poly.get_field();
+        const ring::Ring R(poly);
+
+        polynomial::Poly variable(F, {0, 1});
+        ring::RingElement x = R.element(variable);
+        ring::RingElement x_p_minus_x = ring::RingElement::pow(x, F.modulus()) - x;
+
+        polynomial::Poly gcd = algorithm::gcd(poly, x_p_minus_x.value());
+        return gcd.degree() > 0;
+    }
+}   // namespace elliptic_curve_guide::algorithm

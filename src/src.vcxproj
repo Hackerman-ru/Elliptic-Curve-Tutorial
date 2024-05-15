@@ -353,7 +353,6 @@
     </ClInclude>
     <ClInclude Include="core\utils\fast-pow.h" />
     <ClInclude Include="core\utils\fft.h" />
-    <ClInclude Include="core\utils\gcd.h" />
     <ClInclude Include="core\utils\naf.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - elliptic curve|x64'">

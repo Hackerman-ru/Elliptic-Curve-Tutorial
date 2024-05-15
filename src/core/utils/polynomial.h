@@ -15,6 +15,7 @@ namespace elliptic_curve_guide {
             Poly(const Field& field);
             Poly(const Field& field, const std::vector<Element>& coeffs);
             Poly(const Field& field, std::vector<Element>&& coeffs);
+            Poly(const Field& field, const std::vector<uint>& coeffs);
 
             friend Poly operator+(const Poly& lhs, const Poly& rhs);
             friend Poly operator+(Poly&& lhs, const Poly& rhs);
@@ -61,6 +62,11 @@ namespace elliptic_curve_guide {
             std::vector<Element> m_coeffs;
         };
     }   // namespace polynomial
+
+    namespace algorithm {
+        static polynomial::Poly gcd(const polynomial::Poly& lhs, const polynomial::Poly& rhs);
+        bool has_root(const polynomial::Poly& poly);
+    }   // namespace algorithm
 }   // namespace elliptic_curve_guide
 
 #endif
