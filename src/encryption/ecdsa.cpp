@@ -1,120 +1,71 @@
 #include "ecdsa.h"
 
 #include "utils/random.h"
+#include "utils/schoof.h"
+#include "utils/uint-algorithms.h"
 
 namespace elliptic_curve_guide::algorithm::encryption {
-    static constexpr size_t c_attempts_number = 100000;
+    static elliptic_curve::EllipticCurve generate_random_elliptic_curve(const field::Field& field) {}
 
-    //static uint bit_size(uint value) {
-    //    uint result = 0;
+    static uint get_largest_prime_divisor(uint value) {
+        uint result = 1;
 
-    //    while (value != 0) {
-    //        ++result;
-    //        value >>= 1;
-    //    }
+        for (uint divisor = 2; divisor * divisor <= value; ++divisor) {
+            while (value % divisor == 0) {
+                value /= divisor;
+                result = divisor;
+            }
+        }
 
-    //    return result;
-    //}
+        return result;
+    }
 
-    //static uint hash_value(const uint& value) {
-    //    const auto h = cthash::simple<cthash::sha3_512>(value.convert_to<std::string>());
-    //    const size_t shift = sizeof(h[0]) * 8;
-    //    uint result = 0;
+    ECDSA ECDSA::generate(const uint& field_order, const uint& security_level) {
+        const field::Field F(field_order);
 
-    //    for (const auto& byte : h) {
-    //        result <<= shift;
-    //        result += byte;
-    //    }
+        for (;;) {
+            const elliptic_curve::EllipticCurve E = generate_random_elliptic_curve(F);
+            const uint N = algorithm::schoof::points_number(E);
+            const uint n = get_largest_prime_divisor(N);
 
-    //    return result;
-    //}
+            if (n == field_order) {
+                continue;
+            }
 
-    //static EllipticCurveParameters generate_random_elliptic_curve(const uint& p) {
-    //    uint t = bit_size(p);
-    //    uint s = (t - 1) / c_hash_length;
-    //    size_t v = (t - (s << 9)).convert_to<size_t>();
-    //    uint S = generate_random_uint();
-    //    uint h = hash_value(S);
-    //    uint r0 = (h << (512 - v)) >> v;
-    //    uint R0 = (r0 << 1) >> 1;
+            if (actual_bit_size(n) <= security_level) {
+                continue;
+            }
 
-    //    for (uint i = 1; i < s; ++i) {
-    //    }
-    //}
+            uint p_k = field_order;
+            bool divide = false;
 
-    //static Coefficients generate_random_a_b(const Field& F) {
-    //    FieldElement a = F.element(0);
-    //    FieldElement b = F.element(0);
-    //    FieldElement non_zero = F.element(0);
-    //    const uint& p = F.modulus();
+            for (int k = 1; k < 20; ++k) {
+                if ((p_k - 1) % n != 0) {
+                    divide = true;
+                    break;
+                }
 
-    //    do {
-    //        a = F.element(generate_random_uint_modulo(p));
-    //        b = F.element(generate_random_uint_modulo(p));
-    //        non_zero = (FieldElement::pow(a, 3) << 2) + F.element(27) * FieldElement::pow(b, 2);
-    //    } while (!non_zero.is_invertible());
+                p_k *= field_order;
+            }
 
-    //    return {a, b};
-    //}
+            if (divide) {
+                continue;
+            }
 
-    //static uint get_greatest_prime_divisor(uint value) {
-    //    uint result = 1;
+            const uint h = N / n;
+            elliptic_curve::EllipticCurvePoint P = h * E.random_point();
 
-    //    for (uint divisor = 2; divisor * divisor <= value; ++divisor) {
-    //        while (value % divisor == 0) {
-    //            value /= divisor;
-    //            result = divisor;
-    //        }
-    //    }
+            while (P.is_zero()) {
+                P = h * E.random_point();
+            }
 
-    //    return result;
-    //}
+            return ECDSA(F, E, P, n, h);
+        }
+    }
 
-    //static bool satisfies(const uint& n, const uint& field_order, const uint& security_level) {
-    //    if (n == field_order) {
-    //        return false;
-    //    }
-
-    //    if (bit_size(n) < security_level) {
-    //        return false;
-    //    }
-
-    //    uint temp = field_order;
-
-    //    for (int k = 1; k < 20; ++k) {
-    //        if ((temp - 1) % n != 0) {
-    //            return false;
-    //        }
-
-    //        temp *= field_order;
-    //    }
-
-    //    return true;
-    //}
-
-    //ECDSA ECDSA::generate(const uint& field_order, const uint& security_level) {
-    //    Field F(field_order);
-    //    Coefficients curve_coefficients = generate_random_a_b(F);
-    //    EllipticCurve E(curve_coefficients.a, curve_coefficients.b, F);
-    //    uint N = E.points_number();
-    //    uint n = get_greatest_prime_divisor(N);
-
-    //    while (!satisfies(n, field_order, security_level)) {
-    //        curve_coefficients = generate_random_a_b(F);
-    //        E = EllipticCurve(curve_coefficients.a, curve_coefficients.b, F);
-    //        N = E.points_number();
-    //        n = get_greatest_prime_divisor(N);
-    //    }
-
-    //    uint h = N / n;
-    //    EllipticCurvePoint<> G = h * E.random_point<>();
-
-    //    while (!G.is_zero()) {
-    //        G = h * E.random_point<>();
-    //    }
-
-    //    return ECDSA(F, E, G, n, h);
-    //}
+    ECDSA::ECDSA(const Field& field, const Curve& elliptic_curve, const Point& generator, const uint& n,
+                 const uint& h) :
+        m_field(field), m_elliptic_curve(elliptic_curve), m_generator(generator), m_n(n), m_h(h) {};
 
     ECDSA::Keys ECDSA::generate_keys() const {
         uint d = random::generate_random_non_zero_uint_modulo(m_n);
@@ -123,9 +74,9 @@ namespace elliptic_curve_guide::algorithm::encryption {
     }
 
     ECDSA::Signature ECDSA::generate_signature(const uint& private_key, const uint& message) const {
-        const Field F = Field(m_n);
+        const Field F(m_n);
 
-        for (size_t i = 0; i < c_attempts_number; ++i) {
+        for (;;) {
             const uint k = random::generate_random_non_zero_uint_modulo(m_n);
 
             const Point P = k * m_generator;

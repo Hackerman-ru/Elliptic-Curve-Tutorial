@@ -26,12 +26,7 @@ namespace elliptic_curve_guide {
                 static ECDSA generate(const uint& field_order, const uint& security_level);
 
                 ECDSA(const Field& field, const Curve& elliptic_curve, const Point& generator, const uint& n,
-                      const uint& h) :
-                    m_field(field),
-                    m_elliptic_curve(elliptic_curve),
-                    m_generator(generator),
-                    m_n(n),
-                    m_h(h) {}
+                      const uint& h);
 
                 Keys generate_keys() const;
                 Signature generate_signature(const uint& private_key, const uint& message) const;

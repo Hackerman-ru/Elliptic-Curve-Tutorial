@@ -15,10 +15,7 @@
     <ClInclude Include="core\utils\concepts.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\naf.h">
-      <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\bitsize.h">
+    <ClInclude Include="core\utils\uint-algorithms.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\random.h">
@@ -54,14 +51,11 @@
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\long-arithmetic.cpp" />
-    <ClCompile Include="core\utils\naf.cpp">
+    <ClCompile Include="core\utils\uint-algorithms.cpp">
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="Encryption\ecdsa.cpp" />
     <ClCompile Include="encryption\el-gamal.cpp" />
-    <ClCompile Include="core\utils\bitsize.cpp">
-      <Filter>utils</Filter>
-    </ClCompile>
     <ClCompile Include="core\utils\random.cpp">
       <Filter>utils\random</Filter>
     </ClCompile>

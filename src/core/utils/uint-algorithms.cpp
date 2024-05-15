@@ -1,4 +1,4 @@
-#include "naf.h"
+#include "uint-algorithms.h"
 
 namespace elliptic_curve_guide::algorithm::non_adjacent_form {
     static constexpr uint16_t c_mask_modulo_2_pow_w = (1 << c_width) - 1;
@@ -28,3 +28,16 @@ namespace elliptic_curve_guide::algorithm::non_adjacent_form {
         return result;
     }
 }   // namespace elliptic_curve_guide::algorithm::non_adjacent_form
+
+namespace elliptic_curve_guide::algorithm {
+    size_t actual_bit_size(uint value) {
+        size_t result = 0;
+
+        while (value != 0) {
+            ++result;
+            value >>= 1;
+        }
+
+        return result;
+    }
+}   // namespace elliptic_curve_guide::algorithm

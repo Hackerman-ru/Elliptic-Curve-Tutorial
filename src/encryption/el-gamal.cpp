@@ -1,7 +1,7 @@
 #include "el-gamal.h"
 
-#include "utils/bitsize.h"
 #include "utils/random.h"
+#include "utils/uint-algorithms.h"
 
 #include <map>
 
@@ -53,7 +53,6 @@ namespace elliptic_curve_guide::algorithm::encryption {
 
     static std::map<uint, uint> p_zero_mask;
     static constexpr uint c_full_bits = uint(0) - 1;
-    static constexpr size_t c_attempts_number = 10000;
 
     ElGamal::Point ElGamal::map_to_curve(const uint& message) const {
         const field::Field& F = m_curve.get_field();
@@ -68,7 +67,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         const uint& zero_mask = p_zero_mask.at(p);
 
         // Should take less than 3 iterations for large p: https://eprint.iacr.org/2013/373.pdf, page 5
-        for (size_t i = 0; i < c_attempts_number; ++i) {
+        for (;;) {
             uint x = random::generate_random_uint_modulo(p);
             x &= zero_mask;
             x |= message ^ (message & zero_mask);

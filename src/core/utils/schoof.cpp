@@ -61,8 +61,8 @@ namespace elliptic_curve_guide::algorithm::schoof {
                 modulo_list.emplace_back(has_2_torsion_points ? 0 : 1);
                 continue;
             }
-
-
         }
+
+        return 0;   // TODO
     }
 }   // namespace elliptic_curve_guide::algorithm::schoof

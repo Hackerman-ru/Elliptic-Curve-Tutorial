@@ -1,5 +1,5 @@
-#ifndef ECG_NAF_H
-#define ECG_NAF_H
+#ifndef ECG_UINT_ALGORITHMS_H
+#define ECG_UINT_ALGORITHMS_H
 
 #include "uint.h"
 
@@ -17,6 +17,8 @@ namespace elliptic_curve_guide {
 
             wnaf_form get_wnaf(uint value);
         }   // namespace non_adjacent_form
-    }       // namespace algorithm
+
+        size_t actual_bit_size(uint value);
+    }   // namespace algorithm
 }   // namespace elliptic_curve_guide
 #endif
