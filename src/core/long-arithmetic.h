@@ -602,7 +602,7 @@ namespace elliptic_curve_guide {
             return quotient;
         }
 
-        void constexpr negative() {
+        constexpr void negative() {
             for (size_t i = 0; i < c_block_number; ++i) {
                 m_blocks[i] = ~(m_blocks[i]);
             }
@@ -610,7 +610,7 @@ namespace elliptic_curve_guide {
             ++*this;
         }
 
-        void constexpr increment() {
+        constexpr void increment() {
             for (size_t i = 0; i < c_block_number; ++i) {
                 m_blocks[i] += 1;
 
@@ -620,7 +620,7 @@ namespace elliptic_curve_guide {
             }
         }
 
-        void constexpr decrement() {
+        constexpr void decrement() {
             for (size_t i = 0; i < c_block_number; ++i) {
                 block_t temp = m_blocks[i];
                 m_blocks[i] -= 1;
