@@ -23,8 +23,7 @@ class F_256 {
     static constexpr size_t c_bits_in_byte = 8;
     static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
     static constexpr size_t c_block_number = c_bits / c_block_size;
-    static constexpr size_t c_double_block_size = sizeof(double_block_t) * c_bits_in_byte;
-    static constexpr size_t c_double_block_number = c_bits / c_double_block_size;
+    static constexpr size_t c_half_block_number = c_block_number >> 1;
 
     using blocks = std::array<block_t, c_block_number>;
     blocks m_blocks = {};
@@ -41,7 +40,50 @@ public:
         return element;
     }
 
-    static constexpr F_256 square(const F_256& element) {}   // TODO
+    static constexpr F_256 square(const F_256& element) {
+        F_256 result;
+
+        block_t R_0 = 0;
+        block_t R_1 = 0;
+        block_t R_2 = 0;
+        block_t eps = 0;
+
+        for (size_t k = 0; k < c_block_number - 1; ++k) {
+            for (size_t i = 0; i < c_half_block_number && i <= k; ++i) {
+                size_t j = k - i;
+                double_block_t temp =
+                    static_cast<double_block_t>(element[i]) * static_cast<double_block_t>(element[j]);
+
+                if (i < j) {
+                    eps = temp >> 63;
+                    temp <<= 1;
+                    R_2 += eps;
+                }
+
+                double_block_t V = temp & UINT32_MAX;
+                double_block_t U = temp >> 32;
+
+                temp = static_cast<double_block_t>(R_0) + static_cast<double_block_t>(V);
+                eps = temp >> 32;
+                R_0 = temp & UINT32_MAX;
+
+                temp = static_cast<double_block_t>(R_1) + static_cast<double_block_t>(U)
+                     + static_cast<double_block_t>(eps);
+                eps = temp >> 32;
+                R_1 = temp & UINT32_MAX;
+                R_2 += eps;
+            }
+
+            result[k] = R_0;
+            R_0 = R_1;
+            R_1 = R_2;
+            R_2 = 0;
+        }
+
+        result[c_block_number - 1] = R_0;
+        result.reduce();
+        return result;
+    }
 
     static constexpr F_256 pow(const F_256& element, const uint32_t& power) {
         if ((power & 1) != 0) {
@@ -53,7 +95,7 @@ public:
         }
 
         F_256 temp = pow(element, power >> 1);
-        return temp * temp;
+        return square(temp);
     }
 
     constexpr F_256() = default;
@@ -142,19 +184,20 @@ public:
     friend constexpr F_256 operator*(const F_256& lhs, const F_256& rhs) {
         F_256 result;
 
-        for (size_t i = 0; i < c_block_number; ++i) {
+        for (size_t i = 0; i < c_half_block_number; ++i) {
             double_block_t u = 0;
 
-            for (size_t j = 0; j < c_block_number; ++j) {
+            for (size_t j = 0; j < c_half_block_number; ++j) {
                 u = static_cast<double_block_t>(result[i + j])
                   + static_cast<double_block_t>(lhs[i]) * static_cast<double_block_t>(rhs[j]) + u;
                 result[i + j] = static_cast<block_t>(u);
             }
 
             u >>= c_block_size;
-            result[i + c_block_number] = static_cast<block_t>(u);
+            result[i + c_half_block_number] = static_cast<block_t>(u);
         }
 
+        result.reduce();
         return result;
     }
 
@@ -476,10 +519,6 @@ private:
         return value;
     }
 
-    static constexpr size_t size() {
-        return c_block_number;
-    }
-
     template<typename T>
     requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, block_t>
     static constexpr blocks split_into_blocks(T value) {
@@ -653,7 +692,7 @@ wnaf_form get_wnaf(F_256 value) {
 
 static constexpr size_t c_kp_number = static_cast<size_t>(1) << (c_width - 2);
 
-static void multiply(EllipticCurvePoint& point, const F_256& value) {
+static constexpr void multiply(EllipticCurvePoint& point, const F_256& value) {
     auto wnaf_form = get_wnaf(value);
     EllipticCurvePoint two_p = point + point;
     std::vector<EllipticCurvePoint> kp = {point};
@@ -679,108 +718,110 @@ static void multiply(EllipticCurvePoint& point, const F_256& value) {
 
 class EllipticCurvePoint {
     friend class EllipticCurve;
-    friend void multiply(EllipticCurvePoint& point, const F_256& value);
+    friend constexpr void multiply(EllipticCurvePoint& point, const F_256& value);
 
 public:
-    EllipticCurvePoint(const F_256& x, const F_256& y, bool is_null = false) :
-        m_is_null(is_null), m_x {x}, m_y {y} {
+    constexpr EllipticCurvePoint(const F_256& x, const F_256& y, bool is_null = false) :
+        m_x {x}, m_y {y}, m_is_null(is_null) {
         assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
     }
 
-    EllipticCurvePoint(F_256&& x, const F_256& y, bool is_null = false) :
+    constexpr EllipticCurvePoint(F_256&& x, const F_256& y, bool is_null = false) :
 
-        m_is_null(is_null), m_x {std::move(x)}, m_y {y} {
+        m_x {std::move(x)}, m_y {y}, m_is_null(is_null) {
         assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
     }
 
-    EllipticCurvePoint(const F_256& x, F_256&& y, bool is_null = false) :
+    constexpr EllipticCurvePoint(const F_256& x, F_256&& y, bool is_null = false) :
 
-        m_is_null(is_null), m_x {x}, m_y {std::move(y)} {
+        m_x {x}, m_y {std::move(y)}, m_is_null(is_null) {
         assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
     }
 
-    EllipticCurvePoint(F_256&& x, F_256&& y, bool is_null = false) :
+    constexpr EllipticCurvePoint(F_256&& x, F_256&& y, bool is_null = false) :
 
-        m_is_null(is_null), m_x {std::move(x)}, m_y {std::move(y)} {
+        m_x {std::move(x)}, m_y {std::move(y)}, m_is_null(is_null) {
         assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
     }
 
-    friend EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+    friend constexpr EllipticCurvePoint operator+(const EllipticCurvePoint& lhs,
+                                                  const EllipticCurvePoint& rhs) {
         EllipticCurvePoint result = lhs;
         result += rhs;
         return result;
     }
 
-    friend EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
+    friend constexpr EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
         lhs += rhs;
         return lhs;
     }
 
-    friend EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
+    friend constexpr EllipticCurvePoint operator+(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
         rhs += lhs;
         return rhs;
     }
 
-    friend EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
+    friend constexpr EllipticCurvePoint operator+(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
         lhs += rhs;
         return lhs;
     }
 
-    friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+    friend constexpr EllipticCurvePoint operator-(const EllipticCurvePoint& lhs,
+                                                  const EllipticCurvePoint& rhs) {
         EllipticCurvePoint result = lhs;
         result -= rhs;
         return result;
     }
 
-    friend EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
+    friend constexpr EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, const EllipticCurvePoint& rhs) {
         lhs -= rhs;
         return lhs;
     }
 
-    friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
+    friend constexpr EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs) {
         rhs -= lhs;
         rhs.negative();
         return rhs;
     }
 
-    friend EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
+    friend constexpr EllipticCurvePoint operator-(EllipticCurvePoint&& lhs, EllipticCurvePoint&& rhs) {
         lhs -= rhs;
         return lhs;
     }
 
-    friend EllipticCurvePoint operator*(const EllipticCurvePoint& point, const F_256& value) {
+    friend constexpr EllipticCurvePoint operator*(const EllipticCurvePoint& point, const F_256& value) {
         EllipticCurvePoint result = point;
         result *= value;
         return result;
     }
 
-    friend EllipticCurvePoint operator*(EllipticCurvePoint&& point, const F_256& value) {
+    friend constexpr EllipticCurvePoint operator*(EllipticCurvePoint&& point, const F_256& value) {
         point *= value;
         return point;
     }
 
-    friend EllipticCurvePoint operator*(const F_256& value, const EllipticCurvePoint& point) {
+    friend constexpr EllipticCurvePoint operator*(const F_256& value, const EllipticCurvePoint& point) {
         EllipticCurvePoint result = point;
         result *= value;
         return result;
     }
 
-    friend EllipticCurvePoint operator*(const F_256& value, EllipticCurvePoint&& point) {
+    friend constexpr EllipticCurvePoint operator*(const F_256& value, EllipticCurvePoint&& point) {
         point *= value;
         return point;
     }
 
-    friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
+    friend constexpr bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
         return (lhs.m_is_null && rhs.m_is_null) || (lhs.m_x == rhs.m_x && lhs.m_y == rhs.m_y);
     }
 
-    EllipticCurvePoint operator-() const {
+    constexpr EllipticCurvePoint operator-() const {
         EllipticCurvePoint result = *this;
         result.negative();
         return result;
     }
 
-    EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
+    constexpr EllipticCurvePoint& operator+=(const EllipticCurvePoint& other) {
         if (m_is_null) {
             return *this = other;
         } else if (other.m_is_null) {
@@ -798,7 +839,7 @@ public:
         }
 
         const F_256 k = (other.m_y - m_y) / (other.m_x - m_x);
-        const F_256 x = F_256::pow(k, 2) - m_x - other.m_x;
+        const F_256 x = F_256::square(k) - m_x - other.m_x;
         m_y = k * (m_x - x) - m_y;
         m_x = x;
 
@@ -806,44 +847,44 @@ public:
         return *this;
     }
 
-    EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
+    constexpr EllipticCurvePoint& operator-=(const EllipticCurvePoint& other) {
         EllipticCurvePoint temp = other;
         temp.negative();
         return *this += temp;
     }
 
-    EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
+    constexpr EllipticCurvePoint& operator-=(EllipticCurvePoint&& other) {
         other.negative();
         return *this += other;
     }
 
-    EllipticCurvePoint& operator*=(const F_256& value) {
+    constexpr EllipticCurvePoint& operator*=(const F_256& value) {
         multiply(*this, value);
         return *this;
     }
 
-    F_256 get_x() const {
+    constexpr F_256 get_x() const {
         return m_x;
     }
 
-    F_256 get_y() const {
+    constexpr F_256 get_y() const {
         return m_y;
     }
 
-    bool is_zero() const {
+    constexpr bool is_zero() const {
         return m_is_null;
     }
 
 private:
-    static EllipticCurvePoint null_point() {
+    static constexpr EllipticCurvePoint null_point() {
         return EllipticCurvePoint(0, 1, true);
     }
 
-    void negative() {
+    constexpr void negative() {
         m_y = -m_y;
     }
 
-    void twice() {
+    constexpr void twice() {
         if (m_is_null) {
             return;
         }
@@ -853,27 +894,28 @@ private:
             return;
         }
 
-        const F_256 k = (3 * F_256::pow(m_x, 2) + m_a) / (m_y << 1);
-        const F_256 x = F_256::pow(k, 2) - (m_x << 1);
+        const F_256 k = (3 * F_256::square(m_x) + m_a) / (m_y << 1);
+        const F_256 x = F_256::square(k) - (m_x << 1);
         m_y = k * (m_x - x) - m_y;
         m_x = x;
         assert(is_valid() && "EllipticCurvePoint::twice : invalid coordinates");
     }
 
-    bool is_valid() const {
+    constexpr bool is_valid() const {
         if (m_is_null) {
             return true;
         }
 
-        const F_256 lhs = F_256::pow(m_y, 2);
+        const F_256 lhs = F_256::square(m_y);
         const F_256 rhs = F_256::pow(m_x, 3) + m_a * m_x + m_b;
         return lhs == rhs;
     }
 
-    F_256 m_x;
-    F_256 m_y;
     static constexpr F_256 m_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
     static constexpr F_256 m_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
+
+    F_256 m_x;
+    F_256 m_y;
     bool m_is_null;
 };
 
@@ -886,39 +928,26 @@ public:
         Point public_key;
     };
 
-    enum class EncryptionType {
-        Standard,
-        Hashed,
-    };
-
-    template<EncryptionType type = EncryptionType::Standard>
-    struct EncryptedMessage;
-
-    template<>
-    struct EncryptedMessage<EncryptionType::Standard> {
+    struct EncryptedMessage {
         Point generator_degree;
         Point message_with_salt;
     };
 
-    template<>
-    struct EncryptedMessage<EncryptionType::Hashed> {
-        Point generator_degree;
-        F_256 message_with_salt;
-    };
-
     Keys generate_keys() const;
 
-    EncryptedMessage<EncryptionType::Standard> encrypt(const F_256& message, const Point& public_key) const;
+    EncryptedMessage encrypt(const F_256& message, const Point& public_key) const;
 
-    F_256 decrypt(const EncryptedMessage<EncryptionType::Standard>& encrypted_message,
-                  const F_256& private_key) const;
+    F_256 decrypt(const EncryptedMessage& encrypted_message, const F_256& private_key) const;
 
 private:
     Point map_to_curve(const F_256& message) const;
     F_256 map_to_uint(const Point& message) const;
 
-    static constexpr Point m_generator;
-    static constexpr F_256 m_generator_order;
+    static constexpr Point m_generator =
+        Point(F_256("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
+              F_256("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"));
+    static constexpr F_256 m_generator_order =
+        "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
 };
 
 int main() {}
