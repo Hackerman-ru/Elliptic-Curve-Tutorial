@@ -2,8 +2,8 @@
 #define ECG_ELLIPTIC_CURVE_H
 
 #include "field.h"
-#include "utils/naf.h"
 #include "utils/random.h"
+#include "utils/uint-algorithms.h"
 //#include "utils/schoof.h"
 
 #include <optional>

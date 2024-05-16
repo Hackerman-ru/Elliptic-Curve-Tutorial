@@ -17,6 +17,8 @@ namespace elliptic_curve_guide {
         static constexpr size_t c_bits_in_byte = 8;
         static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
         static constexpr size_t c_block_number = c_bits / c_block_size;
+        static constexpr size_t c_double_block_size = sizeof(double_block_t) * c_bits_in_byte;
+        static constexpr size_t c_double_block_number = c_bits / c_double_block_size;
 
         template<size_t V>
         friend class uint_t;
@@ -30,7 +32,7 @@ namespace elliptic_curve_guide {
         template<typename T>
         constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
-        constexpr uint_t(const char* str) : m_blocks(algorithm::parse_into<uint_t>(str).m_blocks) {};
+        constexpr uint_t(const char* str) : m_blocks(algorithm::parse_into_uint<uint_t>(str).m_blocks) {};
 
         constexpr uint_t& operator=(const uint_t& value) = default;
 
@@ -41,7 +43,7 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator=(const char* str) {
-            return *this = parse_into<uint_t>(str);
+            return *this = parse_into_uint<uint_t>(str);
         }
 
         friend constexpr std::strong_ordering operator<=>(const uint_t& lhs, const uint_t& rhs) {
@@ -116,8 +118,7 @@ namespace elliptic_curve_guide {
         }
 
         // operator/
-        friend constexpr uint_t operator/(const uint_t& lhs,
-                                          const uint_t& rhs) {   // fast_fourier_transform will change this
+        friend constexpr uint_t operator/(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = divide(lhs, rhs);
             uint_t less = result * rhs;
             uint_t greater = (result + 1) * rhs;
@@ -130,8 +131,7 @@ namespace elliptic_curve_guide {
         }
 
         // operator%
-        friend constexpr uint_t operator%(const uint_t& lhs,
-                                          const uint_t& rhs) {   // fast_fourier_transform will change this
+        friend constexpr uint_t operator%(const uint_t& lhs, const uint_t& rhs) {
             uint_t remainder;
             divide(lhs, rhs, &remainder);
             assert(rhs > remainder && "uint_t::operator% : remainder must be less than divisor");
@@ -264,37 +264,34 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator>>=(size_t shift_size) {
-            static constexpr size_t c_double_bucket_size = sizeof(double_block_t) * c_bits_in_byte;
-            static constexpr size_t c_double_bucket_number = c_bits / c_double_bucket_size;
-
-            size_t bucket_shift = shift_size >> 6;
+            size_t block_shift = shift_size >> 6;
             auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
-            if (bucket_shift > 0) {
-                for (size_t i = 0; i < c_double_bucket_number; ++i) {
-                    if (i + bucket_shift < c_double_bucket_number) {
-                        data[i] = data[i + bucket_shift];
+            if (block_shift > 0) {
+                for (size_t i = 0; i < c_double_block_number; ++i) {
+                    if (i + block_shift < c_double_block_number) {
+                        data[i] = data[i + block_shift];
                     } else {
                         data[i] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_bucket_size;
+            shift_size %= c_double_block_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + bucket_shift < c_double_bucket_number; ++i) {
+            for (size_t i = 0; i + block_shift < c_double_block_number; ++i) {
                 data[i] >>= shift_size;
 
-                if (i + 1 < c_double_bucket_number) {
-                    data[i] |= data[i + 1] << (c_double_bucket_size - shift_size);
+                if (i + 1 < c_double_block_number) {
+                    data[i] |= data[i + 1] << (c_double_block_size - shift_size);
                 }
             }
 
-            if constexpr (c_bits % c_double_bucket_size != 0) {
+            if constexpr (c_bits % c_double_block_size != 0) {
                 if constexpr (c_block_number > 1) {
                     m_blocks[c_block_number - 2] |= m_blocks[c_block_number - 1]
                                                  << (c_block_size - shift_size);
@@ -306,29 +303,26 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator<<=(size_t shift_size) {
-            static constexpr size_t c_double_bucket_size = sizeof(double_block_t) * c_bits_in_byte;
-            static constexpr size_t c_double_bucket_number = c_bits / c_double_bucket_size;
-
-            size_t bucket_shift = shift_size >> 6;
+            size_t block_shift = shift_size >> 6;
             auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
-            if (bucket_shift > 0) {
-                for (size_t i = c_double_bucket_number; i > 0; --i) {
-                    if (i > bucket_shift) {
-                        data[i - 1] = data[i - bucket_shift - 1];
+            if (block_shift > 0) {
+                for (size_t i = c_double_block_number; i > 0; --i) {
+                    if (i > block_shift) {
+                        data[i - 1] = data[i - block_shift - 1];
                     } else {
                         data[i - 1] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_bucket_size;
+            shift_size %= c_double_block_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            if constexpr (c_bits % c_double_bucket_size != 0) {
+            if constexpr (c_bits % c_double_block_size != 0) {
                 m_blocks[c_block_number - 1] <<= shift_size;
 
                 if constexpr (c_block_number > 1) {
@@ -337,11 +331,11 @@ namespace elliptic_curve_guide {
                 }
             }
 
-            for (size_t i = c_double_bucket_number; i > bucket_shift; --i) {
+            for (size_t i = c_double_block_number; i > block_shift; --i) {
                 data[i - 1] <<= shift_size;
 
                 if (i - 1 > 0) {
-                    data[i - 1] |= data[i - 2] >> (c_double_bucket_size - shift_size);
+                    data[i - 1] |= data[i - 2] >> (c_double_block_size - shift_size);
                 }
             }
 
@@ -372,7 +366,9 @@ namespace elliptic_curve_guide {
             return *this;
         }
 
-        constexpr uint_t operator++(int) {
+        [[nodiscard("Optimization")]]
+        constexpr uint_t
+            operator++(int) {
             uint_t result = *this;
             increment();
             return result;
@@ -383,7 +379,9 @@ namespace elliptic_curve_guide {
             return *this;
         }
 
-        constexpr uint_t operator--(int) {
+        [[nodiscard("Optimization")]]
+        constexpr uint_t
+            operator--(int) {
             uint_t result = *this;
             decrement();
             return result;
