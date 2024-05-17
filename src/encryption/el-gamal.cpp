@@ -77,8 +77,6 @@ namespace elliptic_curve_guide::algorithm::encryption {
                 return opt.value();
             }
         }
-
-        return m_curve.null_point();
     }
 
     uint ElGamal::map_to_uint(const Point& message) const {

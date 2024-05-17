@@ -31,6 +31,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ecdsa_test", "tests\ecdsa_t
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "specialization", "specialization\specialization.vcxproj", "{A5E2DCA0-4A07-4C1E-A87C-488BE9403F27}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elgamal_test", "tests\elgamal_test\elgamal_test.vcxproj", "{F915643D-ADA9-4ED3-AADF-FB722B7B2661}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug spec|x64 = Debug spec|x64
@@ -193,6 +195,29 @@ Global
 		{A5E2DCA0-4A07-4C1E-A87C-488BE9403F27}.UnitTest(debug) - uint|x64.ActiveCfg = Debug|x64
 		{A5E2DCA0-4A07-4C1E-A87C-488BE9403F27}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
 		{A5E2DCA0-4A07-4C1E-A87C-488BE9403F27}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug spec|x64.ActiveCfg = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug spec|x86.ActiveCfg = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug spec|x86.Build.0 = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug|x64.ActiveCfg = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug|x64.Build.0 = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug|x86.ActiveCfg = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Debug|x86.Build.0 = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release spec|x64.ActiveCfg = Release|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release spec|x86.ActiveCfg = Release|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release spec|x86.Build.0 = Release|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release|x64.ActiveCfg = Release|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release|x64.Build.0 = Release|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release|x86.ActiveCfg = Release|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.Release|x86.Build.0 = Release|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - ellitpic curve|x64.ActiveCfg = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - ellitpic curve|x86.ActiveCfg = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - ellitpic curve|x86.Build.0 = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - field|x64.ActiveCfg = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - field|x86.ActiveCfg = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - field|x86.Build.0 = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - uint|x64.ActiveCfg = Debug|x64
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - uint|x86.ActiveCfg = Debug|Win32
+		{F915643D-ADA9-4ED3-AADF-FB722B7B2661}.UnitTest(debug) - uint|x86.Build.0 = Debug|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

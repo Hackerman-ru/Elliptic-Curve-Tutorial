@@ -1,6 +1,9 @@
 #include <array>
 #include <cassert>
+#include <iostream>
 #include <memory>
+#include <optional>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -16,16 +19,13 @@ template<typename From, typename To>
 concept is_downcastable_to = sizeof(From) > sizeof(To) && is_convertible_to<From, To>;
 
 class F_256 {
-    using block_t = uint32_t;
-    using double_block_t = uint64_t;
-
     static constexpr size_t c_bits = 512;
     static constexpr size_t c_bits_in_byte = 8;
-    static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
-    static constexpr size_t c_block_number = c_bits / c_block_size;
-    static constexpr size_t c_half_block_number = c_block_number >> 1;
+    static constexpr size_t c_block_size = 32;
+    static constexpr size_t c_block_number = 16;
+    static constexpr size_t c_half_block_number = 8;
 
-    using blocks = std::array<block_t, c_block_number>;
+    using blocks = std::array<uint32_t, c_block_number>;
     blocks m_blocks = {};
 
 public:
@@ -40,53 +40,8 @@ public:
         return element;
     }
 
-    static constexpr F_256 square(const F_256& element) {
-        F_256 result;
-
-        block_t R_0 = 0;
-        block_t R_1 = 0;
-        block_t R_2 = 0;
-        block_t eps = 0;
-
-        for (size_t k = 0; k < c_block_number - 1; ++k) {
-            for (size_t i = 0; i < c_half_block_number && i <= k; ++i) {
-                size_t j = k - i;
-                double_block_t temp =
-                    static_cast<double_block_t>(element[i]) * static_cast<double_block_t>(element[j]);
-
-                if (i < j) {
-                    eps = temp >> 63;
-                    temp <<= 1;
-                    R_2 += eps;
-                }
-
-                double_block_t V = temp & UINT32_MAX;
-                double_block_t U = temp >> 32;
-
-                temp = static_cast<double_block_t>(R_0) + static_cast<double_block_t>(V);
-                eps = temp >> 32;
-                R_0 = temp & UINT32_MAX;
-
-                temp = static_cast<double_block_t>(R_1) + static_cast<double_block_t>(U)
-                     + static_cast<double_block_t>(eps);
-                eps = temp >> 32;
-                R_1 = temp & UINT32_MAX;
-                R_2 += eps;
-            }
-
-            result[k] = R_0;
-            R_0 = R_1;
-            R_1 = R_2;
-            R_2 = 0;
-        }
-
-        result[c_block_number - 1] = R_0;
-        result.reduce();
-        return result;
-    }
-
-    static constexpr F_256 pow(const F_256& element, const uint32_t& power) {
-        if ((power & 1) != 0) {
+    static constexpr F_256 pow(const F_256& element, const F_256& power) {
+        if (!power.is_even()) {
             if (power == 1) {
                 return element;
             }
@@ -95,7 +50,7 @@ public:
         }
 
         F_256 temp = pow(element, power >> 1);
-        return square(temp);
+        return temp * temp;
     }
 
     constexpr F_256() = default;
@@ -107,7 +62,7 @@ public:
 
     constexpr F_256(const blocks& value) : m_blocks(value) {}
 
-    constexpr F_256(const char* str) : m_blocks(parse_into_uint(str).m_blocks) {};
+    constexpr F_256(const char* str) : m_blocks(parse_into_uint(str).m_blocks) {}
 
     constexpr F_256& operator=(const F_256& value) = default;
 
@@ -185,16 +140,15 @@ public:
         F_256 result;
 
         for (size_t i = 0; i < c_half_block_number; ++i) {
-            double_block_t u = 0;
+            uint64_t u = 0;
 
             for (size_t j = 0; j < c_half_block_number; ++j) {
-                u = static_cast<double_block_t>(result[i + j])
-                  + static_cast<double_block_t>(lhs[i]) * static_cast<double_block_t>(rhs[j]) + u;
-                result[i + j] = static_cast<block_t>(u);
+                u = static_cast<uint64_t>(result[i + j])
+                  + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_block_size);
+                result[i + j] = static_cast<uint32_t>(u);
             }
 
-            u >>= c_block_size;
-            result[i + c_half_block_number] = static_cast<block_t>(u);
+            result[i + c_half_block_number] = static_cast<uint32_t>(u >> c_block_size);
         }
 
         result.reduce();
@@ -231,10 +185,10 @@ public:
     }
 
     constexpr F_256& operator+=(const F_256& other) {
-        block_t carry = 0;
+        uint32_t carry = 0;
 
         for (size_t i = 0; i < c_block_number; ++i) {
-            block_t sum = carry + other[i];
+            uint32_t sum = carry + other[i];
             m_blocks[i] += sum;
             carry = (m_blocks[i] < sum) || (sum < carry);
         }
@@ -247,11 +201,11 @@ public:
     }
 
     constexpr F_256& operator-=(const F_256& other) {
-        block_t remainder = 0;
+        uint32_t remainder = 0;
 
         for (size_t i = 0; i < c_block_number; ++i) {
-            block_t prev = m_blocks[i];
-            block_t sum = other[i] + remainder;
+            uint32_t prev = m_blocks[i];
+            uint32_t sum = other[i] + remainder;
             m_blocks[i] -= sum;
             remainder = (m_blocks[i] > prev) || (sum < remainder);
         }
@@ -377,10 +331,9 @@ public:
             return "0x0";
         }
 
-        block_t up_value = m_blocks[pos - 1] >> 16;
-        block_t down_value = m_blocks[pos - 1] & UINT16_MAX;
+        result += "0x";
 
-        auto push = [&](const block_t& value) {
+        auto mini_push = [&](const uint8_t& value) {
             if (value < 10) {
                 result.push_back(value + '0');
             } else {
@@ -388,18 +341,42 @@ public:
             }
         };
 
-        if (up_value != 0) {
-            push(up_value);
-        }
+        auto push = [&](const uint32_t& value, bool first_time = false) {
+            size_t shift = 32;
+            uint8_t temp = 0;
 
-        push(down_value);
+            if (first_time) {
+                while (shift > 0 && temp == 0) {
+                    shift -= 4;
+                    temp = (value >> shift) & 0xF;
+                }
+
+                do {
+                    mini_push(temp);
+
+                    if (shift == 0) {
+                        break;
+                    }
+
+                    shift -= 4;
+                    temp = (value >> shift) & 0xF;
+                } while (shift >= 0);
+
+                return;
+            }
+
+            while (shift > 0) {
+                shift -= 4;
+                temp = (value >> shift) & 0xF;
+                mini_push(temp);
+            }
+        };
+
+        push(m_blocks[pos - 1], true);
         --pos;
 
         while (pos > 0) {
-            up_value = m_blocks[pos - 1] >> 16;
-            down_value = m_blocks[pos - 1] & UINT16_MAX;
-            push(up_value);
-            push(down_value);
+            push(m_blocks[pos - 1]);
             --pos;
         }
 
@@ -460,14 +437,24 @@ public:
         } else {
             *this = x_2;
         }
+
+        assert(is_valid());
     }
 
-    bool is_even() const {
+    constexpr bool is_even() const {
         return (m_blocks[0] & 0b1) == 0;
     }
 
-    const block_t& first_block() const {
+    const uint32_t& first_block() const {
         return m_blocks[0];
+    }
+
+    constexpr const uint32_t& operator[](size_t pos) const {
+        return m_blocks[pos];
+    }
+
+    constexpr uint32_t& operator[](size_t pos) {
+        return m_blocks[pos];
     }
 
 private:
@@ -502,14 +489,14 @@ private:
                 break;
             }
 
-            block_t symbol_value = 0;
+            uint32_t symbol_value = 0;
 
             if (*str >= '0' && *str <= '9') {
-                symbol_value = static_cast<block_t>(*str - '0');
+                symbol_value = static_cast<uint32_t>(*str - '0');
             } else if (*str >= 'a' && *str <= 'f') {
-                symbol_value = static_cast<block_t>(*str - 'a') + 10;
+                symbol_value = static_cast<uint32_t>(*str - 'a') + 10;
             } else if (*str >= 'A' && *str <= 'F') {
-                symbol_value = static_cast<block_t>(*str - 'A') + 10;
+                symbol_value = static_cast<uint32_t>(*str - 'A') + 10;
             }
 
             value += symbol_value;
@@ -520,18 +507,18 @@ private:
     }
 
     template<typename T>
-    requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, block_t>
+    requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, uint32_t>
     static constexpr blocks split_into_blocks(T value) {
-        return {static_cast<block_t>(value)};
+        return {static_cast<uint32_t>(value)};
     }
 
     template<typename T>
-    requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, block_t>
+    requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, uint32_t>
     static constexpr blocks split_into_blocks(T value) {
         blocks result = {};
 
         for (size_t i = 0; i < c_block_number; ++i) {
-            result[i] = static_cast<block_t>(value);
+            result[i] = static_cast<uint32_t>(value);
             value >>= c_block_size;
 
             if (value == 0) {
@@ -593,7 +580,7 @@ private:
         assert(is_valid());
     }
 
-    static constexpr blocks max_mod_p = {-2, -1, -1, 0, 0, 0, 1, -1};
+    static constexpr blocks max_mod_p = {4294967294U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 
     constexpr void decrement() {
         if (*this == 0) {
@@ -603,7 +590,7 @@ private:
         }
 
         for (size_t i = 0; i < c_block_number; ++i) {
-            block_t temp = m_blocks[i];
+            uint32_t temp = m_blocks[i];
             m_blocks[i] -= 1;
 
             if (temp >= m_blocks[i]) {
@@ -614,7 +601,7 @@ private:
         assert(is_valid());
     }
 
-    static constexpr blocks p_values = {-1, -1, -1, 0, 0, 0, 1, -1};
+    static constexpr blocks p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 
     constexpr void add_p() {
         constexpr F_256 p(p_values);
@@ -623,10 +610,10 @@ private:
     }
 
     constexpr void add_p_uncheck() {
-        block_t carry = 0;
+        uint32_t carry = 0;
 
         for (size_t i = 0; i < c_block_number; ++i) {
-            block_t sum = carry + p_values[i];
+            uint32_t sum = carry + p_values[i];
             m_blocks[i] += sum;
             carry = (m_blocks[i] < sum) || (sum < carry);
         }
@@ -642,14 +629,6 @@ private:
         constexpr F_256 p(p_values);
         return *this < p;
     }
-
-    constexpr const block_t& operator[](size_t pos) const {
-        return m_blocks[pos];
-    }
-
-    constexpr block_t& operator[](size_t pos) {
-        return m_blocks[pos];
-    }
 };
 
 class EllipticCurvePoint;
@@ -662,10 +641,11 @@ struct Coefficient {
 };
 
 static constexpr uint16_t c_mask_modulo_2_pow_w = (1 << c_width) - 1;
+static constexpr size_t c_kp_number = static_cast<size_t>(1) << (c_width - 2);
 
 using wnaf_form = std::vector<Coefficient>;
 
-wnaf_form get_wnaf(F_256 value) {
+constexpr wnaf_form get_wnaf(F_256 value) {
     wnaf_form result;
 
     while (value > 0) {
@@ -690,59 +670,10 @@ wnaf_form get_wnaf(F_256 value) {
     return result;
 }
 
-static constexpr size_t c_kp_number = static_cast<size_t>(1) << (c_width - 2);
-
-static constexpr void multiply(EllipticCurvePoint& point, const F_256& value) {
-    auto wnaf_form = get_wnaf(value);
-    EllipticCurvePoint two_p = point + point;
-    std::vector<EllipticCurvePoint> kp = {point};
-
-    for (size_t i = 1; i < c_kp_number; ++i) {
-        kp.emplace_back(kp.back() + two_p);
-    }
-
-    point.m_is_null = true;
-
-    for (size_t i = wnaf_form.size(); i > 0; --i) {
-        point.twice();
-
-        if (wnaf_form[i - 1].value != 0) {
-            if (!wnaf_form[i - 1].is_negative) {
-                point += kp[wnaf_form[i - 1].value >> 1];
-            } else {
-                point -= kp[wnaf_form[i - 1].value >> 1];
-            }
-        }
-    }
-}
-
 class EllipticCurvePoint {
-    friend class EllipticCurve;
-    friend constexpr void multiply(EllipticCurvePoint& point, const F_256& value);
-
 public:
     constexpr EllipticCurvePoint(const F_256& x, const F_256& y, bool is_null = false) :
-        m_x {x}, m_y {y}, m_is_null(is_null) {
-        assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
-    }
-
-    constexpr EllipticCurvePoint(F_256&& x, const F_256& y, bool is_null = false) :
-
-        m_x {std::move(x)}, m_y {y}, m_is_null(is_null) {
-        assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
-    }
-
-    constexpr EllipticCurvePoint(const F_256& x, F_256&& y, bool is_null = false) :
-
-        m_x {x}, m_y {std::move(y)}, m_is_null(is_null) {
-        assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
-    }
-
-    constexpr EllipticCurvePoint(F_256&& x, F_256&& y, bool is_null = false) :
-
-        m_x {std::move(x)}, m_y {std::move(y)}, m_is_null(is_null) {
-        assert(is_valid() && "EllipticCurvePoint::EllipticCurvePoint : invalid coordinates");
-    }
+        m_x {x}, m_y {y}, m_is_null(is_null) {}
 
     friend constexpr EllipticCurvePoint operator+(const EllipticCurvePoint& lhs,
                                                   const EllipticCurvePoint& rhs) {
@@ -839,11 +770,10 @@ public:
         }
 
         const F_256 k = (other.m_y - m_y) / (other.m_x - m_x);
-        const F_256 x = F_256::square(k) - m_x - other.m_x;
+        const F_256 x = F_256::pow(k, 2) - m_x - other.m_x;
         m_y = k * (m_x - x) - m_y;
         m_x = x;
 
-        assert(is_valid() && "EllipticCurvePoint::operator+= : invalid coordinates");
         return *this;
     }
 
@@ -859,7 +789,7 @@ public:
     }
 
     constexpr EllipticCurvePoint& operator*=(const F_256& value) {
-        multiply(*this, value);
+        multiply(value);
         return *this;
     }
 
@@ -875,9 +805,61 @@ public:
         return m_is_null;
     }
 
-private:
     static constexpr EllipticCurvePoint null_point() {
         return EllipticCurvePoint(0, 1, true);
+    }
+
+    static std::optional<EllipticCurvePoint> point_with_x_equal_to(const F_256& x) {
+        if (!x.is_invertible()) {
+            return null_point();
+        }
+
+        std::optional<F_256> y = find_y(x);
+
+        if (!y.has_value()) {
+            return std::nullopt;
+        }
+
+        return EllipticCurvePoint(x, std::move(y.value()));
+    }
+
+private:
+    static constexpr std::optional<F_256> find_y(const F_256& x) {
+        F_256 value = F_256::pow(x, 3) + c_a * x + c_b;
+
+        if (!value.is_invertible()) {
+            return std::nullopt;
+        }
+
+        if (F_256::pow(value, c_p_1) != F_256(1)) {
+            return std::nullopt;
+        }
+
+        return F_256::pow(value, c_p_2);
+    }
+
+    constexpr void multiply(const F_256& value) {
+        auto wnaf_form = get_wnaf(value);
+        EllipticCurvePoint two_p = *this + *this;
+        std::vector<EllipticCurvePoint> kp = {*this};
+
+        for (size_t i = 1; i < c_kp_number; ++i) {
+            kp.emplace_back(kp.back() + two_p);
+        }
+
+        m_is_null = true;
+
+        for (size_t i = wnaf_form.size(); i > 0; --i) {
+            twice();
+
+            if (wnaf_form[i - 1].value != 0) {
+                if (!wnaf_form[i - 1].is_negative) {
+                    *this += kp[wnaf_form[i - 1].value >> 1];
+                } else {
+                    *this -= kp[wnaf_form[i - 1].value >> 1];
+                }
+            }
+        }
     }
 
     constexpr void negative() {
@@ -894,35 +876,76 @@ private:
             return;
         }
 
-        const F_256 k = (3 * F_256::square(m_x) + m_a) / (m_y << 1);
-        const F_256 x = F_256::square(k) - (m_x << 1);
+        const F_256 k = (3 * F_256::pow(m_x, 2) + c_a) / (m_y << 1);
+        const F_256 x = F_256::pow(k, 2) - (m_x << 1);
         m_y = k * (m_x - x) - m_y;
         m_x = x;
-        assert(is_valid() && "EllipticCurvePoint::twice : invalid coordinates");
     }
 
-    constexpr bool is_valid() const {
-        if (m_is_null) {
-            return true;
-        }
-
-        const F_256 lhs = F_256::square(m_y);
-        const F_256 rhs = F_256::pow(m_x, 3) + m_a * m_x + m_b;
-        return lhs == rhs;
-    }
-
-    static constexpr F_256 m_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
-    static constexpr F_256 m_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
+    static constexpr F_256 c_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
+    static constexpr F_256 c_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
+    static constexpr F_256 c_p_1 = "0x7FFFFFFF800000008000000000000000000000007FFFFFFFFFFFFFFFFFFFFFFF";
+    static constexpr F_256 c_p_2 = "0x3FFFFFFFC0000000400000000000000000000000400000000000000000000000";
 
     F_256 m_x;
     F_256 m_y;
     bool m_is_null;
 };
 
-class ElGamal {
+static std::mt19937 gen32(42);
+
+constexpr F_256 generate_random_non_zero_value_modulo(const F_256& modulus) {
+    F_256 result;
+
+    for (size_t i = 0; i < 8; ++i) {
+        result[i] = gen32();
+    }
+
+    if (result >= modulus) {
+        result = modulus - 1;
+    }
+
+    return result;
+}
+
+namespace ElGamal {
     using Point = EllipticCurvePoint;
 
-public:
+    namespace {
+        static constexpr Point m_generator =
+            Point(F_256("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
+                  F_256("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"));
+        static constexpr F_256 m_generator_order =
+            "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
+
+        Point map_to_curve(const F_256& message) {
+            for (;;) {
+                F_256 x = generate_random_non_zero_value_modulo(m_generator_order);
+
+                for (size_t i = 0; i < 4; ++i) {
+                    x[i] = message[i];
+                }
+
+                auto opt = Point::point_with_x_equal_to(x);
+
+                if (opt.has_value()) {
+                    return opt.value();
+                }
+            }
+        }
+
+        F_256 map_to_uint(const Point& message) {
+            F_256 result;
+            const F_256& x = message.get_x();
+
+            for (size_t i = 0; i < 4; ++i) {
+                result[i] = x[i];
+            }
+
+            return result;
+        }
+    }   // namespace
+
     struct Keys {
         F_256 private_key;
         Point public_key;
@@ -933,21 +956,30 @@ public:
         Point message_with_salt;
     };
 
-    Keys generate_keys() const;
+    constexpr Keys generate_keys() {
+        F_256 private_key = generate_random_non_zero_value_modulo(m_generator_order);
+        Point public_key = private_key * m_generator;
+        return Keys {.private_key = private_key, .public_key = public_key};
+    }
 
-    EncryptedMessage encrypt(const F_256& message, const Point& public_key) const;
+    EncryptedMessage encrypt(const F_256& message, const Point& public_key) {
+        const F_256 k = generate_random_non_zero_value_modulo(m_generator_order);
+        const Point generator_degree = k * m_generator;
+        const Point message_with_salt = map_to_curve(message) + k * public_key;
+        return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
+    }
 
-    F_256 decrypt(const EncryptedMessage& encrypted_message, const F_256& private_key) const;
+    F_256 decrypt(const EncryptedMessage& encrypted_message, const F_256& private_key) {
+        Point M = encrypted_message.message_with_salt - private_key * encrypted_message.generator_degree;
+        return map_to_uint(M);
+    }
+};   // namespace ElGamal
 
-private:
-    Point map_to_curve(const F_256& message) const;
-    F_256 map_to_uint(const Point& message) const;
-
-    static constexpr Point m_generator =
-        Point(F_256("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
-              F_256("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"));
-    static constexpr F_256 m_generator_order =
-        "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
-};
-
-int main() {}
+int main() {
+    F_256 message = "0xFFFAFFF198422813371488";
+    auto keys = ElGamal::generate_keys();
+    auto encrypted_message = ElGamal::encrypt(message, keys.public_key);
+    auto decrypted_message = ElGamal::decrypt(encrypted_message, keys.private_key);
+    assert(message == decrypted_message);
+    std::cout << "Success!\n";
+}
