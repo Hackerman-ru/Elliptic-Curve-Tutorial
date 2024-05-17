@@ -33,6 +33,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "specialization", "specializ
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elgamal_test", "tests\elgamal_test\elgamal_test.vcxproj", "{F915643D-ADA9-4ED3-AADF-FB722B7B2661}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guide", "guide", "{FD225C5F-F5B5-4D21-9111-773A2D462EBF}"
+	ProjectSection(SolutionItems) = preProject
+		guide\guide.tex = guide\guide.tex
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug spec|x64 = Debug spec|x64
@@ -221,6 +226,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{FD225C5F-F5B5-4D21-9111-773A2D462EBF} = {3BC065EE-DBC6-4E56-BAA1-43191A65C70B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {753A4F60-70E9-4FDC-B814-E59206B44E9A}

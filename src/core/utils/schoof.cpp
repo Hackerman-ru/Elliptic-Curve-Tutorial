@@ -6,33 +6,33 @@
 
 namespace elliptic_curve_guide::algorithm::schoof {
     namespace {
-        struct S {
-            size_t L = 0;
-            uint N = 1;
+        struct PrimesSet {
+            size_t number_of_primes = 0;
+            uint accumulated_product = 1;
         };
     }   // namespace
 
     static constexpr size_t prime_number_list_size =
         sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
 
-    static constexpr S count_primes_number(const uint& p) {
+    static constexpr PrimesSet count_primes_number(const uint& p) {
         uint edge_value = p << 4;
-        S result;
+        PrimesSet result;
 
         do {
-            const uint l = primes::prime_number_list[result.L];
+            const uint l = primes::prime_number_list[result.number_of_primes];
 
             if (l == p) {
                 continue;
             }
 
-            result.N *= l;
-            ++result.L;
+            result.accumulated_product *= l;
+            ++result.number_of_primes;
 
-            if (result.L >= prime_number_list_size) {
+            if (result.number_of_primes >= prime_number_list_size) {
                 break;
             }
-        } while (result.N <= edge_value);
+        } while (result.accumulated_product <= edge_value);
 
         return result;
     }
@@ -45,14 +45,14 @@ namespace elliptic_curve_guide::algorithm::schoof {
 
         const field::Field& F = curve.get_field();
         const uint& p = F.modulus();
-        S primes_set = count_primes_number(p);
-        const size_t& L = primes_set.L;
-        const uint& N = primes_set.N;
+        PrimesSet primes_set = count_primes_number(p);
+        const size_t& length = primes_set.number_of_primes;
+        const uint& product = primes_set.accumulated_product;
 
         std::vector<uint32_t> modulo_list;
-        modulo_list.reserve(L);
+        modulo_list.reserve(length);
 
-        for (size_t i = 0; i < L; ++i) {
+        for (size_t i = 0; i < length; ++i) {
             const uint32_t& l = primes::prime_number_list[i];
 
             if (l == 2) {
