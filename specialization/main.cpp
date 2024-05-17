@@ -631,8 +631,6 @@ private:
     }
 };
 
-class EllipticCurvePoint;
-
 constexpr size_t c_width = 3;
 
 struct Coefficient {
@@ -645,7 +643,7 @@ static constexpr size_t c_kp_number = static_cast<size_t>(1) << (c_width - 2);
 
 using wnaf_form = std::vector<Coefficient>;
 
-constexpr wnaf_form get_wnaf(F_256 value) {
+static constexpr wnaf_form get_wnaf(F_256 value) {
     wnaf_form result;
 
     while (value > 0) {
