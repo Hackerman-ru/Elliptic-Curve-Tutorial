@@ -976,10 +976,23 @@ namespace ElGamal {
 };   // namespace ElGamal
 
 int main() {
-    F_256 message = "0xFFFAFFF198422813371488";
+    std::cout << "Enter hexadecimal message:\n";
+    std::string msg;
+    std::cin >> msg;
+    F_256 message = msg.c_str();
+    std::cout << "Generating keys...\n";
     auto keys = ElGamal::generate_keys();
+    std::cout << "Encrypting message...\n";
     auto encrypted_message = ElGamal::encrypt(message, keys.public_key);
+    std::cout << "Decrypting message...\n";
     auto decrypted_message = ElGamal::decrypt(encrypted_message, keys.private_key);
-    assert(message == decrypted_message);
-    std::cout << "Success!\n";
+    std::cout << "Decrypted message is:\n";
+    std::string decrypted_msg = decrypted_message.convert_to_hex_string();
+    std::cout << decrypted_msg << '\n';
+    std::cout << "Checking correctness...\n";
+    if (message != decrypted_message) {
+        std::cout << "Fail!\n";
+    } else {
+        std::cout << "Success!\n";
+    }
 }
