@@ -35,7 +35,27 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elgamal_test", "tests\elgam
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "guide", "guide", "{FD225C5F-F5B5-4D21-9111-773A2D462EBF}"
 	ProjectSection(SolutionItems) = preProject
+		guide\code_cpp.sty = guide\code_cpp.sty
+		guide\commands.sty = guide\commands.sty
+		guide\environments.sty = guide\environments.sty
+		guide\guide.pdf = guide\guide.pdf
 		guide\guide.tex = guide\guide.tex
+		guide\packages.sty = guide\packages.sty
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "chapters", "chapters", "{C964C857-9741-46BE-A388-ACE44823DCBA}"
+	ProjectSection(SolutionItems) = preProject
+		guide\chapters\comparison.tex = guide\chapters\comparison.tex
+		guide\chapters\conclusion.tex = guide\chapters\conclusion.tex
+		guide\chapters\ecdsa.tex = guide\chapters\ecdsa.tex
+		guide\chapters\elgamal.tex = guide\chapters\elgamal.tex
+		guide\chapters\elliptic_curve.tex = guide\chapters\elliptic_curve.tex
+		guide\chapters\field.tex = guide\chapters\field.tex
+		guide\chapters\introduction.tex = guide\chapters\introduction.tex
+		guide\chapters\long_arithmetic.tex = guide\chapters\long_arithmetic.tex
+		guide\chapters\specialization.tex = guide\chapters\specialization.tex
+		guide\chapters\specialization_tests.tex = guide\chapters\specialization_tests.tex
+		guide\chapters\tests.tex = guide\chapters\tests.tex
 	EndProjectSection
 EndProject
 Global
@@ -229,6 +249,7 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{FD225C5F-F5B5-4D21-9111-773A2D462EBF} = {3BC065EE-DBC6-4E56-BAA1-43191A65C70B}
+		{C964C857-9741-46BE-A388-ACE44823DCBA} = {FD225C5F-F5B5-4D21-9111-773A2D462EBF}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {753A4F60-70E9-4FDC-B814-E59206B44E9A}
