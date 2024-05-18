@@ -37,6 +37,7 @@ x64
 packages
 
 # Tex files
-guide/*
+guide/*.*
+!guide/*.sty
 !guide/guide.tex
 !guide/guide.pdf

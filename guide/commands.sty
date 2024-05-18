@@ -1,0 +1,37 @@
+\ProvidesPackage{commands}
+
+% Utils
+\newcommand{\q}{\hspace{0.2cm}}
+
+\renewcommand{\r}{\right}
+\renewcommand{\l}{\left}
+
+% Sets and Fields
+\newcommand{\N}{\mathbb N}
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\I}{\mathbb I}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\F}{\mathbb F}
+\newcommand{\R}{\mathbb R}
+\newcommand{\E}{\mathbb E}
+
+\renewcommand{\C}{\mathbb C}
+
+% Expressions
+\newcommand{\Sum}[2]{\overset{#2}{\underset{#1}{\sum}}}
+\newcommand{\Lim}[2]{\lim\limits_{#1 \rightarrow #2}}
+\newcommand{\lowlim}[2]{\lim\limits_{\overline{#1 \rightarrow #2}}}
+\newcommand{\uplim}[2]{\overline{\lim\limits_{#1 \rightarrow #2}}}
+\newcommand{\Sup}[1]{\sup\limits_{#1}}
+\newcommand{\Inf}[1]{\inf\limits_{#1}}
+\newcommand{\m}[1]{\q(\bmod\q #1)}
+
+% Operators
+\newcommand{\tr}{\operatorname{tr}}
+\newcommand{\spec}{\operatorname{spec}}
+\newcommand{\Identity}{\operatorname{Id}}
+\newcommand{\sgn}{\operatorname{sgn}}
+\newcommand{\rk}{\operatorname{rk}}
+
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
