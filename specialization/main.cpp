@@ -289,7 +289,7 @@ public:
         return *this;
     }
 
-    [[nodiscard("Optimization")]]
+    [[nodiscard("Optimize unary operator usage")]]
     constexpr F_256
         operator++(int) {
         F_256 result = *this;
@@ -304,7 +304,7 @@ public:
         return *this;
     }
 
-    [[nodiscard("Optimization")]]
+    [[nodiscard("Optimize unary operator usage")]]
     constexpr F_256
         operator--(int) {
         F_256 result = *this;
@@ -920,7 +920,7 @@ namespace ElGamal {
             for (;;) {
                 F_256 x = generate_random_non_zero_value_modulo(m_generator_order);
 
-                for (size_t i = 0; i < 4; ++i) {
+                for (size_t i = 0; i < 6; ++i) {
                     x[i] = message[i];
                 }
 
@@ -936,7 +936,7 @@ namespace ElGamal {
             F_256 result;
             const F_256& x = message.get_x();
 
-            for (size_t i = 0; i < 4; ++i) {
+            for (size_t i = 0; i < 6; ++i) {
                 result[i] = x[i];
             }
 

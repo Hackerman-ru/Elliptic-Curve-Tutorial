@@ -366,7 +366,7 @@ namespace elliptic_curve_guide {
             return *this;
         }
 
-        [[nodiscard("Optimization")]]
+        [[nodiscard("Optimize unary operator usage")]]
         constexpr uint_t
             operator++(int) {
             uint_t result = *this;
@@ -379,7 +379,7 @@ namespace elliptic_curve_guide {
             return *this;
         }
 
-        [[nodiscard("Optimization")]]
+        [[nodiscard("Optimize unary operator usage")]]
         constexpr uint_t
             operator--(int) {
             uint_t result = *this;
