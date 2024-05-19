@@ -264,34 +264,33 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator>>=(size_t shift_size) {
-            size_t digit_shift = shift_size >> 6;
-            auto data = reinterpret_cast<double_digit_t*>(m_digits.data());
+            size_t digit_shift = shift_size >> 5;
 
             if (digit_shift > 0) {
-                for (size_t i = 0; i < c_double_digit_number; ++i) {
-                    if (i + digit_shift < c_double_digit_number) {
-                        data[i] = data[i + digit_shift];
+                for (size_t i = 0; i < c_digit_number; ++i) {
+                    if (i + digit_shift < c_digit_number) {
+                        m_digits[i] = m_digits[i + digit_shift];
                     } else {
-                        data[i] = 0;
+                        m_digits[i] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_digit_size;
+            shift_size %= c_digit_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + digit_shift < c_double_digit_number; ++i) {
-                data[i] >>= shift_size;
+            for (size_t i = 0; i + digit_shift < c_digit_number; ++i) {
+                m_digits[i] >>= shift_size;
 
-                if (i + 1 < c_double_digit_number) {
-                    data[i] |= data[i + 1] << (c_double_digit_size - shift_size);
+                if (i + 1 < c_digit_number) {
+                    m_digits[i] |= m_digits[i + 1] << (c_digit_size - shift_size);
                 }
             }
 
-            if constexpr (c_bits % c_double_digit_size != 0) {
+            if constexpr (c_bits % c_digit_size != 0) {
                 if constexpr (c_digit_number > 1) {
                     m_digits[c_digit_number - 2] |= m_digits[c_digit_number - 1]
                                                  << (c_digit_size - shift_size);
@@ -303,26 +302,25 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator<<=(size_t shift_size) {
-            size_t digit_shift = shift_size >> 6;
-            auto data = reinterpret_cast<double_digit_t*>(m_digits.data());
+            size_t digit_shift = shift_size >> 5;
 
             if (digit_shift > 0) {
-                for (size_t i = c_double_digit_number; i > 0; --i) {
+                for (size_t i = c_digit_number; i > 0; --i) {
                     if (i > digit_shift) {
-                        data[i - 1] = data[i - digit_shift - 1];
+                        m_digits[i - 1] = m_digits[i - digit_shift - 1];
                     } else {
-                        data[i - 1] = 0;
+                        m_digits[i - 1] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_digit_size;
+            shift_size %= c_digit_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            if constexpr (c_bits % c_double_digit_size != 0) {
+            if constexpr (c_bits % c_digit_size != 0) {
                 m_digits[c_digit_number - 1] <<= shift_size;
 
                 if constexpr (c_digit_number > 1) {
@@ -331,11 +329,11 @@ namespace elliptic_curve_guide {
                 }
             }
 
-            for (size_t i = c_double_digit_number; i > digit_shift; --i) {
-                data[i - 1] <<= shift_size;
+            for (size_t i = c_digit_number; i > digit_shift; --i) {
+                m_digits[i - 1] <<= shift_size;
 
                 if (i - 1 > 0) {
-                    data[i - 1] |= data[i - 2] >> (c_double_digit_size - shift_size);
+                    m_digits[i - 1] |= m_digits[i - 2] >> (c_digit_size - shift_size);
                 }
             }
 
