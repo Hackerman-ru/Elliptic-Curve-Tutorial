@@ -7,13 +7,14 @@ namespace elliptic_curve_guide::polynomial {
         return result;
     }
 
-    DivisionPoly::DivisionPoly(const Poly& x_poly, const Poly& curve_poly, const Element& y_coef,
-                               const size_t& y_power) :
+    DivisionPoly::DivisionPoly(const Poly& x_poly, const std::shared_ptr<const Poly>& curve_poly,
+                               const Element& y_coef, const size_t& y_power) :
         m_x_poly(x_poly), m_curve_poly(curve_poly), m_y_coef(y_coef), m_y_power(y_power) {}
 
-    DivisionPoly::DivisionPoly(Poly&& x_poly, Poly&& curve_poly, Element&& y_coef, const size_t& y_power) :
+    DivisionPoly::DivisionPoly(Poly&& x_poly, const std::shared_ptr<const Poly>& curve_poly, Element&& y_coef,
+                               const size_t& y_power) :
         m_x_poly(std::move(x_poly)),
-        m_curve_poly(std::move(curve_poly)),
+        m_curve_poly(curve_poly),
         m_y_coef(std::move(y_coef)),
         m_y_power(y_power) {}
 
