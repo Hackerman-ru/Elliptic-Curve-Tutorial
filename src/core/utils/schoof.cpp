@@ -1,5 +1,6 @@
 #include "schoof.h"
 
+#include "modulo_inversion.h"
 #include "polynomial.h"
 #include "primes.h"
 #include "ring.h"
@@ -15,29 +16,7 @@ namespace elliptic_curve_guide::algorithm::schoof {
     static constexpr size_t prime_number_list_size =
         sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
 
-    static constexpr PrimesSet count_primes_number(const uint& p) {
-        uint edge_value = p << 4;
-        PrimesSet result;
-
-        do {
-            const uint l = primes::prime_number_list[result.number_of_primes];
-
-            if (l == p) {
-                continue;
-            }
-
-            result.accumulated_product *= l;
-            ++result.number_of_primes;
-
-            if (result.number_of_primes >= prime_number_list_size) {
-                break;
-            }
-        } while (result.accumulated_product <= edge_value);
-
-        return result;
-    }
-
-    uint points_number(const elliptic_curve::EllipticCurve& curve) {
+    static uint32_t trace_modulo(const elliptic_curve::EllipticCurve& curve, const uint32_t modulus) {
         using field::Field;
         using polynomial::Poly;
         using ring::Ring;
@@ -45,24 +24,43 @@ namespace elliptic_curve_guide::algorithm::schoof {
 
         const field::Field& F = curve.get_field();
         const uint& p = F.modulus();
-        PrimesSet primes_set = count_primes_number(p);
-        const size_t& length = primes_set.number_of_primes;
-        const uint& product = primes_set.accumulated_product;
 
-        std::vector<uint32_t> modulo_list;
-        modulo_list.reserve(length);
+        if (modulus == 2) {
+            Poly f(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
+            bool has_2_torsion_points = has_root(f);
+            return has_2_torsion_points ? 0 : 1;
+        }
+    }
 
-        for (size_t i = 0; i < length; ++i) {
-            const uint32_t& l = primes::prime_number_list[i];
+    uint points_number(const elliptic_curve::EllipticCurve& curve) {
+        const uint& p = curve.get_field().modulus();
 
-            if (l == 2) {
-                Poly f(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
-                bool has_2_torsion_points = has_root(f);
-                modulo_list.emplace_back(has_2_torsion_points ? 0 : 1);
-                continue;
+        uint M = 1;
+        uint t = 0;
+        size_t pos = 0;
+        const uint edge = p << 4;
+
+        while (M * M <= edge) {
+            const uint32_t& l = primes::prime_number_list[pos];
+            const uint t_l = trace_modulo(curve, l);
+
+            uint a = inverse_modulo((M % l).convert_to<uint64_t>(), l);
+            a *= M * t_l;
+            uint b = inverse_modulo(static_cast<uint>(l), M);
+            b *= l * t;
+
+            t = a + b;
+            M *= l;
+
+            if (t >= M) {
+                t %= M;
             }
         }
 
-        return 0;   // TODO
+        if (t > M >> 1) {
+            t = M - t;
+        }
+
+        return p + 1 - t;
     }
 }   // namespace elliptic_curve_guide::algorithm::schoof

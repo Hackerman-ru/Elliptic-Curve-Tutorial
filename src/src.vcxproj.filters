@@ -46,6 +46,9 @@
     <ClInclude Include="core\utils\polynomial.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
+    <ClInclude Include="core\utils\modulo_inversion.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
@@ -70,6 +73,9 @@
     </ClCompile>
     <ClCompile Include="core\utils\polynomial.cpp">
       <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\modulo_inversion.cpp">
+      <Filter>utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
