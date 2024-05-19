@@ -198,6 +198,15 @@ namespace elliptic_curve_guide::polynomial {
         assert(is_valid() && "Poly::pow : invalid representation of polynomial");
     }
 
+    void Poly::reduce_degree() {
+        for (size_t i = degree(); i > 0; --i) {
+            m_coeffs[i - 1] = m_coeffs[i];
+        }
+
+        m_coeffs.pop_back();
+        assert(is_valid() && "Poly::reduce_degree : invalid representation of polynomial");
+    }
+
     size_t Poly::degree() const {
         return m_coeffs.size() - 1;
     }

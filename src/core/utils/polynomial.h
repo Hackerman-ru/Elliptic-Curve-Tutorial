@@ -47,6 +47,7 @@ namespace elliptic_curve_guide {
             Poly& operator%=(const Poly& other);
 
             void pow(const uint& power);
+            void reduce_degree();
             size_t degree() const;
             void compose(const Poly& inside_poly);
             const Field& get_field() const;

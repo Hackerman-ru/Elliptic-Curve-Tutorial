@@ -348,6 +348,7 @@
     <ClInclude Include="core\utils\csprng\is_iterable.hpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="core\utils\division_poly.h" />
     <ClInclude Include="core\utils\fast-pow.h" />
     <ClInclude Include="core\utils\fft.h" />
     <ClInclude Include="core\utils\field_root.h">
@@ -433,6 +434,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="core\utils\division_poly.cpp" />
     <ClCompile Include="core\utils\field_root.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>

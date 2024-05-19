@@ -6,6 +6,14 @@
 #include "ring.h"
 
 namespace elliptic_curve_guide::algorithm::schoof {
+    static constexpr size_t prime_number_list_size =
+        sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
+
+    static std::vector<polynomial::Poly> get_division_polynomials(const field::FieldElement& a,
+                                                                  const field::FieldElement& b) {
+        std::vector<polynomial::Poly> result;
+    }
+
     namespace {
         struct PrimesSet {
             size_t number_of_primes = 0;
@@ -13,23 +21,18 @@ namespace elliptic_curve_guide::algorithm::schoof {
         };
     }   // namespace
 
-    static constexpr size_t prime_number_list_size =
-        sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
-
     static uint32_t trace_modulo(const elliptic_curve::EllipticCurve& curve, const uint32_t modulus) {
-        using field::Field;
-        using polynomial::Poly;
-        using ring::Ring;
-        using ring::RingElement;
-
         const field::Field& F = curve.get_field();
         const uint& p = F.modulus();
 
         if (modulus == 2) {
-            Poly f(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
+            polynomial::Poly f(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
             bool has_2_torsion_points = has_root(f);
             return has_2_torsion_points ? 0 : 1;
         }
+
+        static std::vector<polynomial::Poly> division_polynomials =
+            get_division_polynomials(curve.get_a(), curve.get_b());
     }
 
     // Main logic was inspired by https://math.mit.edu/classes/18.783/2015/LectureNotes9.pdf
