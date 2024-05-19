@@ -1,6 +1,7 @@
 #include "schoof.h"
 
 #include "division_poly.h"
+#include "endomorphism.h"
 #include "modulo_inversion.h"
 #include "polynomial.h"
 #include "primes.h"
@@ -73,6 +74,9 @@ namespace elliptic_curve_guide::algorithm::schoof {
     }   // namespace
 
     static uint32_t trace_modulo(const elliptic_curve::EllipticCurve& curve, const uint32_t modulus) {
+        using Element = ring::RingElement;
+        using endomorphism::End;
+
         const field::Field& F = curve.get_field();
         const uint& p = F.modulus();
         polynomial::Poly curve_poly(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
@@ -84,6 +88,59 @@ namespace elliptic_curve_guide::algorithm::schoof {
 
         static std::vector<polynomial::DivisionPoly> division_polynomials =
             get_division_polynomials(curve_poly, F);
+
+        polynomial::Poly h = division_polynomials[modulus].get_x_poly();
+
+        for (;;) {
+            ring::Ring R(h);
+
+            Element x = R.element(polynomial::Poly(F, {0, 1}));
+            Element one = R.element(polynomial::Poly(F, {1}));
+
+            Element pi_a = Element::pow(x, p);
+            auto curve_poly_ptr = std::make_shared<const Element>(R.element(curve_poly));
+            Element pi_b = Element::pow(*curve_poly_ptr, (p - 1) >> 1);
+
+            End pi(R, pi_a, pi_b, curve_poly_ptr);
+            End pi_squared = pi * pi;
+            End id(R, x, one, curve_poly_ptr);
+            End::AdditionResult q_res = id * p;
+
+            if (q_res.g.has_value()) {
+                h = q_res.g.value();
+                continue;
+            }
+
+            End q = q_res.end.value();
+            End::AdditionResult sum_res = pi_squared + q;
+
+            if (sum_res.g.has_value()) {
+                h = sum_res.g.value();
+                continue;
+            }
+
+            End sum = sum_res.end.value();
+            uint32_t c = 0;
+            End temp = id;
+            bool bad_denominator = false;
+
+            while (temp != sum) {
+                ++c;
+                End::AdditionResult temp_res = temp + pi;
+
+                if (temp_res.g.has_value()) {
+                    bad_denominator = true;
+                    h = temp_res.g.value();
+                    break;
+                }
+            }
+
+            if (bad_denominator) {
+                break;
+            }
+
+            return c;
+        }
     }
 
     // Main logic was inspired by https://math.mit.edu/classes/18.783/2015/LectureNotes9.pdf

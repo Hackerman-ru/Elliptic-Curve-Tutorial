@@ -4,7 +4,6 @@
 #include "utils/ring.h"
 
 namespace elliptic_curve_guide::polynomial {
-
     Poly Poly::pow(const Poly& poly, const uint& power) {
         return algorithm::fast_pow<Poly>(poly, power);
     }
@@ -16,6 +15,18 @@ namespace elliptic_curve_guide::polynomial {
             result += pow(inside_poly, i) * outside_poly[i];
         }
 
+        return result;
+    }
+
+    Poly Poly::decrease_degree_by(const Poly& poly, size_t shift) {
+        Poly result = poly;
+        result.decrease_degree_by(shift);
+        return result;
+    }
+
+    Poly Poly::increase_degree_by(const Poly& poly, size_t shift) {
+        Poly result = poly;
+        result.increase_degree_by(shift);
         return result;
     }
 
@@ -83,11 +94,11 @@ namespace elliptic_curve_guide::polynomial {
     }
 
     Poly operator*(const Poly& lhs, const Poly& rhs) {
-        const Poly::Field& field = lhs.get_field();
+        const Poly::Field& F = lhs.get_field();
 
         size_t degree = lhs.degree() + rhs.degree();
-        Poly result(field);
-        result.m_coeffs.resize(degree + 1, field.element(0));
+        Poly result(F);
+        result.m_coeffs.resize(degree + 1, F.element(0));
 
         for (size_t lhs_pos = 0; lhs_pos < lhs.len(); ++lhs_pos) {
             for (size_t rhs_pos = 0; rhs_pos < rhs.len(); ++rhs_pos) {
@@ -198,13 +209,46 @@ namespace elliptic_curve_guide::polynomial {
         assert(is_valid() && "Poly::pow : invalid representation of polynomial");
     }
 
-    void Poly::reduce_degree() {
+    void Poly::decrease_degree() {
         for (size_t i = degree(); i > 0; --i) {
             m_coeffs[i - 1] = m_coeffs[i];
         }
 
         m_coeffs.pop_back();
-        assert(is_valid() && "Poly::reduce_degree : invalid representation of polynomial");
+        assert(is_valid() && "Poly::decrease_degree : invalid representation of polynomial");
+    }
+
+    void Poly::increase_degree() {
+        m_coeffs.emplace_back(top_coef());
+
+        for (size_t i = degree(); i > 0; --i) {
+            m_coeffs[i] = m_coeffs[i - 1];
+        }
+
+        m_coeffs[0] = m_field.element(0);
+        assert(is_valid() && "Poly::increase_degree : invalid representation of polynomial");
+    }
+
+    void Poly::decrease_degree_by(size_t shift) {
+        if (shift > degree()) {
+            m_coeffs = {m_field.element(0)};
+            assert(is_valid() && "Poly::decrease_degree : invalid representation of polynomial");
+            return;
+        }
+
+        for (size_t i = degree() + 1; i - shift > 0; --i) {
+            m_coeffs[i - shift - 1] = m_coeffs[i - 1];
+            m_coeffs.pop_back();
+        }
+
+        assert(is_valid() && "Poly::decrease_degree : invalid representation of polynomial");
+    }
+
+    void Poly::increase_degree_by(size_t shift) {
+        std::vector<Element> result(shift, m_field.element(0));
+        result.insert(result.end(), m_coeffs.begin(), m_coeffs.end());
+        m_coeffs = result;
+        assert(is_valid() && "Poly::increase_degree : invalid representation of polynomial");
     }
 
     size_t Poly::degree() const {
@@ -230,17 +274,6 @@ namespace elliptic_curve_guide::polynomial {
 
     size_t Poly::len() const {
         return m_coeffs.size();
-    }
-
-    void Poly::multiply_by_x() {
-        m_coeffs.emplace_back(top_coef());
-
-        for (size_t i = degree(); i > 0; --i) {
-            m_coeffs[i] = m_coeffs[i - 1];
-        }
-
-        m_coeffs[0] = m_field.element(0);
-        assert(is_valid() && "Poly::multiply_by_x : invalid representation of polynomial");
     }
 
     void Poly::clean() {
@@ -285,28 +318,87 @@ namespace elliptic_curve_guide::polynomial {
     const Poly::Element& Poly::top_coef() const {
         return m_coeffs[degree()];
     }
-
 }   // namespace elliptic_curve_guide::polynomial
 
 namespace elliptic_curve_guide::algorithm {
-    polynomial::Poly gcd(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
-        size_t lhs_degree = lhs.degree();
+    namespace {
+        struct DivisionResult {
+            polynomial::Poly quotient;
+            polynomial::Poly remainder;
+        };
+    }   // namespace
 
-        if (lhs_degree == 0) {
+    static DivisionResult divide(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
+        using Element = field::FieldElement;
+        using polynomial::Poly;
+        const field::Field& F = lhs.get_field();
+
+        const size_t lhs_degree = lhs.degree();
+        const size_t rhs_degree = rhs.degree();
+
+        if (lhs_degree < rhs_degree) {
+            return DivisionResult {.quotient = Poly(F), .remainder = lhs};
+        }
+
+        Poly quotient(F);
+        Poly remainder = lhs;
+
+        size_t degree_delta = remainder.degree() - rhs_degree;
+        quotient.increase_degree_by(degree_delta);
+
+        Element k = remainder.top_coef() / rhs.top_coef();
+        remainder -= k * Poly::increase_degree_by(rhs, degree_delta);
+        quotient[degree_delta] = k;
+
+        while (remainder.degree() >= rhs_degree) {
+            degree_delta = remainder.degree() - rhs_degree;
+            k = remainder.top_coef() / rhs.top_coef();
+            remainder -= k * Poly::increase_degree_by(rhs, degree_delta);
+            quotient[degree_delta] = k;
+        }
+
+        return DivisionResult {.quotient = quotient, .remainder = remainder};
+    }
+
+    static polynomial::Poly polynomial_extended_modular_gcd(const polynomial::Poly& a,
+                                                            const polynomial::Poly& b,
+                                                            polynomial::Poly& x,
+                                                            polynomial::Poly& y,
+                                                            const polynomial::Poly& modulus) {
+        const field::Field& F = a.get_field();
+
+        if (b.degree() == 0 && !b[0].is_invertible()) {
+            x = polynomial::Poly(F, {1});
+            y = polynomial::Poly(F);
+            return a;
+        }
+
+        DivisionResult division_result = divide(a, b);
+        polynomial::Poly x1(F), y1(F);
+        polynomial::Poly d = polynomial_extended_modular_gcd(b, division_result.remainder, x1, y1, modulus);
+        x = y1 % modulus;
+        y = (x1 - y1 * division_result.quotient) % modulus;
+        return d;
+    }
+
+    ModulusGcdResult modulus_gcd(const polynomial::Poly& value, const polynomial::Poly& modulus) {
+        const field::Field& F = value.get_field();
+        polynomial::Poly x(F), y(F);
+        polynomial::Poly d = polynomial_extended_modular_gcd(value, modulus, x, y, modulus);
+        return ModulusGcdResult {
+            .gcd = d,
+            .value_multiplier = x,
+            .modulus_multiplier = y,
+        };
+    }
+
+    polynomial::Poly gcd(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
+        if (rhs.degree() == 0 && !rhs[0].is_invertible()) {
             return lhs;
         }
 
-        size_t rhs_degree = rhs.degree();
-
-        if (rhs_degree == 0) {
-            return rhs;
-        }
-
-        if (lhs_degree >= rhs_degree) {
-            return gcd(lhs % rhs, rhs);
-        } else {
-            return gcd(lhs, rhs % lhs);
-        }
+        DivisionResult division_result = divide(lhs, rhs);
+        return gcd(rhs, division_result.remainder);
     }
 
     bool has_root(const polynomial::Poly& poly) {

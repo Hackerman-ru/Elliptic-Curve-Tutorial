@@ -177,4 +177,8 @@ namespace elliptic_curve_guide::ring {
     const field::Field& Ring::get_field() const {
         return m_modulus->get_field();
     }
+
+    bool Ring::operator==(const Ring& other) const {
+        return *m_modulus == *other.m_modulus;
+    }
 }   // namespace elliptic_curve_guide::ring

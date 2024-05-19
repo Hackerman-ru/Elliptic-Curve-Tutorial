@@ -225,4 +225,8 @@ namespace elliptic_curve_guide::field {
     const uint& Field::modulus() const {
         return *m_modulus;
     }
+
+    bool Field::operator==(const Field& other) const {
+        return *m_modulus == *other.m_modulus;
+    }
 }   // namespace elliptic_curve_guide::field

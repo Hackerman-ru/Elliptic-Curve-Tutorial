@@ -16,14 +16,18 @@ namespace elliptic_curve_guide {
             friend End algorithm::wnaf_addition<End>(End end, const uint& value);
 
         public:
-            End(const Ring& ring, const Poly& a, const Poly& b);
-            End(const Ring& ring, const Element& a, const Element& b);
-            End(const Ring& ring, Element&& a, Element&& b);
+            End(const Ring& ring, const Poly& a, const Poly& b,
+                const std::shared_ptr<const Element>& curve_function);
+            End(const Ring& ring, const Element& a, const Element& b,
+                const std::shared_ptr<const Element>& curve_function);
+            End(const Ring& ring, Element&& a, Element&& b, std::shared_ptr<const Element>&& curve_function);
 
             struct AdditionResult {
                 std::optional<End> end;
                 std::optional<Poly> g;
             };
+
+            static AdditionResult twice(const End& end);
 
             friend AdditionResult operator+(const End& lhs, const End& rhs);
 
@@ -34,10 +38,10 @@ namespace elliptic_curve_guide {
             friend End operator*(const End& lhs, End&& rhs);
             friend End operator*(End&& lhs, End&& rhs);
 
-            friend End operator*(const End& end, const uint& value);
-            friend End operator*(End&& end, const uint& value);
-            friend End operator*(const uint& value, const End& end);
-            friend End operator*(const uint& value, End&& end);
+            friend AdditionResult operator*(const End& end, const uint& value);
+            friend AdditionResult operator*(const uint& value, const End& end);
+
+            bool operator==(const End& other) const = default;
 
             End operator-() const;
 
@@ -45,13 +49,13 @@ namespace elliptic_curve_guide {
             End& operator*=(const uint& value);
 
         private:
-            void twice();
             void nullify();
             void change_modulus(const Poly& modulus);
 
             Ring m_ring;
             Element m_a;
             Element m_b;
+            std::shared_ptr<const Element> m_curve_function;
         };
     }   // namespace endomorphism
 }   // namespace elliptic_curve_guide
