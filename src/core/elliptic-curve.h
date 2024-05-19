@@ -3,7 +3,7 @@
 
 #include "field.h"
 #include "utils/random.h"
-#include "utils/uint-algorithms.h"
+#include "utils/wnaf.h"
 //#include "utils/schoof.h"
 
 #include <optional>
@@ -41,6 +41,10 @@ namespace elliptic_curve_guide {
                 virtual void negative() = 0;
                 virtual void twice() = 0;
                 virtual bool is_valid() const = 0;
+
+                void nullify() {
+                    m_is_null = true;
+                }
 
                 std::shared_ptr<const Element> m_a;
                 std::shared_ptr<const Element> m_b;
@@ -109,34 +113,6 @@ namespace elliptic_curve_guide {
             return lhs;
         }
 
-        static constexpr size_t c_kp_number = static_cast<size_t>(1)
-                                           << (algorithm::non_adjacent_form::c_width - 2);
-
-        template<CoordinatesType type>
-        static void multiply(EllipticCurvePoint<type>& point, const uint& value) {
-            auto wnaf_form = algorithm::non_adjacent_form::get_wnaf(value);
-            EllipticCurvePoint<type> two_p = point + point;
-            std::vector<EllipticCurvePoint<type>> kp = {point};
-
-            for (size_t i = 1; i < c_kp_number; ++i) {
-                kp.emplace_back(kp.back() + two_p);
-            }
-
-            point.m_is_null = true;
-
-            for (size_t i = wnaf_form.size(); i > 0; --i) {
-                point.twice();
-
-                if (wnaf_form[i - 1].value != 0) {
-                    if (!wnaf_form[i - 1].is_negative) {
-                        point += kp[wnaf_form[i - 1].value >> 1];
-                    } else {
-                        point -= kp[wnaf_form[i - 1].value >> 1];
-                    }
-                }
-            }
-        }
-
         template<CoordinatesType type>
         EllipticCurvePoint<type> operator*(const EllipticCurvePoint<type>& point, const uint& value) {
             EllipticCurvePoint<type> result = point;
@@ -198,7 +174,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::Normal>(EllipticCurvePoint& point, const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -250,12 +227,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::Normal>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::Normal>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 
@@ -369,7 +346,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::Projective>(EllipticCurvePoint& point, const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -437,12 +415,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::Projective>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::Projective>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 
@@ -564,7 +542,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::Jacobi>(EllipticCurvePoint& point, const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -629,12 +608,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::Jacobi>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::Jacobi>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 
@@ -754,8 +733,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::JacobiChudnovski>(EllipticCurvePoint& point,
-                                                                    const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -823,12 +802,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::JacobiChudnovski>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::JacobiChudnovski>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 
@@ -960,8 +939,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::ModifiedJacobi>(EllipticCurvePoint& point,
-                                                                  const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -1028,12 +1007,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::ModifiedJacobi>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::ModifiedJacobi>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 
@@ -1160,8 +1139,8 @@ namespace elliptic_curve_guide {
         private:
             friend class EllipticCurve;
             friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
-            friend void multiply<CoordinatesType::SimplifiedJacobiChudnovski>(EllipticCurvePoint& point,
-                                                                              const uint& value);
+            friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
+                                                                                   const uint& n);
 
         public:
             friend bool operator==(const EllipticCurvePoint& lhs, const EllipticCurvePoint& rhs) {
@@ -1228,12 +1207,12 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint& operator*=(const uint& value) {
-                multiply<CoordinatesType::SimplifiedJacobiChudnovski>(*this, value);
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, value);
                 return *this;
             }
 
             EllipticCurvePoint& operator*=(const field::FieldElement& element) {
-                multiply<CoordinatesType::SimplifiedJacobiChudnovski>(*this, element.value());
+                *this = algorithm::wnaf_addition<EllipticCurvePoint>(*this, element.value());
                 return *this;
             }
 

@@ -1,9 +1,9 @@
 #include "ecdsa.h"
 
+#include "utils/bitsize.h"
 #include "utils/field_root.h"
 #include "utils/random.h"
 #include "utils/schoof.h"
-#include "utils/uint-algorithms.h"
 
 namespace elliptic_curve_guide::algorithm::encryption {
     static constexpr size_t c_attempts = 1000;

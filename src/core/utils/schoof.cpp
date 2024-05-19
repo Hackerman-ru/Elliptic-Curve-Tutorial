@@ -45,7 +45,7 @@ namespace elliptic_curve_guide::algorithm::schoof {
             std::move(psi_0), std::move(psi_1), std::move(psi_2), std::move(psi_3), std::move(psi_4)};
 
         for (size_t i = 5; i < prime_number_list_size; ++i) {
-            size_t n = i >> 1;
+            const size_t n = i >> 1;
 
             if (i % 2 == 1) {
                 DivisionPoly next = result[n + 2] * DivisionPoly::pow(result[n], 3)

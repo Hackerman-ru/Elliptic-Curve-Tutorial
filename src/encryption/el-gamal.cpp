@@ -1,7 +1,7 @@
 #include "el-gamal.h"
 
+#include "utils/bitsize.h"
 #include "utils/random.h"
-#include "utils/uint-algorithms.h"
 
 #include <map>
 

@@ -173,4 +173,8 @@ namespace elliptic_curve_guide::ring {
     const Ring::Poly& Ring::modulus() const {
         return *m_modulus;
     }
+
+    const field::Field& Ring::get_field() const {
+        return m_modulus->get_field();
+    }
 }   // namespace elliptic_curve_guide::ring

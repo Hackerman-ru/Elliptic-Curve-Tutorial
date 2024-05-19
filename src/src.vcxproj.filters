@@ -15,7 +15,7 @@
     <ClInclude Include="core\utils\concepts.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\uint-algorithms.h">
+    <ClInclude Include="core\utils\bitsize.h">
       <Filter>utils</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\random.h">
@@ -55,12 +55,18 @@
     <ClInclude Include="core\utils\division_poly.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
+    <ClInclude Include="core\utils\endomorphism.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\wnaf.h">
+      <Filter>utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core\field.cpp" />
     <ClCompile Include="core\elliptic-curve.cpp" />
     <ClCompile Include="core\long-arithmetic.cpp" />
-    <ClCompile Include="core\utils\uint-algorithms.cpp">
+    <ClCompile Include="core\utils\bitsize.cpp">
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="Encryption\ecdsa.cpp" />
@@ -84,6 +90,9 @@
       <Filter>utils</Filter>
     </ClCompile>
     <ClCompile Include="core\utils\division_poly.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\endomorphism.cpp">
       <Filter>utils\schoof</Filter>
     </ClCompile>
   </ItemGroup>

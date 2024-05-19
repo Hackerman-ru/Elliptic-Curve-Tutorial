@@ -164,7 +164,7 @@ namespace elliptic_curve_guide::polynomial {
 
     void DivisionPoly::reduce_y() {
         while (m_y_power > 1) {
-            m_x_poly *= m_curve_poly;
+            m_x_poly *= *m_curve_poly;
             m_y_power -= 2;
         }
 
