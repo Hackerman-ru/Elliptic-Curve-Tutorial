@@ -1,11 +1,38 @@
 #include "ecdsa.h"
 
+#include "utils/field_root.h"
 #include "utils/random.h"
 #include "utils/schoof.h"
 #include "utils/uint-algorithms.h"
 
 namespace elliptic_curve_guide::algorithm::encryption {
-    static elliptic_curve::EllipticCurve generate_random_elliptic_curve(const field::Field& field) {}
+    static constexpr size_t c_attempts = 1000;
+
+    static elliptic_curve::EllipticCurve generate_random_elliptic_curve(const field::Field& field) {
+        using Element = field::FieldElement;
+
+        for (;;) {
+            const Element r = random::generate_random_non_zero_field_element(field);
+            const Element discriminant = (r << 2) + field.element(27);
+
+            if (!discriminant.is_invertible()) {
+                continue;
+            }
+
+            for (size_t i = 0; i < c_attempts; ++i) {
+                Element a = random::generate_random_field_element(field);
+                const Element b_squared = Element::pow(a, 3) * Element::inverse(r);
+                auto opt = find_root(b_squared, field);
+
+                if (!opt.has_value()) {
+                    continue;
+                }
+
+                Element& b = opt.value();
+                return elliptic_curve::EllipticCurve(std::move(a), std::move(b), field);
+            }
+        }
+    }
 
     static uint get_largest_prime_divisor(uint value) {
         uint result = 1;
@@ -77,7 +104,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         const Field F(m_n);
 
         for (;;) {
-            const uint k = random::generate_random_non_zero_uint_modulo(m_n);
+            const Element k = random::generate_random_non_zero_field_element(F);
 
             const Point P = k * m_generator;
             const uint& r = P.get_x().value();
@@ -87,7 +114,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
             }
 
             const Element edr = F.element(message) + F.element(private_key) * F.element(r);
-            const uint s = (Element::inverse(F.element(k)) * edr).value();
+            const uint& s = (Element::inverse(k) * edr).value();
 
             if (s == 0) {
                 continue;
@@ -116,7 +143,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         const Element w = Element::inverse(F.element(s));
         const Element u1 = F.element(message) * w;
         const Element u2 = F.element(r) * w;
-        const Point X = u1.value() * m_generator + u2.value() * public_key;
+        const Point X = u1 * m_generator + u2 * public_key;
 
         if (X.is_zero()) {
             return false;

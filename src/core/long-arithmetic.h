@@ -516,6 +516,9 @@ namespace elliptic_curve_guide {
             return result;
         }
 
+        static constexpr double_digit_t c_half_digit = static_cast<double_digit_t>(1) << (c_digit_size - 1);
+        static constexpr double_digit_t c_digit = static_cast<double_digit_t>(1) << c_digit_size;
+
         static constexpr uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
@@ -526,10 +529,8 @@ namespace elliptic_curve_guide {
 
             size_t shift_size = 0;
             digit_t divisor_head = divisor[divisor_size - 1];
-            static constexpr double_digit_t c_Halfdigit = static_cast<double_digit_t>(1)
-                                                       << (c_digit_size - 1);
 
-            while (divisor_head < c_Halfdigit) {
+            while (divisor_head < c_half_digit) {
                 ++shift_size;
                 divisor_head <<= 1;
             }
@@ -538,7 +539,6 @@ namespace elliptic_curve_guide {
             divisor <<= shift_size;
 
             double_digit_t divisor_ = divisor[divisor_size - 1];
-            static constexpr double_digit_t c_digit = static_cast<double_digit_t>(1) << c_digit_size;
 
             for (size_t i = dividend_size - divisor_size + 1; i > 0; --i) {
                 double_digit_t part =

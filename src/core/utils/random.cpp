@@ -30,4 +30,14 @@ namespace elliptic_curve_guide::algorithm::random {
     uint generate_random_non_zero_uint_modulo(const uint& modulus) {
         return generate_random_uint_modulo(modulus - 1) + 1;
     }
+
+    field::FieldElement generate_random_field_element(const field::Field& field) {
+        uint result = generate_random_uint_modulo(field.modulus());
+        return field.element(result);
+    }
+
+    field::FieldElement generate_random_non_zero_field_element(const field::Field& field) {
+        uint result = generate_random_non_zero_uint_modulo(field.modulus());
+        return field.element(result);
+    }
 }   // namespace elliptic_curve_guide::algorithm::random

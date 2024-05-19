@@ -36,7 +36,7 @@ namespace elliptic_curve_guide {
             protected:
                 EllipticCurvePointConcept(std::shared_ptr<const Element> a, std::shared_ptr<const Element> b,
                                           std::shared_ptr<const Field> F, bool is_null = false) :
-                    m_a {std::move(a)}, m_b {std::move(b)}, m_Field {std::move(F)}, m_is_null(is_null) {};
+                    m_a {std::move(a)}, m_b {std::move(b)}, m_field {std::move(F)}, m_is_null(is_null) {};
 
                 virtual void negative() = 0;
                 virtual void twice() = 0;
@@ -44,7 +44,7 @@ namespace elliptic_curve_guide {
 
                 std::shared_ptr<const Element> m_a;
                 std::shared_ptr<const Element> m_b;
-                std::shared_ptr<const Field> m_Field;
+                std::shared_ptr<const Field> m_field;
                 bool m_is_null;
             };
         }   // namespace
@@ -163,6 +163,36 @@ namespace elliptic_curve_guide {
             return point;
         }
 
+        template<CoordinatesType type>
+        EllipticCurvePoint<type> operator*(const EllipticCurvePoint<type>& point,
+                                           const field::FieldElement& value) {
+            EllipticCurvePoint<type> result = point;
+            result *= value;
+            return result;
+        }
+
+        template<CoordinatesType type>
+        EllipticCurvePoint<type> operator*(EllipticCurvePoint<type>&& point,
+                                           const field::FieldElement& value) {
+            point *= value;
+            return point;
+        }
+
+        template<CoordinatesType type>
+        EllipticCurvePoint<type> operator*(const field::FieldElement& value,
+                                           const EllipticCurvePoint<type>& point) {
+            EllipticCurvePoint<type> result = point;
+            result *= value;
+            return result;
+        }
+
+        template<CoordinatesType type>
+        EllipticCurvePoint<type> operator*(const field::FieldElement& value,
+                                           EllipticCurvePoint<type>&& point) {
+            point *= value;
+            return point;
+        }
+
         template<>
         class EllipticCurvePoint<CoordinatesType::Normal> : public EllipticCurvePointConcept {
         private:
@@ -221,6 +251,11 @@ namespace elliptic_curve_guide {
 
             EllipticCurvePoint& operator*=(const uint& value) {
                 multiply<CoordinatesType::Normal>(*this, value);
+                return *this;
+            }
+
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::Normal>(*this, element.value());
                 return *this;
             }
 
@@ -290,7 +325,7 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -307,7 +342,7 @@ namespace elliptic_curve_guide {
                     return;
                 }
 
-                const Element k = (m_Field->element(3) * Element::pow(m_x, 2) + *m_a) / (m_y << 1);
+                const Element k = (m_field->element(3) * Element::pow(m_x, 2) + *m_a) / (m_y << 1);
                 const Element x = Element::pow(k, 2) - (m_x << 1);
                 m_y = k * (m_x - x) - m_y;
                 m_x = x;
@@ -406,6 +441,11 @@ namespace elliptic_curve_guide {
                 return *this;
             }
 
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::Projective>(*this, element.value());
+                return *this;
+            }
+
             Element get_x() const final {
                 return m_X / m_Z;
             }
@@ -429,7 +469,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {y},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -441,7 +481,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {y},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -453,7 +493,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
@@ -465,14 +505,14 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Projective>::EllipticCurvePoint : invalid coordinates");
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -489,7 +529,7 @@ namespace elliptic_curve_guide {
                     return;
                 }
 
-                const Element w = *m_a * Element::pow(m_Z, 2) + m_Field->element(3) * Element::pow(m_X, 2);
+                const Element w = *m_a * Element::pow(m_Z, 2) + m_field->element(3) * Element::pow(m_X, 2);
                 const Element s = m_Y * m_Z;
                 const Element s2 = Element::pow(s, 2);
                 const Element s3 = s2 * s;
@@ -593,6 +633,11 @@ namespace elliptic_curve_guide {
                 return *this;
             }
 
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::Jacobi>(*this, element.value());
+                return *this;
+            }
+
             Element get_x() const final {
                 return m_X / Element::pow(m_Z, 2);
             }
@@ -616,7 +661,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {y},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -628,7 +673,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {y},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -640,7 +685,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
@@ -652,14 +697,14 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)} {
+                m_Z {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::Jacobi>::EllipticCurvePoint : invalid coordinates");
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -679,7 +724,7 @@ namespace elliptic_curve_guide {
                 const Element Y2 = Element::pow(m_Y, 2);
                 const Element Y4 = Element::pow(Y2, 2);
                 const Element V = (m_X * Y2) << 2;
-                const Element W = m_Field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z, 4);
+                const Element W = m_field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z, 4);
                 m_X = -(V << 1) + Element::pow(W, 2);
                 m_Z = (m_Y * m_Z) << 1;
                 m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -782,6 +827,11 @@ namespace elliptic_curve_guide {
                 return *this;
             }
 
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::JacobiChudnovski>(*this, element.value());
+                return *this;
+            }
+
             Element get_x() const final {
                 return m_X / m_Z2;
             }
@@ -805,9 +855,9 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)},
-                m_Z3 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)},
+                m_Z3 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -819,9 +869,9 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)},
-                m_Z3 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)},
+                m_Z3 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -833,9 +883,9 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)},
-                m_Z3 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)},
+                m_Z3 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -847,16 +897,16 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)},
-                m_Z3 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)},
+                m_Z3 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::JacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -876,7 +926,7 @@ namespace elliptic_curve_guide {
                 const Element Y2 = Element::pow(m_Y, 2);
                 const Element Y4 = Element::pow(Y2, 2);
                 const Element V = (m_X * Y2) << 2;
-                const Element W = m_Field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z2, 2);
+                const Element W = m_field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z2, 2);
                 m_X = -(V << 1) + Element::pow(W, 2);
                 m_Z = (m_Y * m_Z) << 1;
                 m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -982,6 +1032,11 @@ namespace elliptic_curve_guide {
                 return *this;
             }
 
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::ModifiedJacobi>(*this, element.value());
+                return *this;
+            }
+
             Element get_x() const final {
                 return m_X / Element::pow(m_Z, 2);
             }
@@ -1005,7 +1060,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
+                m_Z {m_field->element(1)},
                 m_aZ4 {*m_a} {
                 assert(
                     is_valid()
@@ -1018,7 +1073,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
+                m_Z {m_field->element(1)},
                 m_aZ4 {*m_a} {
                 assert(
                     is_valid()
@@ -1031,7 +1086,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
+                m_Z {m_field->element(1)},
                 m_aZ4 {*m_a} {
                 assert(
                     is_valid()
@@ -1044,7 +1099,7 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
+                m_Z {m_field->element(1)},
                 m_aZ4 {*m_a} {
                 assert(
                     is_valid()
@@ -1052,7 +1107,7 @@ namespace elliptic_curve_guide {
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -1072,7 +1127,7 @@ namespace elliptic_curve_guide {
                 const Element Y2 = Element::pow(m_Y, 2);
                 const Element V = (m_X * Y2) << 2;
                 const Element U = Element::pow(Y2, 2) << 3;
-                const Element W = m_Field->element(3) * Element::pow(m_X, 2) + m_aZ4;
+                const Element W = m_field->element(3) * Element::pow(m_X, 2) + m_aZ4;
                 m_X = -(V << 1) + Element::pow(W, 2);
                 m_Z = (m_Y * m_Z) << 1;
                 m_Y = W * (V - m_X) - U;
@@ -1177,6 +1232,11 @@ namespace elliptic_curve_guide {
                 return *this;
             }
 
+            EllipticCurvePoint& operator*=(const field::FieldElement& element) {
+                multiply<CoordinatesType::SimplifiedJacobiChudnovski>(*this, element.value());
+                return *this;
+            }
+
             Element get_x() const final {
                 return m_X / m_Z2;
             }
@@ -1200,8 +1260,8 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1213,8 +1273,8 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {y},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1226,8 +1286,8 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {x},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
@@ -1239,15 +1299,15 @@ namespace elliptic_curve_guide {
                 EllipticCurvePointConcept(std::move(a), std::move(b), std::move(F), is_null),
                 m_X {std::move(x)},
                 m_Y {std::move(y)},
-                m_Z {m_Field->element(1)},
-                m_Z2 {m_Field->element(1)} {
+                m_Z {m_field->element(1)},
+                m_Z2 {m_field->element(1)} {
                 assert(
                     is_valid()
                     && "EllipticCurvePoint<CoordinatesType::SimplifiedJacobiChudnovski>::EllipticCurvePoint : invalid coordinates");
             }
 
             EllipticCurvePoint null_point() const {
-                return EllipticCurvePoint(m_Field->element(0), m_Field->element(1), m_a, m_b, m_Field, true);
+                return EllipticCurvePoint(m_field->element(0), m_field->element(1), m_a, m_b, m_field, true);
             }
 
             void negative() final {
@@ -1267,7 +1327,7 @@ namespace elliptic_curve_guide {
                 const Element Y2 = Element::pow(m_Y, 2);
                 const Element Y4 = Element::pow(Y2, 2);
                 const Element V = (m_X * Y2) << 2;
-                const Element W = m_Field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z2, 2);
+                const Element W = m_field->element(3) * Element::pow(m_X, 2) + *m_a * Element::pow(m_Z2, 2);
                 m_X = -(V << 1) + Element::pow(W, 2);
                 m_Z = (m_Y * m_Z) << 1;
                 m_Y = -(Y4 << 3) + W * (V - m_X);
@@ -1320,7 +1380,7 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(x, std::move(y.value()), m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(x, std::move(y.value()), m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
@@ -1335,7 +1395,7 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(std::move(x), std::move(y.value()), m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(std::move(x), std::move(y.value()), m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
@@ -1348,7 +1408,7 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(x, y, m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(x, y, m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
@@ -1361,7 +1421,7 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(std::move(x), y, m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(std::move(x), y, m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
@@ -1374,7 +1434,7 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(x, std::move(y), m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(x, std::move(y), m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
@@ -1387,22 +1447,22 @@ namespace elliptic_curve_guide {
                     return std::nullopt;
                 }
 
-                return EllipticCurvePoint<type>(std::move(x), std::move(y), m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>(std::move(x), std::move(y), m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
             EllipticCurvePoint<type> null_point() const {
-                return EllipticCurvePoint<type>::null_point(m_a, m_b, m_Field);
+                return EllipticCurvePoint<type>::null_point(m_a, m_b, m_field);
             }
 
             template<CoordinatesType type = CoordinatesType::Normal>
             EllipticCurvePoint<type> random_point() const {
                 static constexpr size_t c_repeat_number = 1000;
-                const uint& p = m_Field->modulus();
+                const uint& p = m_field->modulus();
 
                 for (size_t i = 0; i < c_repeat_number; ++i) {
                     uint x = algorithm::random::generate_random_uint_modulo(p);
-                    auto opt = point_with_x_equal_to<type>(m_Field->element(x));
+                    auto opt = point_with_x_equal_to<type>(m_field->element(x));
 
                     if (opt.has_value()) {
                         return opt.value();
@@ -1419,7 +1479,7 @@ namespace elliptic_curve_guide {
 
             std::shared_ptr<const Element> m_a;
             std::shared_ptr<const Element> m_b;
-            std::shared_ptr<const Field> m_Field;
+            std::shared_ptr<const Field> m_field;
         };
     }   // namespace elliptic_curve
 }   // namespace elliptic_curve_guide

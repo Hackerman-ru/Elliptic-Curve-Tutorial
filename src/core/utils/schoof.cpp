@@ -32,6 +32,7 @@ namespace elliptic_curve_guide::algorithm::schoof {
         }
     }
 
+    // Main logic was inspired by https://math.mit.edu/classes/18.783/2015/LectureNotes9.pdf
     uint points_number(const elliptic_curve::EllipticCurve& curve) {
         const uint& p = curve.get_field().modulus();
 
@@ -44,7 +45,7 @@ namespace elliptic_curve_guide::algorithm::schoof {
             const uint32_t& l = primes::prime_number_list[pos];
             const uint t_l = trace_modulo(curve, l);
 
-            uint a = inverse_modulo((M % l).convert_to<uint64_t>(), l);
+            uint a = inverse_modulo(M.convert_to<uint32_t>() % l, l);
             a *= M * t_l;
             uint b = inverse_modulo(static_cast<uint>(l), M);
             b *= l * t;

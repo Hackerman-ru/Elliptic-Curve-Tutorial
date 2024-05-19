@@ -9,6 +9,16 @@ namespace elliptic_curve_guide::polynomial {
         return algorithm::fast_pow<Poly>(poly, power);
     }
 
+    Poly Poly::compose(const Poly& outside_poly, const Poly& inside_poly) {
+        Poly result(outside_poly.get_field(), {outside_poly[0]});
+
+        for (size_t i = 1; i <= outside_poly.degree(); ++i) {
+            result += pow(inside_poly, i) * outside_poly[i];
+        }
+
+        return result;
+    }
+
     Poly::Poly(const Field& field) : m_field(field), m_coeffs({field.element(0)}) {};
     Poly::Poly(const Field& field, const std::vector<Element>& coeffs) : m_field(field), m_coeffs(coeffs) {};
     Poly::Poly(const Field& field, std::vector<Element>&& coeffs) :
@@ -192,6 +202,11 @@ namespace elliptic_curve_guide::polynomial {
         return m_coeffs.size() - 1;
     }
 
+    void Poly::compose(const Poly& inside_poly) {
+        *this = compose(*this, inside_poly);
+        assert(is_valid() && "Poly::compose : invalid representation of polynomial");
+    }
+
     const Poly::Field& Poly::get_field() const {
         return m_field;
     }
@@ -206,6 +221,17 @@ namespace elliptic_curve_guide::polynomial {
 
     size_t Poly::len() const {
         return m_coeffs.size();
+    }
+
+    void Poly::multiply_by_x() {
+        m_coeffs.emplace_back(top_coef());
+
+        for (size_t i = degree(); i > 0; --i) {
+            m_coeffs[i] = m_coeffs[i - 1];
+        }
+
+        m_coeffs[0] = m_field.element(0);
+        assert(is_valid() && "Poly::multiply_by_x : invalid representation of polynomial");
     }
 
     void Poly::clean() {

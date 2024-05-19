@@ -113,12 +113,14 @@ namespace elliptic_curve_guide::ring {
         m_value += other.m_value;
         assert(is_valid()
                && "RingElement::operator+= : Degree of ring element must be less than that of modulus");
+        return *this;
     }
 
     RingElement& RingElement::operator-=(const RingElement& other) {
         m_value -= other.m_value;
         assert(is_valid()
                && "RingElement::operator-= : Degree of ring element must be less than that of modulus");
+        return *this;
     }
 
     RingElement& RingElement::operator*=(const RingElement& other) {
@@ -126,12 +128,14 @@ namespace elliptic_curve_guide::ring {
         normalize();
         assert(is_valid()
                && "RingElement::operator*= : Degree of ring element must be less than that of modulus");
+        return *this;
     }
 
     RingElement& RingElement::operator*=(const Element& value) {
         m_value *= value;
         assert(is_valid()
                && "RingElement::operator*= : Degree of ring element must be less than that of modulus");
+        return *this;
     }
 
     void RingElement::pow(const uint& power) {
