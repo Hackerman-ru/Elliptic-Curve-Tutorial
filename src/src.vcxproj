@@ -350,8 +350,12 @@
     </ClInclude>
     <ClInclude Include="core\utils\fast-pow.h" />
     <ClInclude Include="core\utils\fft.h" />
-    <ClInclude Include="core\utils\field_root.h" />
-    <ClInclude Include="core\utils\modulo_inversion.h" />
+    <ClInclude Include="core\utils\field_root.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="core\utils\modulo_inversion.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="core\utils\uint-algorithms.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - elliptic curve|x64'">
@@ -429,7 +433,9 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="core\utils\field_root.cpp" />
+    <ClCompile Include="core\utils\field_root.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="core\utils\uint-algorithms.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>

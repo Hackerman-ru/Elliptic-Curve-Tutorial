@@ -11,34 +11,34 @@
 namespace elliptic_curve_guide {
     template<size_t c_bits>
     class uint_t {
-        using digit_t = uint32_t;
-        using double_digit_t = uint64_t;
+        using block_t = uint32_t;
+        using double_block_t = uint64_t;
 
         static constexpr size_t c_bits_in_byte = 8;
-        static constexpr size_t c_digit_size = sizeof(digit_t) * c_bits_in_byte;
-        static constexpr size_t c_digit_number = c_bits / c_digit_size;
-        static constexpr size_t c_double_digit_size = sizeof(double_digit_t) * c_bits_in_byte;
-        static constexpr size_t c_double_digit_number = c_bits / c_double_digit_size;
+        static constexpr size_t c_block_size = sizeof(block_t) * c_bits_in_byte;
+        static constexpr size_t c_block_number = c_bits / c_block_size;
+        static constexpr size_t c_double_block_size = sizeof(double_block_t) * c_bits_in_byte;
+        static constexpr size_t c_double_block_number = c_bits / c_double_block_size;
 
         template<size_t V>
         friend class uint_t;
 
-        using digits = std::array<digit_t, c_digit_number>;
-        digits m_digits = {};
+        using blocks = std::array<block_t, c_block_number>;
+        blocks m_blocks = {};
 
     public:
         constexpr uint_t() = default;
 
         template<typename T>
-        constexpr uint_t(const T& value) : m_digits(split_into_digits<T>(value)) {}
+        constexpr uint_t(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
 
-        constexpr uint_t(const char* str) : m_digits(algorithm::parse_into_uint<uint_t>(str).m_digits) {};
+        constexpr uint_t(const char* str) : m_blocks(algorithm::parse_into_uint<uint_t>(str).m_blocks) {};
 
         constexpr uint_t& operator=(const uint_t& value) = default;
 
         template<typename T>
         constexpr uint_t& operator=(const T& value) {
-            m_digits = split_into_digits<T>(value);
+            m_blocks = split_into_blocks<T>(value);
             return *this;
         }
 
@@ -47,7 +47,7 @@ namespace elliptic_curve_guide {
         }
 
         friend constexpr std::strong_ordering operator<=>(const uint_t& lhs, const uint_t& rhs) {
-            for (size_t i = c_digit_number; i > 0; --i) {
+            for (size_t i = c_block_number; i > 0; --i) {
                 if (lhs[i - 1] != rhs[i - 1]) {
                     return lhs[i - 1] <=> rhs[i - 1];
                 }
@@ -57,7 +57,7 @@ namespace elliptic_curve_guide {
         }
 
         friend constexpr bool operator==(const uint_t& lhs, const uint_t& rhs) {
-            return lhs.m_digits == rhs.m_digits;
+            return lhs.m_blocks == rhs.m_blocks;
         }
 
         // operator+
@@ -109,12 +109,12 @@ namespace elliptic_curve_guide {
         friend constexpr uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
             uint_t result;
 
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                result += (lhs * rhs[i]) << (c_digit_size * i);
+            for (size_t i = 0; i < c_block_number; ++i) {
+                result += (lhs * rhs[i]) << (c_block_size * i);
             }
 
             return result;
-            //return algorithm::fast_fourier_transform::multiply<c_digit_number>(lhs.m_digits, rhs.m_digits);
+            //return algorithm::fast_fourier_transform::multiply<c_block_number>(lhs.m_blocks, rhs.m_blocks);
         }
 
         // operator/
@@ -227,25 +227,25 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator+=(const uint_t& other) {
-            digit_t carry = 0;
+            block_t carry = 0;
 
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                digit_t sum = carry + other[i];
-                m_digits[i] += sum;
-                carry = (m_digits[i] < sum) || (sum < carry);
+            for (size_t i = 0; i < c_block_number; ++i) {
+                block_t sum = carry + other[i];
+                m_blocks[i] += sum;
+                carry = (m_blocks[i] < sum) || (sum < carry);
             }
 
             return *this;
         }
 
         constexpr uint_t& operator-=(const uint_t& other) {
-            digit_t remainder = 0;
+            block_t remainder = 0;
 
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                digit_t prev = m_digits[i];
-                digit_t sum = other[i] + remainder;
-                m_digits[i] -= sum;
-                remainder = (m_digits[i] > prev) || (sum < remainder);
+            for (size_t i = 0; i < c_block_number; ++i) {
+                block_t prev = m_blocks[i];
+                block_t sum = other[i] + remainder;
+                m_blocks[i] -= sum;
+                remainder = (m_blocks[i] > prev) || (sum < remainder);
             }
 
             return *this;
@@ -264,78 +264,78 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator>>=(size_t shift_size) {
-            size_t digit_shift = shift_size >> 6;
-            auto data = reinterpret_cast<double_digit_t*>(m_digits.data());
+            size_t block_shift = shift_size >> 6;
+            auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
-            if (digit_shift > 0) {
-                for (size_t i = 0; i < c_double_digit_number; ++i) {
-                    if (i + digit_shift < c_double_digit_number) {
-                        data[i] = data[i + digit_shift];
+            if (block_shift > 0) {
+                for (size_t i = 0; i < c_double_block_number; ++i) {
+                    if (i + block_shift < c_double_block_number) {
+                        data[i] = data[i + block_shift];
                     } else {
                         data[i] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_digit_size;
+            shift_size %= c_double_block_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            for (size_t i = 0; i + digit_shift < c_double_digit_number; ++i) {
+            for (size_t i = 0; i + block_shift < c_double_block_number; ++i) {
                 data[i] >>= shift_size;
 
-                if (i + 1 < c_double_digit_number) {
-                    data[i] |= data[i + 1] << (c_double_digit_size - shift_size);
+                if (i + 1 < c_double_block_number) {
+                    data[i] |= data[i + 1] << (c_double_block_size - shift_size);
                 }
             }
 
-            if constexpr (c_bits % c_double_digit_size != 0) {
-                if constexpr (c_digit_number > 1) {
-                    m_digits[c_digit_number - 2] |= m_digits[c_digit_number - 1]
-                                                 << (c_digit_size - shift_size);
+            if constexpr (c_bits % c_double_block_size != 0) {
+                if constexpr (c_block_number > 1) {
+                    m_blocks[c_block_number - 2] |= m_blocks[c_block_number - 1]
+                                                 << (c_block_size - shift_size);
                 }
-                m_digits[c_digit_number - 1] >>= shift_size;
+                m_blocks[c_block_number - 1] >>= shift_size;
             }
 
             return *this;
         }
 
         constexpr uint_t& operator<<=(size_t shift_size) {
-            size_t digit_shift = shift_size >> 6;
-            auto data = reinterpret_cast<double_digit_t*>(m_digits.data());
+            size_t block_shift = shift_size >> 6;
+            auto data = reinterpret_cast<double_block_t*>(m_blocks.data());
 
-            if (digit_shift > 0) {
-                for (size_t i = c_double_digit_number; i > 0; --i) {
-                    if (i > digit_shift) {
-                        data[i - 1] = data[i - digit_shift - 1];
+            if (block_shift > 0) {
+                for (size_t i = c_double_block_number; i > 0; --i) {
+                    if (i > block_shift) {
+                        data[i - 1] = data[i - block_shift - 1];
                     } else {
                         data[i - 1] = 0;
                     }
                 }
             }
 
-            shift_size %= c_double_digit_size;
+            shift_size %= c_double_block_size;
 
             if (shift_size == 0) {
                 return *this;
             }
 
-            if constexpr (c_bits % c_double_digit_size != 0) {
-                m_digits[c_digit_number - 1] <<= shift_size;
+            if constexpr (c_bits % c_double_block_size != 0) {
+                m_blocks[c_block_number - 1] <<= shift_size;
 
-                if constexpr (c_digit_number > 1) {
-                    m_digits[c_digit_number - 1] |=
-                        m_digits[c_digit_number - 2] >> (c_digit_size - shift_size);
+                if constexpr (c_block_number > 1) {
+                    m_blocks[c_block_number - 1] |=
+                        m_blocks[c_block_number - 2] >> (c_block_size - shift_size);
                 }
             }
 
-            for (size_t i = c_double_digit_number; i > digit_shift; --i) {
+            for (size_t i = c_double_block_number; i > block_shift; --i) {
                 data[i - 1] <<= shift_size;
 
                 if (i - 1 > 0) {
-                    data[i - 1] |= data[i - 2] >> (c_double_digit_size - shift_size);
+                    data[i - 1] |= data[i - 2] >> (c_double_block_size - shift_size);
                 }
             }
 
@@ -343,24 +343,24 @@ namespace elliptic_curve_guide {
         }
 
         constexpr uint_t& operator^=(const uint_t& other) {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                m_digits[i] ^= other[i];
+            for (size_t i = 0; i < c_block_number; ++i) {
+                m_blocks[i] ^= other[i];
             }
 
             return *this;
         }
 
         constexpr uint_t& operator|=(const uint_t& other) {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                m_digits[i] |= other[i];
+            for (size_t i = 0; i < c_block_number; ++i) {
+                m_blocks[i] |= other[i];
             }
 
             return *this;
         }
 
         constexpr uint_t& operator&=(const uint_t& other) {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                m_digits[i] &= other[i];
+            for (size_t i = 0; i < c_block_number; ++i) {
+                m_blocks[i] &= other[i];
             }
 
             return *this;
@@ -396,19 +396,19 @@ namespace elliptic_curve_guide {
         constexpr T convert_to() const;
 
         template<typename T>
-        requires concepts::is_convertible_to<T, digit_t>
+        requires concepts::is_convertible_to<T, block_t>
         constexpr T convert_to() const {
             size_t shift_size = sizeof(T) * c_bits_in_byte;
-            size_t digits_number = shift_size / c_digit_size;
+            size_t blocks_number = shift_size / c_block_size;
 
-            if (digits_number == 0) {
-                return static_cast<T>(m_digits[0]);
+            if (blocks_number == 0) {
+                return static_cast<T>(m_blocks[0]);
             }
 
             T result = 0;
 
-            for (size_t i = 0; i < c_digit_number && i < digits_number; ++i) {
-                result |= static_cast<T>(m_digits[i]) << (i * c_digit_size);
+            for (size_t i = 0; i < c_block_number && i < blocks_number; ++i) {
+                result |= static_cast<T>(m_blocks[i]) << (i * c_block_size);
             }
 
             return result;
@@ -422,7 +422,7 @@ namespace elliptic_curve_guide {
             do {
                 uint_t remainder;
                 clone_of_this = divide(clone_of_this, 10, &remainder);
-                result.push_back(remainder.m_digits[0] + '0');
+                result.push_back(remainder.m_blocks[0] + '0');
             } while (clone_of_this > 0);
 
             std::reverse(result.begin(), result.end());
@@ -431,23 +431,23 @@ namespace elliptic_curve_guide {
 
     private:
         static constexpr size_t size() {
-            return c_digit_number;
+            return c_block_number;
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && concepts::is_upcastable_to<T, digit_t>
-        static constexpr digits split_into_digits(T value) {
-            return {static_cast<digit_t>(value)};
+        requires std::numeric_limits<T>::is_integer && concepts::is_upcastable_to<T, block_t>
+        static constexpr blocks split_into_blocks(T value) {
+            return {static_cast<block_t>(value)};
         }
 
         template<typename T>
-        requires std::numeric_limits<T>::is_integer && concepts::is_downcastable_to<T, digit_t>
-        static constexpr digits split_into_digits(T value) {
-            digits result = {};
+        requires std::numeric_limits<T>::is_integer && concepts::is_downcastable_to<T, block_t>
+        static constexpr blocks split_into_blocks(T value) {
+            blocks result = {};
 
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                result[i] = static_cast<digit_t>(value);
-                value >>= c_digit_size;
+            for (size_t i = 0; i < c_block_number; ++i) {
+                result[i] = static_cast<block_t>(value);
+                value >>= c_block_size;
 
                 if (value == 0) {
                     break;
@@ -458,15 +458,15 @@ namespace elliptic_curve_guide {
         }
 
         template<typename T>
-        requires concepts::is_convertible_container<T, digit_t> || requires(T x) {
+        requires concepts::is_convertible_container<T, block_t> || requires(T x) {
             { elliptic_curve_guide::uint_t {x} } -> std::same_as<T>;
         }
-        static constexpr digits split_into_digits(const T& other) {
+        static constexpr blocks split_into_blocks(const T& other) {
             const size_t min_size = std::min(size(), other.size());
-            digits result = {};
+            blocks result = {};
 
             for (size_t i = 0; i < min_size; i++) {
-                result[i] = static_cast<digit_t>(other[i]);
+                result[i] = static_cast<block_t>(other[i]);
             }
 
             return result;
@@ -494,43 +494,42 @@ namespace elliptic_curve_guide {
             return d_divide(lhs, rhs, remainder);
         }
 
-        static constexpr uint_t divide(const uint_t& lhs, const digit_t& rhs, uint_t* remainder = nullptr) {
+        static constexpr uint_t divide(const uint_t& lhs, const block_t& rhs, uint_t* remainder = nullptr) {
             uint_t result;
-            double_digit_t part = 0;
+            double_block_t part = 0;
 
-            for (size_t i = c_digit_number; i > 0; --i) {
-                part = (part << (c_digit_size)) + static_cast<double_digit_t>(lhs[i - 1]);
+            for (size_t i = c_block_number; i > 0; --i) {
+                part = (part << (c_block_size)) + static_cast<double_block_t>(lhs[i - 1]);
 
                 if (part < rhs) {
                     continue;
                 }
 
-                result[i - 1] = static_cast<digit_t>(part / rhs);
+                result[i - 1] = static_cast<block_t>(part / rhs);
                 part %= rhs;
             }
 
             if (remainder != nullptr) {
-                *remainder = uint_t(static_cast<digit_t>(part));
+                *remainder = uint_t(static_cast<block_t>(part));
             }
 
             return result;
         }
 
-        static constexpr double_digit_t c_half_digit = static_cast<double_digit_t>(1) << (c_digit_size - 1);
-        static constexpr double_digit_t c_digit = static_cast<double_digit_t>(1) << c_digit_size;
-
         static constexpr uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
 
-            uint_t<c_bits + c_digit_size> dividend(lhs);
+            uint_t<c_bits + c_block_size> dividend(lhs);
             uint_t divisor(rhs);
             uint_t quotient;
 
             size_t shift_size = 0;
-            digit_t divisor_head = divisor[divisor_size - 1];
+            block_t divisor_head = divisor[divisor_size - 1];
+            static constexpr double_block_t c_HalfBlock = static_cast<double_block_t>(1)
+                                                       << (c_block_size - 1);
 
-            while (divisor_head < c_half_digit) {
+            while (divisor_head < c_HalfBlock) {
                 ++shift_size;
                 divisor_head <<= 1;
             }
@@ -538,52 +537,51 @@ namespace elliptic_curve_guide {
             dividend <<= shift_size;
             divisor <<= shift_size;
 
-            double_digit_t divisor_ = divisor[divisor_size - 1];
+            double_block_t divisor_ = divisor[divisor_size - 1];
+            static constexpr double_block_t c_Block = static_cast<double_block_t>(1) << c_block_size;
 
             for (size_t i = dividend_size - divisor_size + 1; i > 0; --i) {
-                double_digit_t part =
-                    (static_cast<double_digit_t>(dividend[i + divisor_size - 1]) << c_digit_size)
-                    + static_cast<double_digit_t>(dividend[i + divisor_size - 2]);
-                double_digit_t quotient_temp = part / divisor_;
+                double_block_t part =
+                    (static_cast<double_block_t>(dividend[i + divisor_size - 1]) << c_block_size)
+                    + static_cast<double_block_t>(dividend[i + divisor_size - 2]);
+                double_block_t quotient_temp = part / divisor_;
                 part %= divisor_;
 
-                if (quotient_temp == c_digit) {
+                if (quotient_temp == c_Block) {
                     --quotient_temp;
                     part += divisor_;
                 }
 
-                while (part < c_digit
+                while (part < c_Block
                        && (quotient_temp * divisor[divisor_size - 2]
-                           > (part << c_digit_size) + dividend[i + divisor_size - 3])) {
+                           > (part << c_block_size) + dividend[i + divisor_size - 3])) {
                     --quotient_temp;
                     part += divisor_;
                 }
 
-                double_digit_t carry = 0;
-                double_digit_t widedigit = 0;
+                int64_t carry = 0;
+                int64_t widedigit = 0;
 
                 for (size_t j = 0; j < divisor_size; ++j) {
-                    double_digit_t product =
-                        static_cast<digit_t>(quotient_temp) * static_cast<double_digit_t>(divisor[j]);
-                    widedigit =
-                        (static_cast<double_digit_t>(dividend[i + j - 1]) + carry) - (product & UINT32_MAX);
-                    dividend[i + j - 1] = static_cast<digit_t>(widedigit);
-                    carry =
-                        (widedigit >> c_digit_size) - static_cast<double_digit_t>(product >> c_digit_size);
+                    double_block_t product =
+                        static_cast<block_t>(quotient_temp) * static_cast<double_block_t>(divisor[j]);
+                    widedigit = (static_cast<int64_t>(dividend[i + j - 1]) + carry) - (product & UINT32_MAX);
+                    dividend[i + j - 1] = static_cast<block_t>(widedigit);
+                    carry = (widedigit >> c_block_size) - static_cast<int64_t>(product >> c_block_size);
                 }
 
-                widedigit = static_cast<double_digit_t>(dividend[i + divisor_size - 1]) + carry;
-                dividend[i + divisor_size - 1] = static_cast<digit_t>(widedigit);
+                widedigit = static_cast<int64_t>(dividend[i + divisor_size - 1]) + carry;
+                dividend[i + divisor_size - 1] = static_cast<block_t>(widedigit);
 
-                quotient[i - 1] = static_cast<digit_t>(quotient_temp);
+                quotient[i - 1] = static_cast<block_t>(quotient_temp);
 
                 if (widedigit < 0) {
                     --quotient[i - 1];
                     widedigit = 0;
 
                     for (size_t j = 0; j < divisor_size; ++j) {
-                        widedigit += static_cast<double_digit_t>(dividend[i + j - 1]) + divisor[j];
-                        dividend[i + j - 1] = static_cast<digit_t>(widedigit);
+                        widedigit += static_cast<double_block_t>(dividend[i + j - 1]) + divisor[j];
+                        dividend[i + j - 1] = static_cast<block_t>(widedigit);
                         widedigit >>= 32;
                     }
                 }
@@ -595,7 +593,7 @@ namespace elliptic_curve_guide {
                 for (size_t i = 0; i < divisor_size - 1; ++i) {
                     (*remainder)[i] =
                         (dividend[i] >> shift_size)
-                        | (static_cast<double_digit_t>(dividend[i + 1]) << (c_digit_size - shift_size));
+                        | (static_cast<double_block_t>(dividend[i + 1]) << (c_block_size - shift_size));
                 }
 
                 (*remainder)[divisor_size - 1] = dividend[divisor_size - 1] >> shift_size;
@@ -605,59 +603,59 @@ namespace elliptic_curve_guide {
         }
 
         constexpr void negative() {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                m_digits[i] = ~(m_digits[i]);
+            for (size_t i = 0; i < c_block_number; ++i) {
+                m_blocks[i] = ~(m_blocks[i]);
             }
 
             ++*this;
         }
 
         constexpr void increment() {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                m_digits[i] += 1;
+            for (size_t i = 0; i < c_block_number; ++i) {
+                m_blocks[i] += 1;
 
-                if (m_digits[i] != 0) {
+                if (m_blocks[i] != 0) {
                     break;
                 }
             }
         }
 
         constexpr void decrement() {
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                digit_t temp = m_digits[i];
-                m_digits[i] -= 1;
+            for (size_t i = 0; i < c_block_number; ++i) {
+                block_t temp = m_blocks[i];
+                m_blocks[i] -= 1;
 
-                if (temp >= m_digits[i]) {
+                if (temp >= m_blocks[i]) {
                     break;
                 }
             }
         }
 
-        constexpr uint_t operator*(digit_t other) const {
-            digit_t remainder = 0;
+        constexpr uint_t operator*(block_t other) const {
+            block_t remainder = 0;
             uint_t result;
 
-            for (size_t i = 0; i < c_digit_number; ++i) {
-                double_digit_t prod = m_digits[i] * static_cast<double_digit_t>(other);
-                result[i] = static_cast<digit_t>(prod) + remainder;
-                remainder = static_cast<digit_t>(result[i] < remainder) + static_cast<digit_t>(prod >> 32);
+            for (size_t i = 0; i < c_block_number; ++i) {
+                double_block_t prod = m_blocks[i] * static_cast<double_block_t>(other);
+                result[i] = static_cast<block_t>(prod) + remainder;
+                remainder = static_cast<block_t>(result[i] < remainder) + static_cast<block_t>(prod >> 32);
             }
 
             return result;
         }
 
-        constexpr const digit_t& operator[](size_t pos) const {
-            return m_digits[pos];
+        constexpr const block_t& operator[](size_t pos) const {
+            return m_blocks[pos];
         }
 
-        constexpr digit_t& operator[](size_t pos) {
-            return m_digits[pos];
+        constexpr block_t& operator[](size_t pos) {
+            return m_blocks[pos];
         }
 
         constexpr size_t actual_size() const {
-            size_t result = c_digit_number;
+            size_t result = c_block_number;
 
-            while (result > 0 && m_digits[result - 1] == 0) {
+            while (result > 0 && m_blocks[result - 1] == 0) {
                 --result;
             }
 
