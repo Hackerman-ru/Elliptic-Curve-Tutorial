@@ -65,6 +65,8 @@ namespace elliptic_curve_guide {
             Ring(const Poly& modulus);
             RingElement element(const Poly& value) const;
             const Poly& modulus() const;
+            const field::Field& get_field() const;
+            bool operator==(const Ring& other) const;
 
         private:
             std::shared_ptr<const Poly> m_modulus;

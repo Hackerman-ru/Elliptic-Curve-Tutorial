@@ -97,6 +97,7 @@ namespace elliptic_curve_guide {
             Field(const uint& modulus);
             FieldElement element(const uint& value) const;
             const uint& modulus() const;
+            bool operator==(const Field& other) const;
 
         private:
             std::shared_ptr<const uint> m_modulus;

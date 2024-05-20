@@ -1,6 +1,7 @@
 #include "field.h"
 
 #include "utils/fast-pow.h"
+#include "utils/modulo_inversion.h"
 
 namespace elliptic_curve_guide::field {
     FieldElement::FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
@@ -164,30 +165,8 @@ namespace elliptic_curve_guide::field {
         return lhs.m_value == rhs.m_value;
     }
 
-    static uint extended_modular_gcd(const uint& a, const uint& b, uint& x, uint& y, const uint& modulus) {
-        if (b == 0) {
-            x = 1;
-            y = 0;
-            return a;
-        }
-
-        uint x1, y1;
-        uint d = extended_modular_gcd(b, a % b, x1, y1, modulus);
-        x = y1;
-        uint temp = y1 * (a / b);
-
-        while (x1 < temp) {
-            x1 += modulus;
-        }
-
-        y = x1 - temp;
-        return d;
-    }
-
     void FieldElement::inverse() {
-        uint x, y;
-        extended_modular_gcd(m_value, *m_modulus, x, y, *m_modulus);
-        m_value = x;
+        m_value = algorithm::inverse_modulo(m_value, *m_modulus);
         assert(is_valid() && "FieldElement::inverse : Field element value must be less than modulus");
     }
 
@@ -245,5 +224,9 @@ namespace elliptic_curve_guide::field {
 
     const uint& Field::modulus() const {
         return *m_modulus;
+    }
+
+    bool Field::operator==(const Field& other) const {
+        return *m_modulus == *other.m_modulus;
     }
 }   // namespace elliptic_curve_guide::field
