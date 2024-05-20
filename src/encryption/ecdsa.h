@@ -23,8 +23,6 @@ namespace elliptic_curve_guide {
                     uint s;
                 };
 
-                static ECDSA generate(const uint& field_order, const uint& security_level);
-
                 ECDSA(const Field& field, const Curve& elliptic_curve, const Point& generator, const uint& n,
                       const uint& h);
 

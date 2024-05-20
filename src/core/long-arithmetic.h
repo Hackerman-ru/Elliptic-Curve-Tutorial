@@ -110,7 +110,13 @@ namespace elliptic_curve_guide {
             uint_t result;
 
             for (size_t i = 0; i < c_digit_number; ++i) {
-                result += (lhs * rhs[i]) << (c_digit_size * i);
+                uint64_t u = 0;
+
+                for (size_t j = 0; i + j < c_digit_number; ++j) {
+                    u = static_cast<uint64_t>(result[i + j])
+                      + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_digit_size);
+                    result[i + j] = static_cast<uint32_t>(u);
+                }
             }
 
             return result;
@@ -120,13 +126,6 @@ namespace elliptic_curve_guide {
         // operator/
         friend constexpr uint_t operator/(const uint_t& lhs, const uint_t& rhs) {
             uint_t result = divide(lhs, rhs);
-            uint_t less = result * rhs;
-            uint_t greater = (result + 1) * rhs;
-            if (less > lhs || greater <= lhs) {
-                result = 0;
-            }
-            assert(result * rhs <= lhs && (result + 1) * rhs > lhs
-                   && "uint_t::operator/ : remainder must be less than divisor");
             return result;
         }
 
@@ -134,7 +133,6 @@ namespace elliptic_curve_guide {
         friend constexpr uint_t operator%(const uint_t& lhs, const uint_t& rhs) {
             uint_t remainder;
             divide(lhs, rhs, &remainder);
-            assert(rhs > remainder && "uint_t::operator% : remainder must be less than divisor");
             return remainder;
         }
 
@@ -471,11 +469,7 @@ namespace elliptic_curve_guide {
         }
 
         static constexpr uint_t divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
-            size_t dividend_size = lhs.actual_size();
-            size_t divisor_size = rhs.actual_size();
-
-            // CASE 0:
-            if (dividend_size < divisor_size) {
+            if (lhs < rhs) {
                 if (remainder != nullptr) {
                     *remainder = lhs;
                 }
@@ -483,12 +477,10 @@ namespace elliptic_curve_guide {
                 return uint_t(0);
             }
 
-            // CASE 1:
-            if (divisor_size == 1) {
+            if (rhs.actual_size() == 1) {
                 return divide(lhs, rhs[0], remainder);
             }
 
-            // CASE 2:
             return d_divide(lhs, rhs, remainder);
         }
 
@@ -514,6 +506,9 @@ namespace elliptic_curve_guide {
             return result;
         }
 
+        static constexpr double_digit_t c_half_digit = static_cast<double_digit_t>(1) << (c_digit_size - 1);
+        static constexpr double_digit_t c_digit = static_cast<double_digit_t>(1) << c_digit_size;
+
         static constexpr uint_t d_divide(const uint_t& lhs, const uint_t& rhs, uint_t* remainder = nullptr) {
             size_t dividend_size = lhs.actual_size();
             size_t divisor_size = rhs.actual_size();
@@ -524,10 +519,8 @@ namespace elliptic_curve_guide {
 
             size_t shift_size = 0;
             digit_t divisor_head = divisor[divisor_size - 1];
-            static constexpr double_digit_t c_HalfBlock = static_cast<double_digit_t>(1)
-                                                       << (c_digit_size - 1);
 
-            while (divisor_head < c_HalfBlock) {
+            while (divisor_head < c_half_digit) {
                 ++shift_size;
                 divisor_head <<= 1;
             }
@@ -536,7 +529,6 @@ namespace elliptic_curve_guide {
             divisor <<= shift_size;
 
             double_digit_t divisor_ = divisor[divisor_size - 1];
-            static constexpr double_digit_t c_Block = static_cast<double_digit_t>(1) << c_digit_size;
 
             for (size_t i = dividend_size - divisor_size + 1; i > 0; --i) {
                 double_digit_t part =
@@ -545,12 +537,12 @@ namespace elliptic_curve_guide {
                 double_digit_t quotient_temp = part / divisor_;
                 part %= divisor_;
 
-                if (quotient_temp == c_Block) {
+                if (quotient_temp == c_digit) {
                     --quotient_temp;
                     part += divisor_;
                 }
 
-                while (part < c_Block
+                while (part < c_digit
                        && (quotient_temp * divisor[divisor_size - 2]
                            > (part << c_digit_size) + dividend[i + divisor_size - 3])) {
                     --quotient_temp;

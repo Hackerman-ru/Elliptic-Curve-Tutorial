@@ -21,12 +21,12 @@ concept is_downcastable_to = sizeof(From) > sizeof(To) && is_convertible_to<From
 class F_256 {
     static constexpr size_t c_bits = 512;
     static constexpr size_t c_bits_in_byte = 8;
-    static constexpr size_t c_block_size = 32;
-    static constexpr size_t c_block_number = 16;
-    static constexpr size_t c_half_block_number = 8;
+    static constexpr size_t c_digit_size = 32;
+    static constexpr size_t c_digit_number = 16;
+    static constexpr size_t c_half_digit_number = 8;
 
-    using blocks = std::array<uint32_t, c_block_number>;
-    blocks m_blocks = {};
+    using digits = std::array<uint32_t, c_digit_number>;
+    digits m_digits = {};
 
 public:
     static constexpr F_256 inverse(const F_256& element) {
@@ -56,19 +56,19 @@ public:
     constexpr F_256() = default;
 
     template<typename T>
-    constexpr F_256(const T& value) : m_blocks(split_into_blocks<T>(value)) {}
+    constexpr F_256(const T& value) : m_digits(split_into_digits<T>(value)) {}
 
-    constexpr F_256(blocks&& value) : m_blocks(std::move(value)) {}
+    constexpr F_256(digits&& value) : m_digits(std::move(value)) {}
 
-    constexpr F_256(const blocks& value) : m_blocks(value) {}
+    constexpr F_256(const digits& value) : m_digits(value) {}
 
-    constexpr F_256(const char* str) : m_blocks(parse_into_uint(str).m_blocks) {}
+    constexpr F_256(const char* str) : m_digits(parse_into_uint(str).m_digits) {}
 
     constexpr F_256& operator=(const F_256& value) = default;
 
     template<typename T>
     constexpr F_256& operator=(const T& value) {
-        m_blocks = split_into_blocks<T>(value);
+        m_digits = split_into_digits<T>(value);
         return *this;
     }
 
@@ -77,7 +77,7 @@ public:
     }
 
     friend constexpr std::strong_ordering operator<=>(const F_256& lhs, const F_256& rhs) {
-        for (size_t i = c_block_number; i > 0; --i) {
+        for (size_t i = c_digit_number; i > 0; --i) {
             if (lhs[i - 1] != rhs[i - 1]) {
                 return lhs[i - 1] <=> rhs[i - 1];
             }
@@ -87,7 +87,7 @@ public:
     }
 
     friend constexpr bool operator==(const F_256& lhs, const F_256& rhs) {
-        return lhs.m_blocks == rhs.m_blocks;
+        return lhs.m_digits == rhs.m_digits;
     }
 
     // operator+
@@ -139,16 +139,16 @@ public:
     friend constexpr F_256 operator*(const F_256& lhs, const F_256& rhs) {
         F_256 result;
 
-        for (size_t i = 0; i < c_half_block_number; ++i) {
+        for (size_t i = 0; i < c_half_digit_number; ++i) {
             uint64_t u = 0;
 
-            for (size_t j = 0; j < c_half_block_number; ++j) {
+            for (size_t j = 0; j < c_half_digit_number; ++j) {
                 u = static_cast<uint64_t>(result[i + j])
-                  + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_block_size);
+                  + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_digit_size);
                 result[i + j] = static_cast<uint32_t>(u);
             }
 
-            result[i + c_half_block_number] = static_cast<uint32_t>(u >> c_block_size);
+            result[i + c_half_digit_number] = static_cast<uint32_t>(u >> c_digit_size);
         }
 
         result.reduce();
@@ -187,10 +187,10 @@ public:
     constexpr F_256& operator+=(const F_256& other) {
         uint32_t carry = 0;
 
-        for (size_t i = 0; i < c_block_number; ++i) {
+        for (size_t i = 0; i < c_digit_number; ++i) {
             uint32_t sum = carry + other[i];
-            m_blocks[i] += sum;
-            carry = (m_blocks[i] < sum) || (sum < carry);
+            m_digits[i] += sum;
+            carry = (m_digits[i] < sum) || (sum < carry);
         }
 
         if (!is_valid()) {
@@ -203,11 +203,11 @@ public:
     constexpr F_256& operator-=(const F_256& other) {
         uint32_t remainder = 0;
 
-        for (size_t i = 0; i < c_block_number; ++i) {
-            uint32_t prev = m_blocks[i];
+        for (size_t i = 0; i < c_digit_number; ++i) {
+            uint32_t prev = m_digits[i];
             uint32_t sum = other[i] + remainder;
-            m_blocks[i] -= sum;
-            remainder = (m_blocks[i] > prev) || (sum < remainder);
+            m_digits[i] -= sum;
+            remainder = (m_digits[i] > prev) || (sum < remainder);
         }
 
         if (!is_valid()) {
@@ -226,29 +226,29 @@ public:
     }
 
     constexpr F_256& operator>>=(size_t shift_size) {
-        size_t block_shift = shift_size >> 6;
+        size_t digit_shift = shift_size >> 6;
 
-        if (block_shift > 0) {
-            for (size_t i = 0; i < c_block_number; ++i) {
-                if (i + block_shift < c_block_number) {
-                    m_blocks[i] = m_blocks[i + block_shift];
+        if (digit_shift > 0) {
+            for (size_t i = 0; i < c_digit_number; ++i) {
+                if (i + digit_shift < c_digit_number) {
+                    m_digits[i] = m_digits[i + digit_shift];
                 } else {
-                    m_blocks[i] = 0;
+                    m_digits[i] = 0;
                 }
             }
         }
 
-        shift_size %= c_block_size;
+        shift_size %= c_digit_size;
 
         if (shift_size == 0) {
             return *this;
         }
 
-        for (size_t i = 0; i + block_shift < c_block_number; ++i) {
-            m_blocks[i] >>= shift_size;
+        for (size_t i = 0; i + digit_shift < c_digit_number; ++i) {
+            m_digits[i] >>= shift_size;
 
-            if (i + 1 < c_block_number) {
-                m_blocks[i] |= m_blocks[i + 1] << (c_block_size - shift_size);
+            if (i + 1 < c_digit_number) {
+                m_digits[i] |= m_digits[i + 1] << (c_digit_size - shift_size);
             }
         }
 
@@ -256,29 +256,29 @@ public:
     }
 
     constexpr F_256& operator<<=(size_t shift_size) {
-        size_t block_shift = shift_size >> 6;
+        size_t digit_shift = shift_size >> 6;
 
-        if (block_shift > 0) {
-            for (size_t i = c_block_number; i > 0; --i) {
-                if (i > block_shift) {
-                    m_blocks[i - 1] = m_blocks[i - block_shift - 1];
+        if (digit_shift > 0) {
+            for (size_t i = c_digit_number; i > 0; --i) {
+                if (i > digit_shift) {
+                    m_digits[i - 1] = m_digits[i - digit_shift - 1];
                 } else {
-                    m_blocks[i - 1] = 0;
+                    m_digits[i - 1] = 0;
                 }
             }
         }
 
-        shift_size %= c_block_size;
+        shift_size %= c_digit_size;
 
         if (shift_size == 0) {
             return *this;
         }
 
-        for (size_t i = c_block_number; i > block_shift; --i) {
-            m_blocks[i - 1] <<= shift_size;
+        for (size_t i = c_digit_number; i > digit_shift; --i) {
+            m_digits[i - 1] <<= shift_size;
 
             if (i - 1 > 0) {
-                m_blocks[i - 1] |= m_blocks[i - 2] >> (c_block_size - shift_size);
+                m_digits[i - 1] |= m_digits[i - 2] >> (c_digit_size - shift_size);
             }
         }
 
@@ -321,9 +321,9 @@ public:
 
     constexpr std::string convert_to_hex_string() const {
         std::string result;
-        size_t pos = c_block_number;
+        size_t pos = c_digit_number;
 
-        while (pos > 0 && m_blocks[pos - 1] == 0) {
+        while (pos > 0 && m_digits[pos - 1] == 0) {
             --pos;
         }
 
@@ -372,11 +372,11 @@ public:
             }
         };
 
-        push(m_blocks[pos - 1], true);
+        push(m_digits[pos - 1], true);
         --pos;
 
         while (pos > 0) {
-            push(m_blocks[pos - 1]);
+            push(m_digits[pos - 1]);
             --pos;
         }
 
@@ -442,19 +442,19 @@ public:
     }
 
     constexpr bool is_even() const {
-        return (m_blocks[0] & 0b1) == 0;
+        return (m_digits[0] & 0b1) == 0;
     }
 
-    const uint32_t& first_block() const {
-        return m_blocks[0];
+    const uint32_t& first_digit() const {
+        return m_digits[0];
     }
 
     constexpr const uint32_t& operator[](size_t pos) const {
-        return m_blocks[pos];
+        return m_digits[pos];
     }
 
     constexpr uint32_t& operator[](size_t pos) {
-        return m_blocks[pos];
+        return m_digits[pos];
     }
 
 private:
@@ -508,18 +508,18 @@ private:
 
     template<typename T>
     requires std::numeric_limits<T>::is_integer && is_upcastable_to<T, uint32_t>
-    static constexpr blocks split_into_blocks(T value) {
+    static constexpr digits split_into_digits(T value) {
         return {static_cast<uint32_t>(value)};
     }
 
     template<typename T>
     requires std::numeric_limits<T>::is_integer && is_downcastable_to<T, uint32_t>
-    static constexpr blocks split_into_blocks(T value) {
-        blocks result = {};
+    static constexpr digits split_into_digits(T value) {
+        digits result = {};
 
-        for (size_t i = 0; i < c_block_number; ++i) {
+        for (size_t i = 0; i < c_digit_number; ++i) {
             result[i] = static_cast<uint32_t>(value);
-            value >>= c_block_size;
+            value >>= c_digit_size;
 
             if (value == 0) {
                 break;
@@ -530,70 +530,70 @@ private:
     }
 
     constexpr void reduce() {
-        F_256 s1({m_blocks[0],
-                  m_blocks[1],
-                  m_blocks[2],
-                  m_blocks[3],
-                  m_blocks[4],
-                  m_blocks[5],
-                  m_blocks[6],
-                  m_blocks[7]});
-        F_256 s2({0, 0, 0, m_blocks[11], m_blocks[12], m_blocks[13], m_blocks[14], m_blocks[15]});
-        F_256 s3({0, 0, 0, m_blocks[12], m_blocks[13], m_blocks[14], m_blocks[15], 0});
-        F_256 s4({m_blocks[8], m_blocks[9], m_blocks[10], 0, 0, 0, m_blocks[14], m_blocks[15]});
-        F_256 s5({m_blocks[9],
-                  m_blocks[10],
-                  m_blocks[11],
-                  m_blocks[13],
-                  m_blocks[14],
-                  m_blocks[15],
-                  m_blocks[13],
-                  m_blocks[8]});
-        F_256 s6({m_blocks[11], m_blocks[12], m_blocks[13], 0, 0, 0, m_blocks[8], m_blocks[10]});
-        F_256 s7({m_blocks[12], m_blocks[13], m_blocks[14], m_blocks[15], 0, 0, m_blocks[9], m_blocks[11]});
-        F_256 s8({m_blocks[13],
-                  m_blocks[14],
-                  m_blocks[15],
-                  m_blocks[8],
-                  m_blocks[9],
-                  m_blocks[10],
+        F_256 s1({m_digits[0],
+                  m_digits[1],
+                  m_digits[2],
+                  m_digits[3],
+                  m_digits[4],
+                  m_digits[5],
+                  m_digits[6],
+                  m_digits[7]});
+        F_256 s2({0, 0, 0, m_digits[11], m_digits[12], m_digits[13], m_digits[14], m_digits[15]});
+        F_256 s3({0, 0, 0, m_digits[12], m_digits[13], m_digits[14], m_digits[15], 0});
+        F_256 s4({m_digits[8], m_digits[9], m_digits[10], 0, 0, 0, m_digits[14], m_digits[15]});
+        F_256 s5({m_digits[9],
+                  m_digits[10],
+                  m_digits[11],
+                  m_digits[13],
+                  m_digits[14],
+                  m_digits[15],
+                  m_digits[13],
+                  m_digits[8]});
+        F_256 s6({m_digits[11], m_digits[12], m_digits[13], 0, 0, 0, m_digits[8], m_digits[10]});
+        F_256 s7({m_digits[12], m_digits[13], m_digits[14], m_digits[15], 0, 0, m_digits[9], m_digits[11]});
+        F_256 s8({m_digits[13],
+                  m_digits[14],
+                  m_digits[15],
+                  m_digits[8],
+                  m_digits[9],
+                  m_digits[10],
                   0,
-                  m_blocks[12]});
-        F_256 s9({m_blocks[14], m_blocks[15], 0, m_blocks[9], m_blocks[10], m_blocks[11], 0, m_blocks[13]});
+                  m_digits[12]});
+        F_256 s9({m_digits[14], m_digits[15], 0, m_digits[9], m_digits[10], m_digits[11], 0, m_digits[13]});
         *this = s1 + s2 + s2 + s3 + s3 + s4 + s5 - s6 - s7 - s8 - s9;
         assert(is_valid());
     }
 
     constexpr void increment() {
-        for (size_t i = 0; i < c_block_number; ++i) {
-            m_blocks[i] += 1;
+        for (size_t i = 0; i < c_digit_number; ++i) {
+            m_digits[i] += 1;
 
-            if (m_blocks[i] != 0) {
+            if (m_digits[i] != 0) {
                 break;
             }
         }
 
-        if (m_blocks == p_values) {
-            m_blocks = {};
+        if (m_digits == p_values) {
+            m_digits = {};
         }
 
         assert(is_valid());
     }
 
-    static constexpr blocks max_mod_p = {4294967294U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
+    static constexpr digits max_mod_p = {4294967294U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 
     constexpr void decrement() {
         if (*this == 0) {
-            m_blocks = max_mod_p;
+            m_digits = max_mod_p;
             assert(is_valid());
             return;
         }
 
-        for (size_t i = 0; i < c_block_number; ++i) {
-            uint32_t temp = m_blocks[i];
-            m_blocks[i] -= 1;
+        for (size_t i = 0; i < c_digit_number; ++i) {
+            uint32_t temp = m_digits[i];
+            m_digits[i] -= 1;
 
-            if (temp >= m_blocks[i]) {
+            if (temp >= m_digits[i]) {
                 break;
             }
         }
@@ -601,7 +601,7 @@ private:
         assert(is_valid());
     }
 
-    static constexpr blocks p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
+    static constexpr digits p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 
     constexpr void add_p() {
         constexpr F_256 p(p_values);
@@ -612,10 +612,10 @@ private:
     constexpr void add_p_uncheck() {
         uint32_t carry = 0;
 
-        for (size_t i = 0; i < c_block_number; ++i) {
+        for (size_t i = 0; i < c_digit_number; ++i) {
             uint32_t sum = carry + p_values[i];
-            m_blocks[i] += sum;
-            carry = (m_blocks[i] < sum) || (sum < carry);
+            m_digits[i] += sum;
+            carry = (m_digits[i] < sum) || (sum < carry);
         }
     }
 
@@ -648,7 +648,7 @@ static constexpr wnaf_form get_wnaf(F_256 value) {
 
     while (value > 0) {
         if (!value.is_even()) {
-            uint16_t coef_value = static_cast<uint16_t>(value.first_block()) & c_mask_modulo_2_pow_w;
+            uint16_t coef_value = static_cast<uint16_t>(value.first_digit()) & c_mask_modulo_2_pow_w;
 
             if (coef_value >= (1 << (c_width - 1))) {
                 coef_value = (1 << c_width) - coef_value;
@@ -988,8 +988,15 @@ int main() {
     std::string decrypted_msg = decrypted_message.convert_to_hex_string();
     std::cout << decrypted_msg << '\n';
     std::cout << "Checking correctness...\n";
+
     if (message != decrypted_message) {
-        std::cout << "Fail!\n";
+        std::cout << "Fail ";
+
+        if (msg.ends_with(decrypted_msg.substr(2))) {
+            std::cout << "due to insufficient number of encryption bits\n";
+        } else {
+            std::cout << "due to implementation problems\n";
+        }
     } else {
         std::cout << "Success!\n";
     }
