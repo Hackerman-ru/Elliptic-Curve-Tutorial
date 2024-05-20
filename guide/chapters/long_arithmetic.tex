@@ -310,9 +310,28 @@ friend constexpr uint_t operator-(uint_t&& lhs, uint_t&& rhs) {
 }
   \end{cppcode}
   \item Умножение:
-    Стабильным и надёжным способом будет умножение в столбик. TODO
+    Самым лёгким и относительно быстрым способом будет метод сканирования операнда (или построчное умножение). Заключается в построчном обновлении цифр ответа и накоплении прежних результатов умножения для новой строки. Получается такое динамическое программирование:
+    \begin{cppcode}
+friend constexpr uint_t operator*(const uint_t& lhs, const uint_t& rhs) {
+    uint_t result;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint64_t u = 0;
+
+        for (size_t j = 0; i + j < c_digit_number; ++j) {
+            u = static_cast<uint64_t>(result[i + j])
+              + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j])
+              + (u >> c_digit_size);
+            result[i + j] = static_cast<uint32_t>(u);
+        }
+    }
+
+    return result;
+}
+    \end{cppcode}
+    Заметим, что мы отбрасываем цифры, чей номер не помещается в c\_digit\_number. Улучшения этого алгоритма можно найти в \cite{fast_mult}.
   \item Деление:
-    Чтобы поделить два целочисленных длинных числа используем алгоритм-D Кнута:
+    Чтобы поделить два целочисленных длинных числа используем алгоритм-D Кнута \cite{knuth2014art}:
 
     Задача - поделить два длинных числа, представленных цифрами с основанием $b$, где $b$ в имплементации $2^{32}$ или $2^{64}$. 
 
@@ -824,3 +843,25 @@ size_t b = a.convert_to<size_t>();
 std::string s = a.convert_to<std::string>();
     \end{cppcode}
 \end{itemize}
+
+\subsection{Главный тип}
+Независимо от того, выбрали мы писать свою длинку или использовать boost::multiprecision, нам нужно задать главный целочисленный тип, на котором мы будем в дальнейшем работать.
+
+Так как обычно для алгоритмов шифрования на эллиптических кривых мы будем использовать эллиптические кривые, \href{https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-186-draft.pdf}{предложенные NIST}, то нам нужно выбрать количество бит, которое в два раза больше количетсва бит используемых чисел, чтобы числа не переполнялись при умножении. В данном гайде будем ориентироваться на \href{https://neuromancer.sk/std/nist/P-256}{NIST P-256}, поэтому нам понадобится 512 бит в нашей длинке.
+
+Два варианта:
+\begin{enumerate}
+  \item Для бустовской длинки: 
+  \begin{cppcode}
+#include "boost/multiprecision/cpp_int.hpp"
+#include "boost/multiprecision/fwd.hpp"
+
+using uint = boost::multiprecision::uint512_t;
+  \end{cppcode}
+  \item Для самописной:
+  \begin{cppcode}
+#include "long-arithmetic.h"
+
+using uint = uint_t<512>;
+  \end{cppcode}
+\end{enumerate}
