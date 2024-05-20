@@ -23,6 +23,11 @@ namespace elliptic_curve_guide {
             }
 
             y = x1 - temp;
+
+            while (y >= modulus) {
+                y -= modulus;
+            }
+
             return d;
         }
 

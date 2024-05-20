@@ -7,6 +7,10 @@ namespace elliptic_curve_guide::ring {
         m_value(normalize(value, modulus)), m_modulus(std::move(modulus)) {}
 
     RingElement RingElement::pow(const RingElement& element, const uint& power) {
+        if (power == 0) {
+            return RingElement(Poly(element.m_modulus->get_field(), {1}), element.m_modulus);
+        }
+
         return algorithm::fast_pow<RingElement>(element, power);
     }
 

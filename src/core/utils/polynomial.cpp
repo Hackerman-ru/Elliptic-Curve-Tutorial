@@ -5,6 +5,10 @@
 
 namespace elliptic_curve_guide::polynomial {
     Poly Poly::pow(const Poly& poly, const uint& power) {
+        if (power == 0) {
+            return Poly(poly.get_field(), {1});
+        }
+
         return algorithm::fast_pow<Poly>(poly, power);
     }
 
