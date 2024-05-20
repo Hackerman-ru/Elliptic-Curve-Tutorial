@@ -181,6 +181,10 @@ public:
     }
 
     constexpr F_256 operator-() const {
+        if(!is_invertible()) {
+            return *this;
+        }
+        
         return F_256(p_values) - *this;
     }
 
@@ -194,7 +198,7 @@ public:
         }
 
         if (!is_valid()) {
-            subtract_p();
+            subtract_p_uncheck();
         }
         assert(is_valid());
         return *this;
@@ -211,7 +215,7 @@ public:
         }
 
         if (!is_valid()) {
-            add_p();
+            add_p_uncheck();
         }
         assert(is_valid());
         return *this;
@@ -283,7 +287,7 @@ public:
         }
 
         while (!is_valid()) {
-            subtract_p();
+            subtract_p_uncheck();
         }
 
         return *this;
@@ -603,12 +607,6 @@ private:
 
     static constexpr digits p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 
-    constexpr void add_p() {
-        constexpr F_256 p(p_values);
-        *this += p_values;
-        assert(is_valid());
-    }
-
     constexpr void add_p_uncheck() {
         uint32_t carry = 0;
 
@@ -619,10 +617,15 @@ private:
         }
     }
 
-    constexpr void subtract_p() {
-        constexpr F_256 p(p_values);
-        *this -= p_values;
-        assert(is_valid());
+    constexpr void subtract_p_uncheck() {
+        uint32_t remainder = 0;
+
+        for (size_t i = 0; i < c_digit_number; ++i) {
+            uint32_t prev = m_digits[i];
+            uint32_t sum = p_values[i] + remainder;
+            m_digits[i] -= sum;
+            remainder = (m_digits[i] > prev) || (sum < remainder);
+        }
     }
 
     constexpr bool is_valid() const {
