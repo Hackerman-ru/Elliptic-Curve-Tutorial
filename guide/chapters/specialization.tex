@@ -17,22 +17,36 @@ class F_256 {
     digits m_digits = {};
 }
 \end{cppcode}
+\subsubsection{Арифметика}
 Так как наше простое число имеет 256 бит, то достаточно 512 бит для сдерживания переполнения. Для нормализации числа нам нужно определить само простое число p, но вот загвоздка --- оно то тоже 256 битное, а мы не можем определить статическое поле класса самим классом. Поэтому идём на хитрость: расписываем через constexpr только цифры простого числа:
 \begin{cppcode}
 static constexpr digits p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
 \end{cppcode}
-Тогда для прибавления и вычитания простого числа при нормализации числа определим приватные методы:
+Тогда для прибавления и вычитания простого числа при нормализации числа определим приватные методы, которые не проверяют инвариант:
 \begin{cppcode}
 constexpr void add_p() {
-    constexpr F_256 p(p_values);
-    *this += p_values;
+    uint32_t carry = 0;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t sum = carry + p_values[i];
+        m_digits[i] += sum;
+        carry = (m_digits[i] < sum) || (sum < carry);
+    }
 }
 
 constexpr void subtract_p() {
-    constexpr F_256 p(p_values);
-    *this -= p_values;
+    uint32_t remainder = 0;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t prev = m_digits[i];
+        uint32_t sum = p_values[i] + remainder;
+        m_digits[i] -= sum;
+        remainder = (m_digits[i] > prev) || (sum < remainder);
+    }
 }
 \end{cppcode}
+Специально повторили логику методов += и -=, чтобы не было бесконечного зацикливания.
+
 Теперь модифицируем инкремент и декремент: так как мы считаем, что при инкременте число поддерживало инвариант, то максимум кем оно могло стать --- это самим простым модулем p, поэтому:
 \begin{cppcode}
 constexpr void increment() {
@@ -69,3 +83,413 @@ constexpr void decrement() {
     }
 }
 \end{cppcode}
+Оператором отрицания будет как обычно вычитание из модуля или 0, если текущее значение 0:
+\begin{cppcode}
+constexpr F_256 operator-() const {
+    if(!is_invertible) {
+        return *this;
+    }
+
+    blocks result = p_values;
+    uint32_t remainder = 0;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t prev = result[i];
+        uint32_t sum = m_digits[i] + remainder;
+        result[i] -= sum;
+        remainder = (result[i] > prev) || (sum < remainder);
+    }
+
+    return F_256(result);
+}
+\end{cppcode}
+Теперь можно определить операции сложения и вычитания:
+\begin{cppcode}
+constexpr F_256& operator+=(const F_256& other) {
+    uint32_t carry = 0;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t sum = carry + other[i];
+        m_digits[i] += sum;
+        carry = (m_digits[i] < sum) || (sum < carry);
+    }
+
+    if (!is_valid()) {
+        subtract_p();
+    }
+
+    return *this;
+}
+
+constexpr F_256& operator-=(const F_256& other) {
+    uint32_t remainder = 0;
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t prev = m_digits[i];
+        uint32_t sum = other[i] + remainder;
+        m_digits[i] -= sum;
+        remainder = (m_digits[i] > prev) || (sum < remainder);
+    }
+
+    if (!is_valid()) {
+        add_p();
+    }
+
+    return *this;
+}
+\end{cppcode}
+\subsubsection{Умножение}
+Чтобы редуцировать число, которое получиться после умножения двух чисел из поля, нам надо научиться брать по модулю число $c\colon 0\leqslant c < p^2$. У P-256 есть специальный ритуал для этого:
+\begin{cppcode}
+constexpr void reduce() {
+    F_256 s1({m_digits[0],
+              m_digits[1],
+              m_digits[2],
+              m_digits[3],
+              m_digits[4],
+              m_digits[5],
+              m_digits[6],
+              m_digits[7]});
+    F_256 s2({0, 0, 0, m_digits[11], m_digits[12], m_digits[13], m_digits[14], m_digits[15]});
+    F_256 s3({0, 0, 0, m_digits[12], m_digits[13], m_digits[14], m_digits[15], 0});
+    F_256 s4({m_digits[8], m_digits[9], m_digits[10], 0, 0, 0, m_digits[14], m_digits[15]});
+    F_256 s5({m_digits[9],
+              m_digits[10],
+              m_digits[11],
+              m_digits[13],
+              m_digits[14],
+              m_digits[15],
+              m_digits[13],
+              m_digits[8]});
+    F_256 s6({m_digits[11], m_digits[12], m_digits[13], 0, 0, 0, m_digits[8], m_digits[10]});
+    F_256 s7({m_digits[12], m_digits[13], m_digits[14], m_digits[15], 0, 0, m_digits[9], m_digits[11]});
+    F_256 s8({m_digits[13],
+              m_digits[14],
+              m_digits[15],
+              m_digits[8],
+              m_digits[9],
+              m_digits[10],
+              0,
+              m_digits[12]});
+    F_256 s9({m_digits[14], m_digits[15], 0, m_digits[9], m_digits[10], m_digits[11], 0, m_digits[13]});
+    *this = s1 + s2 + s2 + s3 + s3 + s4 + s5 - s6 - s7 - s8 - s9;
+}
+\end{cppcode}
+Умные дяди написали, что нужно именно так, поэтому мы как макаки повторяем. Значит умножение можно сделать через:
+\begin{cppcode}
+friend constexpr F_256 operator*(const F_256& lhs, const F_256& rhs) {
+    F_256 result;
+
+    for (size_t i = 0; i < c_half_digit_number; ++i) {
+        uint64_t u = 0;
+
+        for (size_t j = 0; j < c_half_digit_number; ++j) {
+            u = static_cast<uint64_t>(result[i + j])
+              + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_digit_size);
+            result[i + j] = static_cast<uint32_t>(u);
+        }
+
+        result[i + c_half_digit_number] = static_cast<uint32_t>(u >> c_digit_size);
+    }
+
+    result.reduce();
+    return result;
+}
+\end{cppcode}
+где используется только половина длины числа у i и j, так как мы считаем, что lhs и rhs удовлетворяют инваринату: lhs, rhs < p. 
+\subsubsection{Инверсия}
+Так как мы хотим и рыбку съесть и ..., то у нас нет деления. Но как же реализовать инверсию без деления? На помощь приходит алгоритм бинарного расширенного евклида. В его основе лежит житейская мудрость: не можешь использовать обычную арифметику --- используй бинарную. Так и поступил автор данного алгоритма. Пруфов работы не будет (точнее, объяснение есть в \cite{das2004guide}):
+\begin{cppcode}
+constexpr void inverse() {
+    constexpr F_256 zero;
+    constexpr F_256 one = 1;
+
+    F_256 u = *this;
+    F_256 v(p_values);
+
+    F_256 x_1 = one;
+    F_256 x_2;
+
+    while (u != one && v != one) {
+        while (u.is_even()) {
+            u >>= 1;
+
+            if (x_1.is_even()) {
+                x_1 >>= 1;
+            } else {
+                x_1.add_p_uncheck();
+                x_1 >>= 1;
+                assert(x_1.is_valid());
+            }
+        }
+
+        while (v.is_even()) {
+            v >>= 1;
+
+            if (x_2.is_even()) {
+                x_2 >>= 1;
+            } else {
+                x_2.add_p_uncheck();
+                x_2 >>= 1;
+                assert(x_2.is_valid());
+            }
+        }
+
+        if (u >= v) {
+            u -= v;
+            x_1 -= x_2;
+        } else {
+            v -= u;
+            x_2 -= x_1;
+        }
+    }
+
+    if (u == 1) {
+        *this = x_1;
+    } else {
+        *this = x_2;
+    }
+
+    assert(is_valid());
+}
+\end{cppcode}
+\subsubsection{Пролом 4 стены}
+Нам нужен быстрый доступ к данным, поэтому открываем пользователю методы:
+\begin{cppcode}
+const uint32_t& first_digit() const {
+    return m_digits[0];
+}
+
+constexpr const uint32_t& operator[](size_t pos) const {
+    return m_digits[pos];
+}
+
+constexpr uint32_t& operator[](size_t pos) {
+    return m_digits[pos];
+}
+\end{cppcode}
+Да, это не безопасно, зато быстро.
+\subsubsection{Конверсия}
+У нас нет деления, значит мы можем привести только к 16,8,2-ичным системам счисления. Ограничимся для нашей специализации 16-ричной системой.
+
+Основная сложность - каждая цифра содержит 8 16-ричных символов, поэтому нам понадобятся некоторые лямбды, которые будут упрощать деление числа на хекс-символы.
+
+Так как мы начинаем заполнять со старших битов, то нам нужно пропустить верхние нули. Для цифр это несложно, но вот для скипа нулей внутри цифры нам придётся передать флаг в лямбды.
+
+Итого:
+\begin{cppcode}
+constexpr std::string convert_to_hex_string() const {
+    std::string result;
+    size_t pos = c_digit_number;
+
+    while (pos > 0 && m_digits[pos - 1] == 0) {
+        --pos;
+    }
+
+    if (pos == 0) {
+        return "0x0";
+    }
+
+    result += "0x";
+
+    auto mini_push = [&](const uint8_t& value) {
+        if (value < 10) {
+            result.push_back(value + '0');
+        } else {
+            result.push_back(value - 10 + 'A');
+        }
+    };
+
+    auto push = [&](const uint32_t& value, bool first_time = false) {
+        size_t shift = 32;
+        uint8_t temp = 0;
+
+        if (first_time) {
+            while (shift > 0 && temp == 0) {
+                shift -= 4;
+                temp = (value >> shift) & 0xF;
+            }
+
+            do {
+                mini_push(temp);
+
+                if (shift == 0) {
+                    break;
+                }
+
+                shift -= 4;
+                temp = (value >> shift) & 0xF;
+            } while (shift >= 0);
+
+            return;
+        }
+
+        while (shift > 0) {
+            shift -= 4;
+            temp = (value >> shift) & 0xF;
+            mini_push(temp);
+        }
+    };
+
+    push(m_digits[pos - 1], true);
+    --pos;
+
+    while (pos > 0) {
+        push(m_digits[pos - 1]);
+        --pos;
+    }
+
+    return result;
+}
+\end{cppcode}
+Остальные методы без изменений.
+\subsection{Точка Эллиптической кривой}
+Забываем о классе эллиптической кривой и захардкоживаем внутрь класса точки основные параметры:
+\begin{cppcode}
+class EllipticCurvePoint {
+    static constexpr F_256 c_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
+    static constexpr F_256 c_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
+    static constexpr F_256 c_p_1 = "0x7FFFFFFF800000008000000000000000000000007FFFFFFFFFFFFFFFFFFFFFFF";
+    static constexpr F_256 c_p_2 = "0x3FFFFFFFC0000000400000000000000000000000400000000000000000000000";
+
+    F_256 m_x;
+    F_256 m_y;
+    bool m_is_null;
+};
+\end{cppcode}
+где $p_1$ и $p_2$ - те самые значения, которые мы считали при нахождении корня в поле:
+\[p_1:=\frac{p-1}{2}\]
+\[p_2:=\frac{p+1}{4}\]
+Они понадобятся нам для имплементации приватного метода нахождения y-координаты. Заметим, что $p\equiv 3\mod 4$, поэтому можно использовать прежний алгоритм:
+\begin{cppcode}
+static constexpr std::optional<F_256> find_y(const F_256& x) {
+    F_256 value = F_256::pow(x, 3) + c_a * x + c_b;
+
+    if (!value.is_invertible()) {
+        return std::nullopt;
+    }
+
+    if (F_256::pow(value, c_p_1) != F_256(1)) {
+        return std::nullopt;
+    }
+
+    return F_256::pow(value, c_p_2);
+}
+\end{cppcode}
+В остальном никаких изменений методов нет, мы просто копируем используемые алгоритмы, например wNAF, в наш файл и подставляем в нужные места.
+\subsection{Эль-Гамаль}
+Так как нам больше не нужно держать общие данные, то класс Эль-Гамаль распадается на обычный namespace:
+\begin{cppcode}
+namespace ElGamal {
+    using Point = EllipticCurvePoint;
+
+    namespace {
+        static constexpr Point m_generator =
+            Point(F_256("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296"),
+                  F_256("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5"));
+        static constexpr F_256 m_generator_order =
+            "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
+
+        Point map_to_curve(const F_256& message) {
+            for (;;) {
+                F_256 x = generate_random_non_zero_value_modulo(m_generator_order);
+
+                for (size_t i = 0; i < 6; ++i) {
+                    x[i] = message[i];
+                }
+
+                auto opt = Point::point_with_x_equal_to(x);
+
+                if (opt.has_value()) {
+                    return opt.value();
+                }
+            }
+        }
+
+        F_256 map_to_uint(const Point& message) {
+            F_256 result;
+            const F_256& x = message.get_x();
+
+            for (size_t i = 0; i < 6; ++i) {
+                result[i] = x[i];
+            }
+
+            return result;
+        }
+    }   // namespace
+
+    struct Keys {
+        F_256 private_key;
+        Point public_key;
+    };
+
+    struct EncryptedMessage {
+        Point generator_degree;
+        Point message_with_salt;
+    };
+
+    constexpr Keys generate_keys() {
+        F_256 private_key = generate_random_non_zero_value_modulo(m_generator_order);
+        Point public_key = private_key * m_generator;
+        return Keys {.private_key = private_key, .public_key = public_key};
+    }
+
+    EncryptedMessage encrypt(const F_256& message, const Point& public_key) {
+        const F_256 k = generate_random_non_zero_value_modulo(m_generator_order);
+        const Point generator_degree = k * m_generator;
+        const Point message_with_salt = map_to_curve(message) + k * public_key;
+        return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
+    }
+
+    F_256 decrypt(const EncryptedMessage& encrypted_message, const F_256& private_key) {
+        Point M = encrypted_message.message_with_salt - private_key * encrypted_message.generator_degree;
+        return map_to_uint(M);
+    }
+};   // namespace ElGamal
+\end{cppcode}
+Имплементация функций остаётся прежней, кроме того факта, что мы используем 6 бит из 8, вместо 4 бит, во время отображения сообщения на кривую и обратно. Это позволяет значительно увеличить передаваемое сообщение.
+\subsection{Тестирование}
+Наконец мы можем побаловаться с шифрованием сообщений через консоль:
+\begin{cppcode}
+int main() {
+    std::cout << "Enter hexadecimal message:\n";
+    std::string msg;
+    std::cin >> msg;
+    F_256 message = msg.c_str();
+    std::cout << "Generating keys...\n";
+    auto keys = ElGamal::generate_keys();
+    std::cout << "Encrypting message...\n";
+    auto encrypted_message = ElGamal::encrypt(message, keys.public_key);
+    std::cout << "Decrypting message...\n";
+    auto decrypted_message = ElGamal::decrypt(encrypted_message, keys.private_key);
+    std::cout << "Decrypted message is:\n";
+    std::string decrypted_msg = decrypted_message.convert_to_hex_string();
+    std::cout << decrypted_msg << '\n';
+    std::cout << "Checking correctness...\n";
+
+    if (message != decrypted_message) {
+        std::cout << "Fail ";
+
+        if (msg.ends_with(decrypted_msg.substr(2))) {
+            std::cout << "due to insufficient number of encryption bits\n";
+        } else {
+            std::cout << "due to implementation problems\n";
+        }
+    } else {
+        std::cout << "Success!\n";
+    }
+}
+\end{cppcode}
+Результаты замеров тестов, сравнивая с шаблонным многофайловым решением:
+\begin{itemize}
+  \item Debug сборка:
+
+    TODO
+
+  \item Release сборка:
+
+    TODO
+\end{itemize}
+
+Вывод: TODO
+
