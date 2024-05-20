@@ -110,7 +110,13 @@ namespace elliptic_curve_guide {
             uint_t result;
 
             for (size_t i = 0; i < c_digit_number; ++i) {
-                result += (lhs * rhs[i]) << (c_digit_size * i);
+                uint64_t u = 0;
+
+                for (size_t j = 0; i + j < c_digit_number; ++j) {
+                    u = static_cast<uint64_t>(result[i + j])
+                      + static_cast<uint64_t>(lhs[i]) * static_cast<uint64_t>(rhs[j]) + (u >> c_digit_size);
+                    result[i + j] = static_cast<uint32_t>(u);
+                }
             }
 
             return result;
