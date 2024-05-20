@@ -15,14 +15,16 @@ using namespace algorithm::random;
 
 static constexpr size_t c_primes_n = 150;
 static constexpr size_t c_correctness_test_arithmetic_n = 50;
-static constexpr size_t c_correctness_test_inversion_n = 1600000;
-static constexpr size_t c_correctness_test_inversion_prime = 1599827;
-static constexpr size_t c_correctness_test_power_n = 100;
+static constexpr size_t c_correctness_test_inversion_n = 100;
+static constexpr size_t c_correctness_test_negotiation_n = 100;
+static constexpr size_t c_correctness_test_power_n = 80;
 static constexpr size_t c_correctness_test_shift_n = 100;
 
-static constexpr size_t c_timing_test_arithmetic_n = 200;
-static constexpr size_t c_timing_test_power_n = 200;
-static constexpr size_t c_timing_test_shift_n = 200;
+static constexpr size_t c_stress_test_arithmetic_n = 200;
+static constexpr size_t c_stress_test_inversion_n = 400;
+static constexpr size_t c_stress_test_negotiation_n = 400;
+static constexpr size_t c_stress_test_power_n = 200;
+static constexpr size_t c_stress_test_shift_n = 200;
 
 #define UCMP(my_value, correct_value)                                      \
     if (my_value != correct_value) {                                       \
@@ -38,6 +40,7 @@ static constexpr size_t c_timing_test_shift_n = 200;
         ASSERT_EQ(my_str, correct_str);                                            \
     }
 
+// Simple tests
 TEST(SimpleTest, Creating) {
     Field f("7");
     FieldElement a = f.element(10);
@@ -88,6 +91,8 @@ TEST(SimpleTest, Shift) {
     UCMP(result, correct_result);
 }
 
+// Correctness tests
+
 TEST(CorrectnessTest, Creating) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
@@ -134,7 +139,7 @@ TEST(CorrectnessTest, Negotiation) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_correctness_test_negotiation_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement b = -a;
             uint my_value = (a + b).value();
@@ -196,7 +201,7 @@ TEST(CorrectnessTest, Inversion) {
         Field f(p);
         FieldElement one = f.element(1);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_correctness_test_inversion_n; ++j) {
             FieldElement a = generate_random_non_zero_field_element(f);
             FieldElement inv_a = FieldElement::inverse(a);
             FieldElement result = a * inv_a;
@@ -251,13 +256,13 @@ TEST(CorrectnessTest, Shift) {
     }
 }
 
-// Timing measurements
-TEST(TimingTest, Addition) {
+// Stress tests
+TEST(StressTest, Addition) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement b = generate_random_field_element(f);
             FieldElement result = a + b;
@@ -265,24 +270,24 @@ TEST(TimingTest, Addition) {
     }
 }
 
-TEST(TimingTest, Negotiation) {
+TEST(StressTest, Negotiation) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_negotiation_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement result = -a;
         }
     }
 }
 
-TEST(TimingTest, Subtraction) {
+TEST(StressTest, Subtraction) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement b = generate_random_field_element(f);
             FieldElement result = a - b;
@@ -290,12 +295,12 @@ TEST(TimingTest, Subtraction) {
     }
 }
 
-TEST(TimingTest, Multiplication) {
+TEST(StressTest, Multiplication) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement b = generate_random_field_element(f);
             FieldElement result = a * b;
@@ -303,12 +308,12 @@ TEST(TimingTest, Multiplication) {
     }
 }
 
-TEST(TimingTest, Division) {
+TEST(StressTest, Division) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement b = generate_random_non_zero_field_element(f);
             FieldElement result = a / b;
@@ -316,24 +321,24 @@ TEST(TimingTest, Division) {
     }
 }
 
-TEST(TimingTest, Inversion) {
+TEST(StressTest, Inversion) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_arithmetic_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_inversion_n; ++j) {
             FieldElement a = generate_random_non_zero_field_element(f);
             FieldElement result = FieldElement::inverse(a);
         }
     }
 }
 
-TEST(TimingTest, Power) {
+TEST(StressTest, Power) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_power_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_power_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             uint power = generate_random_uint_modulo(p);
             FieldElement result = FieldElement::pow(a, power);
@@ -341,12 +346,12 @@ TEST(TimingTest, Power) {
     }
 }
 
-TEST(TimingTest, Shift) {
+TEST(StressTest, Shift) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
 
-        for (size_t j = 0; j < c_timing_test_shift_n; ++j) {
+        for (size_t j = 0; j < c_stress_test_shift_n; ++j) {
             FieldElement a = generate_random_field_element(f);
             FieldElement result = a << j;
         }

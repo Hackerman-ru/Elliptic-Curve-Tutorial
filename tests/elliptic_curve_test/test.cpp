@@ -3,10 +3,13 @@
 // clang-format on
 
 #include "elliptic-curve.h"
+#include "field.h"
+#include "utils/random.h"
 
 using namespace elliptic_curve_guide;
 using namespace field;
 using namespace elliptic_curve;
+using namespace algorithm::random;
 using enum CoordinatesType;
 
 static constexpr uint c_find_y_n = 53617;   // e = 4
@@ -14,7 +17,7 @@ static const uint c_kp_timing_n("0xFFFFFFFFF00FFFFFFFFFFF1FFFFFFFFFFFFFF9FFFFAFF
 static constexpr size_t c_kp_comparison_timing_n = 228133;
 static constexpr size_t c_doubling_timing_n = 228133;
 
-TEST(CorrectnessTest, FindY) {
+TEST(SimpleTest, FindY) {
     Field F(29);
     FieldElement a = F.element(0);
     FieldElement b = F.element(28);
@@ -24,7 +27,7 @@ TEST(CorrectnessTest, FindY) {
     ASSERT_EQ(opt.value().get_y().value(), 18);
 }
 
-TEST(StressTest, FindMultipleY) {
+TEST(StressTest, FindY) {
     Field F(c_find_y_n);
     static const FieldElement one = F.element(1);
     FieldElement a = F.element(1984);
