@@ -10,6 +10,10 @@ namespace elliptic_curve_guide::field {
     }
 
     FieldElement FieldElement::operator-() const {
+        if(!is_invertible()) {
+            return *this;
+        }
+        
         return FieldElement(*m_modulus - m_value, m_modulus);
     }
 
