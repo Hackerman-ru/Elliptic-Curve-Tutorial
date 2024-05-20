@@ -340,13 +340,13 @@
     <ClInclude Include="core\long-arithmetic.h" />
     <ClInclude Include="core\uint.h" />
     <ClInclude Include="core\utils\csprng\csprng.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\csprng\csprng.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\csprng\is_iterable.hpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\division_poly.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -364,6 +364,7 @@
     <ClInclude Include="core\utils\fft.h" />
     <ClInclude Include="core\utils\field_root.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\modulo_inversion.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
@@ -382,7 +383,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - elliptic curve|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\random.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="core\utils\polynomial.h">
@@ -408,7 +409,9 @@
     </ClInclude>
     <ClInclude Include="core\utils\string-parser.h" />
     <ClInclude Include="core\utils\concepts.h" />
-    <ClInclude Include="core\utils\wnaf.h" />
+    <ClInclude Include="core\utils\wnaf.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Encryption\ecdsa.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
@@ -444,7 +447,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug - elliptic curve|x64'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="core\utils\division_poly.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
@@ -460,13 +463,14 @@
     </ClCompile>
     <ClCompile Include="core\utils\field_root.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="core\utils\bitsize.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="core\utils\random.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="core\utils\polynomial.cpp">
@@ -499,6 +503,7 @@
     </ClCompile>
     <ClCompile Include="encryption\el-gamal.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,6 +2,7 @@
 #include "pch.h"
 // clang-format on
 #include "field.h"
+#include "utils/random.h"
 
 #include <boost/multiprecision/cpp_int.hpp>
 #include <boost/multiprecision/fwd.hpp>
@@ -11,7 +12,11 @@ using namespace field;
 
 static const uint inversion_hard_n = 1599827;
 
-TEST(SimpleTesting, Creating) {
+using algorithm::random::generate_random_field_element;
+
+static constexpr size_t c_correctness_test_creating = 1000;
+
+TEST(SimpleTest, Creating) {
     Field f("7");
     FieldElement a = f.element(10);
     ASSERT_EQ(a.value(), 3);
@@ -19,7 +24,7 @@ TEST(SimpleTesting, Creating) {
     ASSERT_EQ(a.value(), 1);
 }
 
-TEST(SimpleTesting, Multiplication) {
+TEST(SimpleTest, Multiplication) {
     Field f("7");
     FieldElement a = f.element(3);
     FieldElement b = a;
@@ -27,14 +32,14 @@ TEST(SimpleTesting, Multiplication) {
     ASSERT_EQ(c, 2);
 }
 
-TEST(SimpleTesting, Negotiation) {
+TEST(SimpleTest, Negotiation) {
     Field f("7");
     FieldElement a = -f.element(3);
     uint c = FieldElement::pow(a, 10).value();
     ASSERT_EQ(c, 4);
 }
 
-TEST(SimpleTesting, Inversion) {
+TEST(SimpleTest, Inversion) {
     Field f("1000000007");
     FieldElement a = f.element("999999999");
     FieldElement b = f.element(2);
@@ -45,14 +50,14 @@ TEST(SimpleTesting, Inversion) {
     ASSERT_EQ(result, correct_result);
 }
 
-TEST(SimpleTesting, Comparison) {
+TEST(SimpleTest, Comparison) {
     Field f("1000000007");
     FieldElement a = f.element("999999999");
     FieldElement b = f.element(2);
     ASSERT_EQ(a < b, false);
 }
 
-TEST(SimpleTesting, Shift) {
+TEST(SimpleTest, Shift) {
     Field f("1000000007");
     FieldElement a = f.element("999999999");
     FieldElement b = a << uint("30");
@@ -60,6 +65,9 @@ TEST(SimpleTesting, Shift) {
     uint correct_result("410065471");
     ASSERT_EQ(result, correct_result);
 }
+
+TEST(CorrectnessTest, Creating) {
+    for (size_t i = 1; i <) }
 
 TEST(HardTest, Inversion) {
     Field f(inversion_hard_n);

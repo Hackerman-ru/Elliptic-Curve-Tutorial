@@ -14,15 +14,14 @@ using boost::multiprecision::uint512_t;
 
 using namespace elliptic_curve_guide;
 
-static constexpr size_t int_conversion_correctness_n = 1000000;
-static constexpr size_t string_correctness_n = 10000;
-static constexpr size_t shift_correctness_n = 1000;
-static constexpr size_t arithmetic_correctness_n = 10000;
-static constexpr size_t division_correctness_n = 10000;
+static constexpr size_t c_correctness_test_int_conversion_n = 1000000;
+static constexpr size_t c_correctness_test_string_conversion_n = 10000;
+static constexpr size_t c_correctness_test_shift_n = 1000;
+static constexpr size_t c_correctness_test_arithmetic_n = 10000;
 
-static constexpr size_t string_timing_n = 10000;
-static constexpr size_t shift_timin_n = 10000;
-static constexpr size_t arithmetic_timing_n = 10000;
+static constexpr size_t c_timing_test_string_n = 10000;
+static constexpr size_t c_timing_test_shift_n = 10000;
+static constexpr size_t c_timing_test_arithmetic_n = 10000;
 
 static uint512_t generate_random_boost_uint() {
     duthomhas::csprng rng;
@@ -73,7 +72,7 @@ static std::string convert_to_binary(uint512_t value) {
 }
 
 template<typename From, typename To>
-static To conv(const From& value) {
+static To convert(const From& value) {
     To result = 0;
 
     for (size_t i = 16; i > 0; --i) {
@@ -85,7 +84,7 @@ static To conv(const From& value) {
 }
 
 static bool is_equal(uint512_t lhs, uint_t<512> rhs) {
-    uint512_t rhs_value = conv<uint_t<512>, uint512_t>(rhs);
+    uint512_t rhs_value = convert<uint_t<512>, uint512_t>(rhs);
     return lhs == rhs_value;
 }
 
@@ -96,7 +95,8 @@ static bool is_equal(uint512_t lhs, uint_t<512> rhs) {
         ASSERT_EQ(boost_str, my_str);                        \
     }
 
-TEST(StringConversionCorrectness, SimpleConversions) {
+// String manipulation correctness
+TEST(CorrectnessTest, SimpleConversions) {
     uint_t<512> my_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
     uint512_t boost_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
     comp(boost_p, my_p);
@@ -128,16 +128,16 @@ TEST(StringConversionCorrectness, SimpleConversions) {
     ASSERT_EQ(my_lhs, my_rhs);
 }
 
-TEST(StringConversionCorrectness, DecimalStringConversion) {
-    for (size_t i = 0; i < string_correctness_n; ++i) {
+TEST(CorrectnessTest, DecimalStringConversion) {
+    for (size_t i = 0; i < c_correctness_test_string_conversion_n; ++i) {
         uint512_t boost_value = generate_random_boost_uint();
-        uint_t<512> my_value = conv<uint512_t, uint_t<512>>(boost_value);
+        uint_t<512> my_value = convert<uint512_t, uint_t<512>>(boost_value);
         comp(boost_value, my_value);
     }
 }
 
-TEST(StringConversionCorrectness, HexadecimalStringConversion) {
-    for (size_t i = 0; i < string_correctness_n; ++i) {
+TEST(CorrectnessTest, HexadecimalStringConversion) {
+    for (size_t i = 0; i < c_correctness_test_string_conversion_n; ++i) {
         uint512_t boost_value = generate_random_boost_uint();
         std::stringstream ss;
         ss << std::hex << std::showbase << boost_value;
@@ -147,8 +147,8 @@ TEST(StringConversionCorrectness, HexadecimalStringConversion) {
     }
 }
 
-TEST(StringConversionCorrectness, OctalStringConversion) {
-    for (size_t i = 0; i < string_correctness_n; ++i) {
+TEST(CorrectnessTest, OctalStringConversion) {
+    for (size_t i = 0; i < c_correctness_test_string_conversion_n; ++i) {
         uint512_t boost_value = generate_random_boost_uint();
         std::stringstream ss;
         ss << std::oct << std::showbase << boost_value;
@@ -158,8 +158,8 @@ TEST(StringConversionCorrectness, OctalStringConversion) {
     }
 }
 
-TEST(StringConversionCorrectness, BinaryStringConversion) {
-    for (size_t i = 0; i < string_correctness_n; ++i) {
+TEST(CorrectnessTest, BinaryStringConversion) {
+    for (size_t i = 0; i < c_correctness_test_string_conversion_n; ++i) {
         uint512_t boost_value = generate_random_boost_uint();
         std::string binary_str = convert_to_binary(boost_value);
         uint_t<512> my_value(binary_str.c_str());
@@ -167,26 +167,11 @@ TEST(StringConversionCorrectness, BinaryStringConversion) {
     }
 }
 
-TEST(StringConversionTiming, DecimalStringConversionBoost) {
-    for (size_t i = 0; i < string_timing_n; ++i) {
-        uint512_t a = generate_random_boost_uint();
-        std::string a_str = a.convert_to<std::string>();
-    }
-}
-
-TEST(StringConversionTiming, DecimalStringConversion) {
-    for (size_t i = 0; i < string_timing_n; ++i) {
-        uint_t<512> a = generate_random_my_uint();
-        std::string a_str = a.convert_to<std::string>();
-    }
-}
-
-// Convert_to
-
-TEST(IntConversionCorrectness, uint32_t) {
+// Convert_to correctness
+TEST(CorrectnessTest, uint32_t) {
     std::mt19937 gen(42);
 
-    for (size_t i = 0; i < int_conversion_correctness_n; ++i) {
+    for (size_t i = 0; i < c_correctness_test_int_conversion_n; ++i) {
         uint32_t value = gen();
         uint_t<512> my_value(value);
         ASSERT_EQ(value, my_value.convert_to<uint32_t>());
@@ -195,10 +180,10 @@ TEST(IntConversionCorrectness, uint32_t) {
     }
 }
 
-TEST(IntConversionCorrectness, size_t) {
+TEST(CorrectnessTest, size_t) {
     std::mt19937_64 gen(42);
 
-    for (size_t i = 0; i < int_conversion_correctness_n; ++i) {
+    for (size_t i = 0; i < c_correctness_test_int_conversion_n; ++i) {
         size_t value = gen();
         uint_t<512> my_value(value);
         ASSERT_EQ(value, my_value.convert_to<size_t>());
@@ -207,12 +192,11 @@ TEST(IntConversionCorrectness, size_t) {
     }
 }
 
-// Shift
-
-TEST(ShiftCorrectness, LeftShift) {
-    for (size_t i = 0; i < shift_correctness_n; ++i) {
+// Shift correctness
+TEST(CorrectnessTest, LeftShift) {
+    for (size_t i = 0; i < c_correctness_test_shift_n; ++i) {
         uint512_t a = generate_random_boost_uint();
-        uint_t<512> b = conv<uint512_t, uint_t<512>>(a);
+        uint_t<512> b = convert<uint512_t, uint_t<512>>(a);
 
         for (size_t j = 0; j < 512; ++j) {
             uint512_t boost_value = a << j;
@@ -226,10 +210,10 @@ TEST(ShiftCorrectness, LeftShift) {
     }
 }
 
-TEST(ShiftCorrectness, RightShift) {
-    for (size_t i = 0; i < shift_correctness_n; ++i) {
+TEST(CorrectnessTest, RightShift) {
+    for (size_t i = 0; i < c_correctness_test_shift_n; ++i) {
         uint512_t a = generate_random_boost_uint();
-        uint_t<512> b = conv<uint512_t, uint_t<512>>(a);
+        uint_t<512> b = convert<uint512_t, uint_t<512>>(a);
 
         for (size_t j = 0; j < 512; ++j) {
             uint512_t boost_value = a >> j;
@@ -243,131 +227,151 @@ TEST(ShiftCorrectness, RightShift) {
     }
 }
 
-TEST(ShiftTiming, LeftShift) {
-    for (size_t i = 0; i < shift_timin_n; ++i) {
-        uint_t<512> a = generate_random_my_uint();
-
-        for (size_t shift = 0; shift < 512; ++shift) {
-            auto b = a << shift;
-        }
-    }
-}
-
-TEST(ShiftTiming, LeftShiftBoost) {
-    for (size_t i = 0; i < shift_timin_n; ++i) {
-        uint512_t a = generate_random_boost_uint();
-
-        for (size_t shift = 0; shift < 512; ++shift) {
-            auto b = a << shift;
-        }
-    }
-}
-
-TEST(ShiftTiming, RightShift) {
-    for (size_t i = 0; i < shift_timin_n; ++i) {
-        uint_t<512> a = generate_random_my_uint();
-
-        for (size_t shift = 0; shift < 512; ++shift) {
-            auto b = a >> shift;
-        }
-    }
-}
-
-TEST(ShiftTiming, RightShiftBoost) {
-    for (size_t i = 0; i < shift_timin_n; ++i) {
-        uint512_t a = generate_random_boost_uint();
-
-        for (size_t shift = 0; shift < 512; ++shift) {
-            auto b = a >> shift;
-        }
-    }
-}
-
-// Arithmetic
-TEST(ArithmeticCorrectness, Addition) {
-    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
+// Arithmetic correctness
+TEST(CorrectnessTest, Addition) {
+    for (size_t i = 0; i < c_correctness_test_arithmetic_n; ++i) {
         uint_t<512> left = generate_random_my_uint();
         uint_t<512> right = generate_random_my_uint();
         uint_t<512> my_value = left + right;
-        uint512_t boost_value = conv<uint_t<512>, uint512_t>(left) + conv<uint_t<512>, uint512_t>(right);
+        uint512_t boost_value =
+            convert<uint_t<512>, uint512_t>(left) + convert<uint_t<512>, uint512_t>(right);
         comp(boost_value, my_value);
     }
 }
 
-TEST(ArithmeticCorrectness, Subtraction) {
-    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
+TEST(CorrectnessTest, Subtraction) {
+    for (size_t i = 0; i < c_correctness_test_arithmetic_n; ++i) {
         uint_t<512> left = generate_random_my_uint();
         uint_t<512> right = generate_random_my_uint();
         uint_t<512> my_value = left - right;
-        uint512_t boost_value = conv<uint_t<512>, uint512_t>(left) - conv<uint_t<512>, uint512_t>(right);
+        uint512_t boost_value =
+            convert<uint_t<512>, uint512_t>(left) - convert<uint_t<512>, uint512_t>(right);
         comp(boost_value, my_value);
     }
 }
 
-TEST(ArithmeticCorrectness, Multiplication) {
-    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
+TEST(CorrectnessTest, Multiplication) {
+    for (size_t i = 0; i < c_correctness_test_arithmetic_n; ++i) {
         uint_t<512> left = generate_random_my_uint();
         uint_t<512> right = generate_random_my_uint();
         uint_t<512> my_value = left * right;
-        uint512_t boost_value = conv<uint_t<512>, uint512_t>(left) * conv<uint_t<512>, uint512_t>(right);
+        uint512_t boost_value =
+            convert<uint_t<512>, uint512_t>(left) * convert<uint_t<512>, uint512_t>(right);
         comp(boost_value, my_value);
     }
 }
 
-TEST(ArithmeticCorrectness, Division) {
-    for (size_t i = 0; i < arithmetic_correctness_n; ++i) {
+TEST(CorrectnessTest, Division) {
+    for (size_t i = 0; i < c_correctness_test_arithmetic_n; ++i) {
         uint_t<512> left = generate_random_my_uint();
         uint_t<512> right = generate_random_my_uint();
         uint_t<512> my_value = left / right;
-        uint512_t boost_value = conv<uint_t<512>, uint512_t>(left) / conv<uint_t<512>, uint512_t>(right);
+        uint512_t boost_value =
+            convert<uint_t<512>, uint512_t>(left) / convert<uint_t<512>, uint512_t>(right);
         comp(boost_value, my_value);
     }
 }
 
-TEST(ArithmeticTiming, Addition) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+// Timing measurements
+
+TEST(TimingTest, DecimalStringConversion) {
+    for (size_t i = 0; i < c_timing_test_string_n; ++i) {
+        uint_t<512> a = generate_random_my_uint();
+        std::string a_str = a.convert_to<std::string>();
+    }
+}
+
+TEST(TimingTest, DecimalStringConversionBoost) {
+    for (size_t i = 0; i < c_timing_test_string_n; ++i) {
+        uint512_t a = generate_random_boost_uint();
+        std::string a_str = a.convert_to<std::string>();
+    }
+}
+
+TEST(TimingTest, LeftShift) {
+    for (size_t i = 0; i < c_timing_test_shift_n; ++i) {
+        uint_t<512> a = generate_random_my_uint();
+
+        for (size_t shift = 0; shift < 512; ++shift) {
+            auto b = a << shift;
+        }
+    }
+}
+
+TEST(TimingTest, LeftShiftBoost) {
+    for (size_t i = 0; i < c_timing_test_shift_n; ++i) {
+        uint512_t a = generate_random_boost_uint();
+
+        for (size_t shift = 0; shift < 512; ++shift) {
+            auto b = a << shift;
+        }
+    }
+}
+
+TEST(TimingTest, RightShift) {
+    for (size_t i = 0; i < c_timing_test_shift_n; ++i) {
+        uint_t<512> a = generate_random_my_uint();
+
+        for (size_t shift = 0; shift < 512; ++shift) {
+            auto b = a >> shift;
+        }
+    }
+}
+
+TEST(TimingTest, RightShiftBoost) {
+    for (size_t i = 0; i < c_timing_test_shift_n; ++i) {
+        uint512_t a = generate_random_boost_uint();
+
+        for (size_t shift = 0; shift < 512; ++shift) {
+            auto b = a >> shift;
+        }
+    }
+}
+
+TEST(TimingTest, Addition) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint_t<512> a = generate_random_my_uint() + generate_random_my_uint();
     }
 }
 
-TEST(ArithmeticTiming, AdditionBoost) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, AdditionBoost) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint512_t a = generate_random_boost_uint() + generate_random_boost_uint();
     }
 }
 
-TEST(ArithmeticTiming, Subtraction) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, Subtraction) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint_t<512> a = generate_random_my_uint() - generate_random_my_uint();
     }
 }
 
-TEST(ArithmeticTiming, SubtractionBoost) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, SubtractionBoost) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint512_t a = generate_random_boost_uint() - generate_random_boost_uint();
     }
 }
 
-TEST(ArithmeticTiming, Multiplication) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, Multiplication) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint_t<512> a = generate_random_my_uint() * generate_random_my_uint();
     }
 }
 
-TEST(ArithmeticTiming, MultiplicationBoost) {
-    for (size_t i = 0; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, MultiplicationBoost) {
+    for (size_t i = 0; i < c_timing_test_arithmetic_n; ++i) {
         uint512_t a = generate_random_boost_uint() * generate_random_boost_uint();
     }
 }
 
-TEST(ArithmeticTiming, Division) {
-    for (size_t i = 1; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, Division) {
+    for (size_t i = 1; i < c_timing_test_arithmetic_n; ++i) {
         uint_t<512> a = generate_random_my_uint() / generate_random_my_uint();
     }
 }
 
-TEST(ArithmeticTiming, DivisionBoost) {
-    for (size_t i = 1; i < arithmetic_timing_n; ++i) {
+TEST(TimingTest, DivisionBoost) {
+    for (size_t i = 1; i < c_timing_test_arithmetic_n; ++i) {
         uint512_t a = generate_random_boost_uint() / generate_random_boost_uint();
     }
 }
