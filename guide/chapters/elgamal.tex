@@ -1,0 +1,222 @@
+\ProvidesFile{elgamal.tex}
+
+\section{Эллиптический Эль-Гамаль}
+Общие данные: простое число $p$, эллиптическая кривая $\E(\F_p)$, точка на этой кривой $P\in\E(\F_p)$, её порядок $q$, отображение сообщения на эллиптическую кривую и обратное слева к нему отображение.
+
+  Допустим Боб хочет отправить сообщение $m$ Алисе. Тогда:
+  \begin{enumerate}
+    \item Алиса генерирует секретный ключ $n_\alpha\colon 1\leqslant n_\alpha<q$, публичный ключ: $A:=n_\alpha P$. Отправляет публичный ключ Бобу.
+    \item Боб обратимо отображает сообщение $m$ на эллиптическую кривую: $M\in\E(\F_p)$, генерирует одноразовый сектретный ключ $k\colon 1\leqslant k<q$, вычисляет $C_1:=kP,\q C_2:=kA+M$ и отправляет пару $(C_1,C_2)$ Алисе.
+    \item Алиса вычисляет исходную точку по формуле:
+    \[C_2 - n_\alpha C_1 =\]\[= kA+M - n_\alpha k P = n_\alpha k P + M - n_\alpha k P = M\]
+    и отображает её обратно в $m$ 
+  \end{enumerate}
+  
+  Отображать сообщение, представленное в виде двоичного числа, на эллиптическую кривую можно следующим образом:
+  \begin{enumerate}
+    \item Пусть наше поле $\F_p$, и $p$ - это достаточно большое число. Обозначим за $q$ - длину числа $p$ в битовом представлении.
+    \item Выберем и зафиксируем число $l\in (0, \frac{q}{2})$, и будем в первые $l$ бит числа записывать наше сообщение $m$ в двоичном представлении.
+    \item Заполним оставшиеся биты случайно. Тогда высока вероятность, что полученное число - это координата $x$ какой-то точки на эллиптической кривой. Если нет, то повторяем этот шаг, пока не получим точку на кривой.
+    \item Когда Алиса посчитала точку $M$, она берёт координату $x$ этой точки. Тогда первые $l$ бит значения этой координаты и будут сообщением $m$. 
+  \end{enumerate}
+
+  Заметим, что отображать сообщения на кривую и обратно не является удобным. В вариации Эль-Гамаля с хешированием, выбирается хеш-функция $H\colon \E(\F_p)\to \left\{0,1\right\}^n$ и $(C_1,c_2) := (kP, m \oplus H(kA))$, т.е. сообщение в двоичном виде длины $\leqslant n$ XORится с хешем от точки $kA$. Тогда Алиса получает исходное сообщение через $m = c_2 \oplus H(n_\alpha C_1)$.
+
+Реализуем данный функционал через класс:
+\subsection{Каркас}
+Запрашиваем нужные общие данные:
+\begin{cppcode}
+class ElGamal {
+    using Curve = EllipticCurve;
+    using Point = EllipticCurvePoint;
+
+public:
+    ElGamal(const Curve& curve, const Point& generator, const uint& generator_order);
+
+private:
+
+    Curve m_curve;
+    Point m_generator;
+    uint m_generator_order;
+};
+\end{cppcode}
+\subsection{Методы}
+Нам нужны методы
+\begin{enumerate}
+  \item Генерации ключей.
+
+  Для этого нужнен генератор рандомных чисел. Обычный мерсен не подойдёт, так как он не предназначен для криптографии. Используем \href{https://github.com/Duthomhas/CSPRNG}{библиотеку CSPRNG} для этих целей. Она использует внутренние генераторы операционной системы. Напишем генератор рандомных uint:
+  \begin{cppcode}
+#include "csprng/csprng.hpp"
+
+constexpr size_t c_size = 512 / sizeof(uint32_t);
+
+uint generate_random_uint() {
+    duthomhas::csprng rng;
+    std::seed_seq sseq {228};
+    rng.seed(sseq);
+    uint result = 0;
+    uint32_t x = rng(uint32_t());
+    std::vector<uint32_t> values = rng(std::vector<uint32_t>(c_size));
+
+    for (size_t i = 0; i < c_size; ++i) {
+        result <<= 32;
+        result += values[i];
+    }
+
+    return result;
+}
+
+uint generate_random_uint_modulo(const uint& modulus) {
+    return generate_random_uint() % modulus;
+}
+
+uint generate_random_non_zero_uint_modulo(const uint& modulus) {
+    return generate_random_uint_modulo(modulus - 1) + 1;
+}
+  \end{cppcode}
+
+  Тогда ключи получаем через:
+  \begin{cppcode}
+struct Keys {
+    uint private_key;
+    Point public_key;
+};
+
+Keys ElGamal::generate_keys() const {
+    uint private_key = generate_random_non_zero_uint_modulo(m_generator_order);
+    Point public_key = private_key * m_generator;
+    return Keys {.private_key = private_key, .public_key = public_key};
+}
+  \end{cppcode}
+  \item Шифрование сообщения. Есть два варианта - нам предоставили уже готовое сообщение $M\in\E(\F_p)$, либо надо самим отобразить $m$ на кривую. Напишем отображение uint на кривую, через вероятностный алгоритм:
+  \begin{cppcode}
+size_t actual_bit_size(uint value) {
+    size_t result = 0;
+
+    while (value != 0) {
+        ++result;
+        value >>= 1;
+    }
+
+    return result;
+}
+
+static std::map<uint, uint> p_zero_mask;
+static constexpr uint c_full_bits = uint(0) - 1;
+
+ElGamal::Point ElGamal::map_to_curve(const uint& message) const {
+    const Field& F = m_curve.get_field();
+    const uint& p = F.modulus();
+
+    if (!p_zero_mask.contains(p)) {
+        const size_t l = actual_bit_size(p) >> 1;
+        uint zero_mask = (c_full_bits >> l) << l;
+        p_zero_mask.insert({p, zero_mask});
+    }
+
+    const uint& zero_mask = p_zero_mask.at(p);
+
+    for (;;) {
+        uint x = random::generate_random_uint_modulo(p);
+        x &= zero_mask;
+        x |= message ^ (message & zero_mask);
+        auto opt = m_curve.point_with_x_equal_to(F.element(x));
+
+        if (opt.has_value()) {
+            return opt.value();
+        }
+    }
+}
+  \end{cppcode}
+  Так как нам нужно быстро записывать сообщение в половину длины простого числа, то нам нужна нулевая маска для этой половины. Заводим статическую мапу, которая будет хранить предподсчитанные маски, и создаём новые маски, если такого простого числа p не встречалось за время выполнения.
+
+  Отображение обратно с точки на uint происходит аналогично:
+  \begin{cppcode}
+uint ElGamal::map_to_uint(const Point& message) const {
+    const uint& p = m_curve.get_field().modulus();
+
+    if (!p_zero_mask.contains(p)) {
+        const size_t l = actual_bit_size(p) >> 1;
+        uint zero_mask = (c_full_bits >> l) << l;
+        p_zero_mask.insert({p, zero_mask});
+    }
+
+    const uint& zero_mask = p_zero_mask.at(p);
+    uint x = message.get_x().value();
+    x ^= (x & zero_mask);
+    return x;
+}
+  \end{cppcode}
+  Заметим, что мы обрезаем сообщение, если количество бит в нём больше, чем половина бит от простого модуля. С высокой долей вероятности, этот алгоритм будет работать относительно быстро и при большей заполненности бит простого модуля, поэтому вы можете поэксперементировать над длиной нулевой маски.
+
+  Имея оба отображения, можем имплементировать алгоритм шифрования, описанный ранее:
+  \begin{cppcode}
+struct EncryptedMessage {
+    Point generator_degree;
+    Point message_with_salt;
+};
+
+EncryptedMessage encrypt(const Point& message, const Point& public_key) const {
+    const uint k = generate_random_non_zero_uint_modulo(m_generator_order);
+    const Point generator_degree = k * m_generator;
+    const Point message_with_salt = message + k * public_key;
+    return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
+}
+
+EncryptedMessage encrypt(const uint& message, const Point& public_key) const {
+    Point point_message = map_to_curve(message);
+    return encrypt(point_message, public_key);
+}
+  \end{cppcode}
+  \item Дешифрование. По алгоритму, описанному ранее:
+  \begin{cppcode}
+Point decrypt_to_point(const EncryptedMessage& encrypted_message, const uint& private_key) const {
+    return encrypted_message.message_with_salt - private_key * encrypted_message.generator_degree;
+}
+
+uint decrypt_to_uint(const EncryptedMessage& encrypted_message, const uint& private_key) const {
+    const Point M = encrypted_message.message_with_salt
+                    - private_key * encrypted_message.generator_degree;
+    return map_to_uint(M);
+}
+
+  \end{cppcode}
+\end{enumerate}
+
+Итого сигнатура класса:
+\begin{cppcode}
+class ElGamal {
+    using Curve = EllipticCurve;
+    using Point = EllipticCurvePoint;
+
+public:
+    struct Keys {
+        uint private_key;
+        Point public_key;
+    };
+
+    struct EncryptedMessage {
+        Point generator_degree;
+        Point message_with_salt;
+    };
+
+    ElGamal(const Curve& curve, const Point& generator, const uint& generator_order);
+
+    Keys generate_keys() const;
+
+    EncryptedMessage encrypt(const uint& message, const Point& public_key) const;
+    EncryptedMessage encrypt(const Point& message, const Point& public_key) const;
+    Point decrypt_to_point(const EncryptedMessage& encrypted_message, const uint& private_key) const;
+    uint decrypt_to_uint(const EncryptedMessage& encrypted_message, const uint& private_key) const;
+
+private:
+    Point map_to_curve(const uint& message) const;
+    uint map_to_uint(const Point& message) const;
+
+    Curve m_curve;
+    Point m_generator;
+    uint m_generator_order;
+};
+\end{cppcode}
+
