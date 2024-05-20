@@ -181,20 +181,20 @@ public:
     }
 
     constexpr F_256 operator-() const {
-        if(!is_invertible) {
+        if (!is_invertible()) {
             return *this;
         }
-    
-        blocks result = p_values;
+
+        digits result = p_values;
         uint32_t remainder = 0;
-    
+
         for (size_t i = 0; i < c_digit_number; ++i) {
             uint32_t prev = result[i];
             uint32_t sum = m_digits[i] + remainder;
             result[i] -= sum;
             remainder = (result[i] > prev) || (sum < remainder);
         }
-    
+
         return F_256(result);
     }
 
