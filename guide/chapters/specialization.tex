@@ -1,0 +1,71 @@
+\ProvidesFile{specialization.tex}
+
+\section{Специализация}
+Остановимся на конкретной кривой и генераторе, а именно \href{https://neuromancer.sk/std/nist/P-256}{NIST P-256}. Будем писать однофайловое решение шифрования эллиптическим Эль-Гамалем. Начнём!
+
+\subsection{Поле}
+Так как нам нужно одно конкретное поле, то можно соединить классы FieldElement и uint\_t в одно целое, забыв о классе Field:
+\begin{cppcode}
+class F_256 {
+    static constexpr size_t c_bits = 512;
+    static constexpr size_t c_bits_in_byte = 8;
+    static constexpr size_t c_digit_size = 32;
+    static constexpr size_t c_digit_number = 16;
+    static constexpr size_t c_half_digit_number = 8;
+
+    using digits = std::array<uint32_t, c_digit_number>;
+    digits m_digits = {};
+}
+\end{cppcode}
+Так как наше простое число имеет 256 бит, то достаточно 512 бит для сдерживания переполнения. Для нормализации числа нам нужно определить само простое число p, но вот загвоздка --- оно то тоже 256 битное, а мы не можем определить статическое поле класса самим классом. Поэтому идём на хитрость: расписываем через constexpr только цифры простого числа:
+\begin{cppcode}
+static constexpr digits p_values = {4294967295U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
+\end{cppcode}
+Тогда для прибавления и вычитания простого числа при нормализации числа определим приватные методы:
+\begin{cppcode}
+constexpr void add_p() {
+    constexpr F_256 p(p_values);
+    *this += p_values;
+}
+
+constexpr void subtract_p() {
+    constexpr F_256 p(p_values);
+    *this -= p_values;
+}
+\end{cppcode}
+Теперь модифицируем инкремент и декремент: так как мы считаем, что при инкременте число поддерживало инвариант, то максимум кем оно могло стать --- это самим простым модулем p, поэтому:
+\begin{cppcode}
+constexpr void increment() {
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        m_digits[i] += 1;
+
+        if (m_digits[i] != 0) {
+            break;
+        }
+    }
+
+    if (m_digits == p_values) {
+        m_digits = {};
+    }
+}
+\end{cppcode}
+С декрементом немного посложней. Основное переполнение --- это декремент 0. Но мы знаем, чему число тогда станет равно: $p-1$, поэтому заранее определим его:
+\begin{cppcode}
+static constexpr digits max_mod_p = {4294967294U, 4294967295U, 4294967295U, 0U, 0U, 0U, 1U, 4294967295U};
+
+constexpr void decrement() {
+    if (*this == 0) {
+        m_digits = max_mod_p;
+        return;
+    }
+
+    for (size_t i = 0; i < c_digit_number; ++i) {
+        uint32_t temp = m_digits[i];
+        m_digits[i] -= 1;
+
+        if (temp >= m_digits[i]) {
+            break;
+        }
+    }
+}
+\end{cppcode}
