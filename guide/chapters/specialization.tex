@@ -478,16 +478,20 @@ int main() {
     }
 }
 \end{cppcode}
-Результаты замеров тестов, сравнивая с шаблонным многофайловым решением:
+Результаты замеров тестов на 1000 сообщений по 128 бит:
 \begin{itemize}
   \item Debug сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/spec_debug.png}
+    \end{center}
 
   \item Release сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/spec_release.png}
+    \end{center}
 \end{itemize}
 
-Вывод: TODO
+Шифрование стало в 5.7 раз медленнее, чем было у шаблонного варианта. Я уверен, что это из-за того, что код является однофайловым решением и не может эффективно скомпилироваться и слинковаться. Но всё равно, это был интересный опыт специализации.
 
