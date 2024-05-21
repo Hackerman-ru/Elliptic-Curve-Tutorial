@@ -10,9 +10,12 @@ namespace elliptic_curve_guide {
                 using Field = field::Field;
                 using Element = field::FieldElement;
                 using Curve = elliptic_curve::EllipticCurve;
-                using Point = elliptic_curve::EllipticCurvePoint<elliptic_curve::CoordinatesType::Normal>;
 
             public:
+                static constexpr elliptic_curve::CoordinatesType point_type =
+                    elliptic_curve::CoordinatesType::ModifiedJacobi;
+                using Point = elliptic_curve::EllipticCurvePoint<point_type>;
+
                 struct Keys {
                     Point public_key;
                     uint private_key;

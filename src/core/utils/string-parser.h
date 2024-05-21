@@ -10,7 +10,7 @@ namespace elliptic_curve_guide {
         // Parsing invalid string of unsigned integer is UB
         template<typename T>
         requires concepts::is_integral<T>
-        T parse_into_uint(const char* str) {
+        constexpr T parse_into_uint(const char* str) {
             assert(str != nullptr && "parse_into got nullptr");
 
             T value = 0;

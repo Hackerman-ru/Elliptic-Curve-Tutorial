@@ -83,47 +83,47 @@ static To convert(const From& value) {
     return result;
 }
 
-static bool is_equal(uint512_t lhs, uint_t<512> rhs) {
-    uint512_t rhs_value = convert<uint_t<512>, uint512_t>(rhs);
-    return lhs == rhs_value;
+static bool is_equal(uint_t<512> lhs, uint512_t rhs) {
+    uint512_t lhs_value = convert<uint_t<512>, uint512_t>(lhs);
+    return lhs_value == rhs;
 }
 
-#define UCMP(a, b)                                           \
-    if (!is_equal(a, b)) {                                   \
-        std::string boost_str = a.convert_to<std::string>(); \
-        std::string my_str = b.convert_to<std::string>();    \
-        ASSERT_EQ(boost_str, my_str);                        \
+#define UINT_EQ(a, b)                                          \
+    if (!is_equal(a, b)) {                                     \
+        std::string my_str = a.convert_to<std::string>();      \
+        std::string correct_str = b.convert_to<std::string>(); \
+        ASSERT_EQ(my_str, correct_str);                        \
     }
 
 // String manipulation correctness
 TEST(CorrectnessTest, SimpleConversions) {
     uint_t<512> my_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
     uint512_t boost_p("0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff");
-    UCMP(boost_p, my_p);
+    UINT_EQ(my_p, boost_p);
     uint_t<512> my_a = "0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc";
     uint512_t boost_a("0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc");
-    UCMP(boost_a, my_a);
+    UINT_EQ(my_a, boost_a);
     uint_t<512> my_b = "0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b";
     uint512_t boost_b("0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604b");
-    UCMP(boost_b, my_b);
+    UINT_EQ(my_b, boost_b);
     uint_t<512> my_x = "0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296";
     uint512_t boost_x("0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296");
-    UCMP(boost_x, my_x);
+    UINT_EQ(my_x, boost_x);
     uint_t<512> my_y = "0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5";
     uint512_t boost_y("0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5");
-    UCMP(boost_y, my_y);
+    UINT_EQ(my_y, boost_y);
     uint_t<512> my_n = "0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551";
     uint512_t boost_n("0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551");
-    UCMP(boost_n, my_n);
+    UINT_EQ(my_n, boost_n);
 
     uint_t<512> my_lhs = (my_y * my_y) % my_p;
     uint512_t boost_lhs = (boost_y * boost_y) % boost_p;
-    UCMP(boost_lhs, my_lhs);
+    UINT_EQ(my_lhs, boost_lhs);
 
     uint_t<512> my_rhs = (((my_x * my_x) % my_p) * my_x) % my_p + (my_a * my_x) % my_p + my_b - my_p;
     uint512_t boost_rhs = (((boost_x * boost_x) % boost_p) * boost_x) % boost_p
                         + (boost_a * boost_x) % boost_p + boost_b - boost_p;
-    UCMP(boost_rhs, my_rhs);
+    UINT_EQ(my_rhs, boost_rhs);
     ASSERT_EQ(boost_lhs, boost_rhs);
     ASSERT_EQ(my_lhs, my_rhs);
 }
@@ -132,7 +132,7 @@ TEST(CorrectnessTest, DecimalStringConversion) {
     for (size_t i = 0; i < c_correctness_test_string_conversion_n; ++i) {
         uint512_t boost_value = generate_random_boost_uint();
         uint_t<512> my_value = convert<uint512_t, uint_t<512>>(boost_value);
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -143,7 +143,7 @@ TEST(CorrectnessTest, HexadecimalStringConversion) {
         ss << std::hex << std::showbase << boost_value;
         std::string hex_str = ss.str();
         uint_t<512> my_value(hex_str.c_str());
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -154,7 +154,7 @@ TEST(CorrectnessTest, OctalStringConversion) {
         ss << std::oct << std::showbase << boost_value;
         std::string oct_str = ss.str();
         uint_t<512> my_value(oct_str.c_str());
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -163,7 +163,7 @@ TEST(CorrectnessTest, BinaryStringConversion) {
         uint512_t boost_value = generate_random_boost_uint();
         std::string binary_str = convert_to_binary(boost_value);
         uint_t<512> my_value(binary_str.c_str());
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -176,7 +176,7 @@ TEST(CorrectnessTest, uint32_t) {
         uint_t<512> my_value(value);
         ASSERT_EQ(value, my_value.convert_to<uint32_t>());
         uint512_t boost_value = value;
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -188,7 +188,7 @@ TEST(CorrectnessTest, size_t) {
         uint_t<512> my_value(value);
         ASSERT_EQ(value, my_value.convert_to<size_t>());
         uint512_t boost_value = value;
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -201,7 +201,7 @@ TEST(CorrectnessTest, LeftShift) {
         for (size_t j = 0; j < 512; ++j) {
             uint512_t boost_value = a << j;
             uint_t<512> my_value = b << j;
-            UCMP(boost_value, my_value);
+            UINT_EQ(my_value, boost_value);
 
             if (boost_value == 0) {
                 break;
@@ -218,7 +218,7 @@ TEST(CorrectnessTest, RightShift) {
         for (size_t j = 0; j < 512; ++j) {
             uint512_t boost_value = a >> j;
             uint_t<512> my_value = b >> j;
-            UCMP(boost_value, my_value);
+            UINT_EQ(my_value, boost_value);
 
             if (boost_value == 0) {
                 break;
@@ -235,7 +235,7 @@ TEST(CorrectnessTest, Addition) {
         uint_t<512> my_value = left + right;
         uint512_t boost_value =
             convert<uint_t<512>, uint512_t>(left) + convert<uint_t<512>, uint512_t>(right);
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -246,7 +246,7 @@ TEST(CorrectnessTest, Subtraction) {
         uint_t<512> my_value = left - right;
         uint512_t boost_value =
             convert<uint_t<512>, uint512_t>(left) - convert<uint_t<512>, uint512_t>(right);
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -257,7 +257,7 @@ TEST(CorrectnessTest, Multiplication) {
         uint_t<512> my_value = left * right;
         uint512_t boost_value =
             convert<uint_t<512>, uint512_t>(left) * convert<uint_t<512>, uint512_t>(right);
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 
@@ -268,7 +268,7 @@ TEST(CorrectnessTest, Division) {
         uint_t<512> my_value = left / right;
         uint512_t boost_value =
             convert<uint_t<512>, uint512_t>(left) / convert<uint_t<512>, uint512_t>(right);
-        UCMP(boost_value, my_value);
+        UINT_EQ(my_value, boost_value);
     }
 }
 

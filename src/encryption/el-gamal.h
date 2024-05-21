@@ -9,9 +9,12 @@ namespace elliptic_curve_guide {
         namespace encryption {
             class ElGamal {
                 using Curve = elliptic_curve::EllipticCurve;
-                using Point = elliptic_curve::EllipticCurvePoint<elliptic_curve::CoordinatesType::Normal>;
 
             public:
+                static constexpr elliptic_curve::CoordinatesType point_type =
+                    elliptic_curve::CoordinatesType::ModifiedJacobi;
+                using Point = elliptic_curve::EllipticCurvePoint<point_type>;
+
                 struct Keys {
                     uint private_key;
                     Point public_key;
