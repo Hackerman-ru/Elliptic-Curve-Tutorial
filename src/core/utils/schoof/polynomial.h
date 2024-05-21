@@ -48,7 +48,7 @@ namespace elliptic_curve_guide {
             Poly& operator*=(const Element& value);
             Poly& operator%=(const Poly& other);
 
-            bool operator==(const Poly& other) const = default;
+            bool operator==(const Poly& other) const;
 
             void pow(const uint& power);
             void decrease_degree();

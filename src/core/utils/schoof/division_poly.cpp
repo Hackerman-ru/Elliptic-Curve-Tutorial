@@ -8,11 +8,11 @@ namespace elliptic_curve_guide::polynomial {
     }
 
     DivisionPoly::DivisionPoly(const Poly& x_poly, const std::shared_ptr<const Poly>& curve_poly,
-                               const Element& y_coef, const size_t& y_power) :
+                               const Element& y_coef, const uint& y_power) :
         m_x_poly(x_poly), m_curve_poly(curve_poly), m_y_coef(y_coef), m_y_power(y_power) {}
 
     DivisionPoly::DivisionPoly(Poly&& x_poly, const std::shared_ptr<const Poly>& curve_poly, Element&& y_coef,
-                               const size_t& y_power) :
+                               const uint& y_power) :
         m_x_poly(std::move(x_poly)),
         m_curve_poly(curve_poly),
         m_y_coef(std::move(y_coef)),
@@ -119,6 +119,7 @@ namespace elliptic_curve_guide::polynomial {
         }
 
         m_x_poly += other.m_x_poly;
+        return *this;
     }
 
     DivisionPoly& DivisionPoly::operator-=(const DivisionPoly& other) {
@@ -130,22 +131,31 @@ namespace elliptic_curve_guide::polynomial {
         }
 
         m_x_poly -= other.m_x_poly;
+
+        if (m_x_poly.degree() == 0 && !m_x_poly[0].is_invertible()) {
+            m_y_coef = m_x_poly.get_field().element(1);
+            m_y_power = 0;
+        }
+
+        return *this;
     }
 
     DivisionPoly& DivisionPoly::operator*=(const DivisionPoly& other) {
         m_x_poly *= other.m_x_poly;
         m_y_power += other.m_y_power;
         m_y_coef *= other.m_y_coef;
+        return *this;
     }
 
     DivisionPoly& DivisionPoly::operator*=(const Element& value) {
         m_x_poly *= value;
+        return *this;
     }
 
     void DivisionPoly::pow(const uint& power) {
         m_x_poly.pow(power);
         m_y_coef.pow(2);
-        m_y_power <<= 1;
+        m_y_power *= power;
     }
 
     void DivisionPoly::divide_by_2_y() {

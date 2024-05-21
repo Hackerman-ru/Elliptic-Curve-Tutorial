@@ -5,7 +5,7 @@
 #include "elliptic-curve.h"
 #include "field.h"
 #include "uint.h"
-#include "utils/schoof.h"
+#include "utils/schoof/schoof.h"
 
 using namespace elliptic_curve_guide;
 using namespace field;

@@ -4,7 +4,6 @@
 #include "field.h"
 #include "utils/random.h"
 #include "utils/wnaf.h"
-//#include "utils/schoof.h"
 
 #include <optional>
 

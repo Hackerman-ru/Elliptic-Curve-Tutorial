@@ -102,11 +102,7 @@ namespace elliptic_curve_guide::ring {
     }
 
     bool operator==(const RingElement& lhs, const RingElement& rhs) {
-        return false;
-    }
-
-    bool operator!=(const RingElement& lhs, const RingElement& rhs) {
-        return false;
+        return lhs.m_value == rhs.m_value && *lhs.m_modulus == *rhs.m_modulus;
     }
 
     RingElement RingElement::operator-() const {

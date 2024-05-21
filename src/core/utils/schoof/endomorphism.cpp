@@ -1,5 +1,7 @@
 #include "endomorphism.h"
 
+#include "utils/wnaf.h"
+
 namespace elliptic_curve_guide::endomorphism {
     End::End(const Ring& ring, const Poly& a, const Poly& b,
              const std::shared_ptr<const Element>& curve_function) :
@@ -24,17 +26,18 @@ namespace elliptic_curve_guide::endomorphism {
         const polynomial::Poly& g = gcd_result.gcd;
 
         if (g.degree() > 0) {
-            return End::AdditionResult {.end = std::nullopt, .g = g};
+            return g;
         }
 
-        assert(g[0].value() == 1 && "End::operator+ : gcd must be 1");
-        const polynomial::Poly& inverse_denominator = gcd_result.value_multiplier;
+        const polynomial::Poly& inverse_denominator =
+            gcd_result.value_multiplier * field::FieldElement::inverse(gcd_result.gcd[0]);
         const field::FieldElement& A = f.value()[1];
-        End::Element r = (F.element(3) * Element::pow(end.m_a, 2) + R.element(Poly(F, {A})) * R.element(inverse_denominator);
+        End::Element r = F.element(3) * Element::pow(end.m_a, 2)
+                       + R.element(Poly(F, {A})) * R.element(inverse_denominator);
         End::Element a = End::Element::pow(r, 2) * f - end.m_a * F.element(2);
         End::Element b = r * (end.m_a - a) - end.m_b;
         End result(R, a, b, end.m_curve_function);
-        return End::AdditionResult {.end = result, .g = std::nullopt};
+        return result;
     }
 
     End::AdditionResult operator+(const End& lhs, const End& rhs) {
@@ -53,16 +56,16 @@ namespace elliptic_curve_guide::endomorphism {
         const End::Element& f = *lhs.m_curve_function;
 
         if (g.degree() > 0) {
-            return End::AdditionResult {.end = std::nullopt, .g = g};
+            return g;
         }
 
-        assert(g[0].value() == 1 && "End::operator+ : gcd must be 1");
-        const polynomial::Poly& inverse_denominator = gcd_result.value_multiplier;
+        const polynomial::Poly& inverse_denominator =
+            gcd_result.value_multiplier * field::FieldElement::inverse(gcd_result.gcd[0]);
         End::Element r = (lhs.m_b - rhs.m_b) * R.element(inverse_denominator);
         End::Element a = End::Element::pow(r, 2) * f - lhs.m_a - rhs.m_a;
         End::Element b = r * (lhs.m_a - a) - lhs.m_b;
         End result(R, a, b, lhs.m_curve_function);
-        return End::AdditionResult {.end = result, .g = std::nullopt};
+        return result;
     }
 
     End::AdditionResult operator-(const End& lhs, const End& rhs) {
@@ -95,12 +98,68 @@ namespace elliptic_curve_guide::endomorphism {
         return lhs;
     }
 
+    static End::AdditionResult multiply(End value, const uint& n) {
+        algorithm::WnafForm wform = algorithm::get_wnaf(n);
+        End::AdditionResult var = value + value;
+
+        if (std::holds_alternative<polynomial::Poly>(var)) {
+            return std::get<polynomial::Poly>(var);
+        }
+
+        End two_value = std::get<End>(var);
+        std::vector<End> k_values = {value};
+
+        for (size_t i = 1; i < algorithm::c_k_number; ++i) {
+            var = k_values.back() + two_value;
+
+            if (std::holds_alternative<polynomial::Poly>(var)) {
+                return std::get<polynomial::Poly>(var);
+            }
+
+            k_values.emplace_back(std::get<End>(var));
+        }
+
+        value.nullify();
+
+        for (size_t i = wform.size(); i > 0; --i) {
+            var = value + value;
+
+            if (std::holds_alternative<polynomial::Poly>(var)) {
+                return std::get<polynomial::Poly>(var);
+            }
+
+            value = std::get<End>(var);
+
+            if (wform[i - 1].value != 0) {
+                if (!wform[i - 1].is_negative) {
+                    var = value + k_values[wform[i - 1].value >> 1];
+
+                    if (std::holds_alternative<polynomial::Poly>(var)) {
+                        return std::get<polynomial::Poly>(var);
+                    }
+
+                    value = std::get<End>(var);
+                } else {
+                    var = value - k_values[wform[i - 1].value >> 1];
+
+                    if (std::holds_alternative<polynomial::Poly>(var)) {
+                        return std::get<polynomial::Poly>(var);
+                    }
+
+                    value = std::get<End>(var);
+                }
+            }
+        }
+
+        return value;
+    }
+
     End::AdditionResult operator*(const End& end, const uint& value) {
-        // TODO : double and add
+        return multiply(end, value);
     }
 
     End::AdditionResult operator*(const uint& value, const End& end) {
-        // TODO : double and add
+        return multiply(end, value);
     }
 
     End End::operator-() const {
@@ -113,10 +172,7 @@ namespace elliptic_curve_guide::endomorphism {
         assert(m_ring == other.m_ring && "End::operator*= : endomorphisms from different rings");
         m_a = m_ring.element(polynomial::Poly::compose(m_a.value(), other.m_a.value()));
         m_b = m_ring.element(polynomial::Poly::compose(m_b.value(), other.m_b.value()));
-    }
-
-    End& End::operator*=(const uint& value) {
-        return *this = algorithm::wnaf_addition<End>(*this, value);
+        return *this;
     }
 
     void End::nullify() {

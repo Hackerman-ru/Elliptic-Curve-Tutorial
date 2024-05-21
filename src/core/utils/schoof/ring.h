@@ -43,7 +43,6 @@ namespace elliptic_curve_guide {
             RingElement& operator*=(const Element& value);
 
             friend bool operator==(const RingElement& lhs, const RingElement& rhs);
-            friend bool operator!=(const RingElement& lhs, const RingElement& rhs);
 
             void pow(const uint& power);
             const Poly& modulus() const;

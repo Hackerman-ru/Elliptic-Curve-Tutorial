@@ -6,6 +6,8 @@
 #include "uint.h"
 #include "wnaf.h"
 
+#include <variant>
+
 namespace elliptic_curve_guide {
     namespace endomorphism {
         class End {
@@ -22,10 +24,7 @@ namespace elliptic_curve_guide {
                 const std::shared_ptr<const Element>& curve_function);
             End(const Ring& ring, Element&& a, Element&& b, std::shared_ptr<const Element>&& curve_function);
 
-            struct AdditionResult {
-                std::optional<End> end;
-                std::optional<Poly> g;
-            };
+            using AdditionResult = std::variant<End, Poly>;
 
             static AdditionResult twice(const End& end);
 
@@ -46,9 +45,10 @@ namespace elliptic_curve_guide {
             End operator-() const;
 
             End& operator*=(const End& other);
-            End& operator*=(const uint& value);
 
         private:
+            friend static AdditionResult multiply(End value, const uint& n);
+
             void nullify();
             void change_modulus(const Poly& modulus);
 

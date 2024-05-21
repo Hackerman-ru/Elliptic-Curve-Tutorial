@@ -12,7 +12,6 @@ namespace elliptic_curve_guide::algorithm::random {
         std::seed_seq sseq {228};
         rng.seed(sseq);
         uint result = 0;
-        uint32_t x = rng(uint32_t());
         std::vector<uint32_t> values = rng(std::vector<uint32_t>(c_size));
 
         for (size_t i = 0; i < c_size; ++i) {

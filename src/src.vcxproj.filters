@@ -31,20 +31,8 @@
       <Filter>utils\random</Filter>
     </ClInclude>
     <ClInclude Include="core\uint.h" />
-    <ClInclude Include="core\utils\primes.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\schoof.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
     <ClInclude Include="core\utils\fast-pow.h">
       <Filter>utils</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\ring.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\polynomial.h">
-      <Filter>utils\schoof</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\modulo_inversion.h">
       <Filter>utils</Filter>
@@ -52,14 +40,26 @@
     <ClInclude Include="core\utils\field_root.h">
       <Filter>utils</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\division_poly.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
-    <ClInclude Include="core\utils\endomorphism.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
     <ClInclude Include="core\utils\wnaf.h">
       <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\division_poly.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\endomorphism.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\polynomial.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\primes.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\ring.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\schoof.h">
+      <Filter>utils\schoof</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -77,22 +77,22 @@
     <ClCompile Include="core\utils\csprng\csprng.cpp">
       <Filter>utils\random</Filter>
     </ClCompile>
-    <ClCompile Include="core\utils\schoof.cpp">
-      <Filter>utils\schoof</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\ring.cpp">
-      <Filter>utils\schoof</Filter>
-    </ClCompile>
-    <ClCompile Include="core\utils\polynomial.cpp">
-      <Filter>utils\schoof</Filter>
-    </ClCompile>
     <ClCompile Include="core\utils\field_root.cpp">
       <Filter>utils</Filter>
     </ClCompile>
-    <ClCompile Include="core\utils\division_poly.cpp">
+    <ClCompile Include="core\utils\schoof\division_poly.cpp">
       <Filter>utils\schoof</Filter>
     </ClCompile>
-    <ClCompile Include="core\utils\endomorphism.cpp">
+    <ClCompile Include="core\utils\schoof\endomorphism.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\polynomial.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\ring.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\schoof.cpp">
       <Filter>utils\schoof</Filter>
     </ClCompile>
   </ItemGroup>
