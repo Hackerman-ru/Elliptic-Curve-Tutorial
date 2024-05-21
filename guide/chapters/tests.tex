@@ -32,11 +32,15 @@
 \begin{itemize}
   \item Debug сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/elgamal_debug.png}
+    \end{center}
 
   \item Release сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/elgamal_release.png}
+    \end{center}
 \end{itemize}
 Так как никто из нормальных людей не использует Эллиптического Эль-Гамаля, то придётся сравнить его с \href{https://github.com/RustCrypto/elliptic-curves/tree/master/p256}{Эллиптическим Диффи-Хеллманом}, который написан на расте:
 
@@ -44,18 +48,22 @@
   \includegraphics{images/outsource_elgamal.png}
 \end{center}
 
-То есть он выполнился за $\thicksim 375$ мс ($\pm9$ мс). При одинаковых условиях TODO
+То есть он выполнился за $\thicksim 375$ мс ($\pm9$ мс). При одинаковых условиях код выполнился в 10 раз медленнее. Это наверно связано с тем, что в библиотеке растовская имплементация, заточенная под P-256, а у нас C++ и общая имплементация. Поэтому есть возможности для улучшения.
 
 \subsection{ECDSA}
 Результаты времени работы Эль-Гамаля для 1000 сообщений из 128 бит над NIST P-256:
 \begin{itemize}
   \item Debug сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/ecdsa_debug.png}
+    \end{center}
 
   \item Release сборка:
 
-    TODO
+    \begin{center}
+      \includegraphics{images/ecdsa_release.png}
+    \end{center}
 \end{itemize}
 
 Раз уж мы использовали \href{https://github.com/RustCrypto/elliptic-curves/tree/master/p256}{эту библиотеку}, то можно сравнить именно с её ECDSA:
@@ -64,5 +72,5 @@
   \includegraphics{images/outsoucre_ecdsa.png}
 \end{center}
 
-Как видим, результаты $\thicksim 372$ мс ($\pm26$ мс). При одинаковых условиях TODO
+Как видим, результаты $\thicksim 372$ мс ($\pm26$ мс). При одинаковых условиях аналогично предыдущему случаю: в 10 раз медленнее.
 
