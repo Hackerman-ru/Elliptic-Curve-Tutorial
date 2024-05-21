@@ -1,7 +1,7 @@
 #include "polynomial.h"
 
+#include "ring.h"
 #include "utils/fast-pow.h"
-#include "utils/ring.h"
 
 namespace elliptic_curve_guide::polynomial {
     Poly Poly::pow(const Poly& poly, const uint& power) {
@@ -9,7 +9,10 @@ namespace elliptic_curve_guide::polynomial {
             return Poly(poly.get_field(), {1});
         }
 
-        return algorithm::fast_pow<Poly>(poly, power);
+        Poly result = algorithm::fast_pow<Poly>(poly, power);
+        result.clean();
+        assert(result.is_valid() && "Poly::pow : invalid representation of polynomial");
+        return result;
     }
 
     Poly Poly::compose(const Poly& outside_poly, const Poly& inside_poly) {
@@ -22,9 +25,9 @@ namespace elliptic_curve_guide::polynomial {
         return result;
     }
 
-    Poly Poly::decrease_degree_by(const Poly& poly, size_t shift) {
-        Poly result = poly;
-        result.decrease_degree_by(shift);
+    Poly Poly::get_x_power_n(const Field& field, size_t n) {
+        Poly result = Poly(field, {1});
+        result.increase_degree_by(n);
         return result;
     }
 
@@ -35,9 +38,17 @@ namespace elliptic_curve_guide::polynomial {
     }
 
     Poly::Poly(const Field& field) : m_field(field), m_coeffs({field.element(0)}) {};
-    Poly::Poly(const Field& field, const std::vector<Element>& coeffs) : m_field(field), m_coeffs(coeffs) {};
+
+    Poly::Poly(const Field& field, const std::vector<Element>& coeffs) : m_field(field), m_coeffs(coeffs) {
+        clean();
+        assert(is_valid() && "Poly::pow : invalid representation of polynomial");
+    }
+
     Poly::Poly(const Field& field, std::vector<Element>&& coeffs) :
-        m_field(field), m_coeffs(std::move(coeffs)) {};
+        m_field(field), m_coeffs(std::move(coeffs)) {
+        clean();
+        assert(is_valid() && "Poly::pow : invalid representation of polynomial");
+    }
 
     static std::vector<field::FieldElement> convert_to_field_coeffs(const field::Field& field,
                                                                     const std::vector<uint>& coeffs) {
@@ -52,7 +63,10 @@ namespace elliptic_curve_guide::polynomial {
     }
 
     Poly::Poly(const Field& field, const std::vector<uint>& coeffs) :
-        m_field(field), m_coeffs(convert_to_field_coeffs(field, coeffs)) {};
+        m_field(field), m_coeffs(convert_to_field_coeffs(field, coeffs)) {
+        clean();
+        assert(is_valid() && "Poly::pow : invalid representation of polynomial");
+    }
 
     Poly operator+(const Poly& lhs, const Poly& rhs) {
         Poly result = lhs;
@@ -195,69 +209,24 @@ namespace elliptic_curve_guide::polynomial {
     }
 
     Poly& Poly::operator%=(const Poly& other) {
-        if (other.degree() == 0) {
-            return *this;
-        }
-
-        if (degree() == 0 && other.degree() == 0) {
-            if (m_coeffs[0] >= other.m_coeffs[0]) {
-                m_coeffs[0] = m_field.element(m_coeffs[0].value() % other.m_coeffs[0].value());
-            }
-
-            return *this;
-        }
+        assert(other.degree() > 0 && "Poly::operator%= : invalid modulus");
 
         while (degree() >= other.degree()) {
             Element factor = top_coef() / other.top_coef();
             *this -= increase_degree_by(other * factor, degree() - other.degree());
         }
 
+        clean();
         assert(is_valid() && "Poly::operator%= : invalid representation of polynomial");
         return *this;
     }
 
-    bool Poly::operator==(const Poly& other) const {
-        return m_coeffs == other.m_coeffs;
+    bool operator==(const Poly& lhs, const Poly& rhs) {
+        return lhs.m_coeffs == rhs.m_coeffs;
     }
 
     void Poly::pow(const uint& power) {
         *this = pow(*this, power);
-        assert(is_valid() && "Poly::pow : invalid representation of polynomial");
-    }
-
-    void Poly::decrease_degree() {
-        for (size_t i = degree(); i > 0; --i) {
-            m_coeffs[i - 1] = m_coeffs[i];
-        }
-
-        m_coeffs.pop_back();
-        assert(is_valid() && "Poly::decrease_degree : invalid representation of polynomial");
-    }
-
-    void Poly::increase_degree() {
-        m_coeffs.emplace_back(top_coef());
-
-        for (size_t i = degree(); i > 0; --i) {
-            m_coeffs[i] = m_coeffs[i - 1];
-        }
-
-        m_coeffs[0] = m_field.element(0);
-        assert(is_valid() && "Poly::increase_degree : invalid representation of polynomial");
-    }
-
-    void Poly::decrease_degree_by(size_t shift) {
-        if (shift > degree()) {
-            m_coeffs = {m_field.element(0)};
-            assert(is_valid() && "Poly::decrease_degree_by : invalid representation of polynomial");
-            return;
-        }
-
-        for (size_t i = degree() + 1; i - shift > 0; --i) {
-            m_coeffs[i - shift - 1] = m_coeffs[i - 1];
-            m_coeffs.pop_back();
-        }
-
-        assert(is_valid() && "Poly::decrease_degree_by : invalid representation of polynomial");
     }
 
     void Poly::increase_degree_by(size_t shift) {
@@ -308,6 +277,8 @@ namespace elliptic_curve_guide::polynomial {
         if (size == 0) {
             m_coeffs = {m_field.element(0)};
         }
+
+        assert(is_valid() && "Poly::clean : invalid representation of polynomial");
     }
 
     void Poly::negative() {
@@ -315,6 +286,7 @@ namespace elliptic_curve_guide::polynomial {
             coef = -coef;
         }
 
+        clean();
         assert(is_valid() && "Poly::negative : invalid representation of polynomial");
     }
 
@@ -357,12 +329,12 @@ namespace elliptic_curve_guide::algorithm {
         const size_t lhs_degree = lhs.degree();
         const size_t rhs_degree = rhs.degree();
 
-        if (lhs_degree < rhs_degree) {
-            return DivisionResult {.quotient = Poly(F), .remainder = lhs};
-        }
-
         if (rhs_degree == 0) {
             return DivisionResult {.quotient = lhs * Element::inverse(rhs[0]), .remainder = Poly(F)};
+        }
+
+        if (lhs_degree < rhs_degree) {
+            return DivisionResult {.quotient = Poly(F), .remainder = lhs};
         }
 
         Poly quotient(F, {1});
@@ -389,19 +361,20 @@ namespace elliptic_curve_guide::algorithm {
                                                             polynomial::Poly& x,
                                                             polynomial::Poly& y,
                                                             const polynomial::Poly& modulus) {
+        using polynomial::Poly;
         const field::Field& F = a.get_field();
 
         if (b.degree() == 0 && !b[0].is_invertible()) {
-            x = polynomial::Poly(F, {1});
-            y = polynomial::Poly(F);
+            x = Poly(F, {1});
+            y = Poly(F);
             return a;
         }
 
         DivisionResult division_result = divide(a, b);
-        polynomial::Poly x1(F), y1(F);
-        polynomial::Poly d = polynomial_extended_modular_gcd(b, division_result.remainder, x1, y1, modulus);
-        x = y1 % modulus;
-        y = (x1 - y1 * division_result.quotient) % modulus;
+        Poly x1(F), y1(F);
+        Poly d = polynomial_extended_modular_gcd(b, division_result.remainder, x1, y1, modulus);
+        x = y1;
+        y = x1 - y1 * division_result.quotient;
         return d;
     }
 
@@ -409,6 +382,14 @@ namespace elliptic_curve_guide::algorithm {
         const field::Field& F = value.get_field();
         polynomial::Poly x(F), y(F);
         polynomial::Poly d = polynomial_extended_modular_gcd(value, modulus, x, y, modulus);
+
+        if (d.degree() == 0) {
+            const field::FieldElement inverse_value = field::FieldElement::inverse(d.top_coef());
+            x *= inverse_value;
+            y *= inverse_value;
+            d = polynomial::Poly(F, {1});
+        }
+
         return ModulusGcdResult {
             .gcd = d,
             .value_multiplier = x,

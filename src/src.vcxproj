@@ -363,6 +363,7 @@
       </ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="core\utils\primes.h" />
     <ClInclude Include="core\utils\random.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - uint|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug - field|x64'">false</ExcludedFromBuild>
@@ -370,7 +371,6 @@
     <ClInclude Include="core\utils\schoof\division_poly.h" />
     <ClInclude Include="core\utils\schoof\endomorphism.h" />
     <ClInclude Include="core\utils\schoof\polynomial.h" />
-    <ClInclude Include="core\utils\schoof\primes.h" />
     <ClInclude Include="core\utils\schoof\ring.h" />
     <ClInclude Include="core\utils\schoof\schoof.h" />
     <ClInclude Include="core\utils\string-parser.h" />

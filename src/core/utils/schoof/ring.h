@@ -6,6 +6,7 @@
 namespace elliptic_curve_guide {
     namespace ring {
         class RingElement {
+            using Field = field::Field;
             using Element = field::FieldElement;
             using Poly = polynomial::Poly;
             friend class Ring;
@@ -14,6 +15,7 @@ namespace elliptic_curve_guide {
 
         public:
             static RingElement pow(const RingElement& element, const uint& power);
+            static RingElement compose(const RingElement& outside_element, const RingElement& inside_element);
 
             friend RingElement operator+(const RingElement& lhs, const RingElement& rhs);
             friend RingElement operator+(RingElement&& lhs, const RingElement& rhs);
@@ -45,7 +47,9 @@ namespace elliptic_curve_guide {
             friend bool operator==(const RingElement& lhs, const RingElement& rhs);
 
             void pow(const uint& power);
+            void compose(const RingElement& inside_element);
             const Poly& modulus() const;
+            const Field& get_field() const;
             const Poly& value() const;
 
         private:

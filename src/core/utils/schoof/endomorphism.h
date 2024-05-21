@@ -4,7 +4,7 @@
 #include "polynomial.h"
 #include "ring.h"
 #include "uint.h"
-#include "wnaf.h"
+#include "utils/wnaf.h"
 
 #include <variant>
 
@@ -40,7 +40,7 @@ namespace elliptic_curve_guide {
             friend AdditionResult operator*(const End& end, const uint& value);
             friend AdditionResult operator*(const uint& value, const End& end);
 
-            bool operator==(const End& other) const = default;
+            bool operator==(const End& other) const;
 
             End operator-() const;
 
@@ -50,7 +50,6 @@ namespace elliptic_curve_guide {
             friend static AdditionResult multiply(End value, const uint& n);
 
             void nullify();
-            void change_modulus(const Poly& modulus);
 
             Ring m_ring;
             Element m_a;

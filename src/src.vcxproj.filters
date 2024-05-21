@@ -52,14 +52,14 @@
     <ClInclude Include="core\utils\schoof\polynomial.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
-    <ClInclude Include="core\utils\schoof\primes.h">
-      <Filter>utils\schoof</Filter>
-    </ClInclude>
     <ClInclude Include="core\utils\schoof\ring.h">
       <Filter>utils\schoof</Filter>
     </ClInclude>
     <ClInclude Include="core\utils\schoof\schoof.h">
       <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\primes.h">
+      <Filter>utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

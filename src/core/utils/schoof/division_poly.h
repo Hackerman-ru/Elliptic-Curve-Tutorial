@@ -14,9 +14,8 @@ namespace elliptic_curve_guide {
             static DivisionPoly pow(const DivisionPoly& division_poly, const uint& power);
 
             DivisionPoly(const Poly& x_poly, const std::shared_ptr<const Poly>& curve_poly,
-                         const Element& y_coef, const uint& y_power);
-            DivisionPoly(Poly&& x_poly, const std::shared_ptr<const Poly>& curve_poly, Element&& y_coef,
                          const uint& y_power);
+            DivisionPoly(Poly&& x_poly, const std::shared_ptr<const Poly>& curve_poly, const uint& y_power);
 
             friend DivisionPoly operator+(const DivisionPoly& lhs, const DivisionPoly& rhs);
             friend DivisionPoly operator+(DivisionPoly&& lhs, const DivisionPoly& rhs);
@@ -46,15 +45,15 @@ namespace elliptic_curve_guide {
             DivisionPoly& operator*=(const Element& value);
 
             void pow(const uint& power);
-            void divide_by_2_y();
+            void divide_by_y();
             void reduce_y();
             const Poly& get_x_poly() const;
-            const Element& get_y_coef() const;
 
         private:
+            bool is_x_poly_null() const;
+
             Poly m_x_poly;
             std::shared_ptr<const Poly> m_curve_poly;
-            Element m_y_coef;
             uint m_y_power;
         };
     }   // namespace polynomial

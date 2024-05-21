@@ -2,14 +2,16 @@
 
 #include "division_poly.h"
 #include "endomorphism.h"
-#include "modulo_inversion.h"
 #include "polynomial.h"
-#include "primes.h"
 #include "ring.h"
+#include "utils/modulo_inversion.h"
+#include "utils/primes.h"
 
 namespace elliptic_curve_guide::algorithm::schoof {
-    static constexpr size_t prime_number_list_size =
+    static constexpr size_t c_prime_number_list_size =
         sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
+
+    static constexpr size_t c_max_needed_prime_number = 400;
 
     static std::vector<polynomial::DivisionPoly> get_division_polynomials(const polynomial::Poly& curve_poly,
                                                                           const field::Field& field) {
@@ -20,28 +22,30 @@ namespace elliptic_curve_guide::algorithm::schoof {
         const Element& a = curve_poly[1];
         const Element& b = curve_poly[0];
         const Element a_squared = Element::pow(a, 2);
+        const Element b_squared = Element::pow(b, 2);
         auto curve_poly_ptr = std::make_shared<const Poly>(curve_poly);
 
-        DivisionPoly psi_0 = {Poly(field, {0}), curve_poly_ptr, field.element(1), 0};
+        DivisionPoly psi_0 = {Poly(field, {0}), curve_poly_ptr, 0};
 
-        DivisionPoly psi_1 = {Poly(field, {1}), curve_poly_ptr, field.element(1), 0};
+        DivisionPoly psi_1 = {Poly(field, {1}), curve_poly_ptr, 0};
 
-        DivisionPoly psi_2 = {Poly(field, {1}), curve_poly_ptr, field.element(2), 1};
+        DivisionPoly psi_2 = {Poly(field, {2}), curve_poly_ptr, 1};
 
         Poly psi_3_poly = Poly(
             field,
             {-a_squared, field.element(12) * b, field.element(6) * a, field.element(0), field.element(3)});
-        DivisionPoly psi_3 = {std::move(psi_3_poly), curve_poly_ptr, field.element(1), 0};
+        DivisionPoly psi_3 = {std::move(psi_3_poly), curve_poly_ptr, 0};
 
         Poly psi_4_poly = Poly(field,
-                               {-(Element::pow(b, 2) << 3) - a_squared * a,
-                                -(a * b << 2),
+                               {-(b_squared << 3) - a_squared * a,
+                                -(a * b << 4),
                                 -field.element(5) * a_squared,
                                 field.element(20) * b,
                                 field.element(5) * a,
                                 field.element(0),
-                                field.element(1)});
-        DivisionPoly psi_4 = {std::move(psi_4_poly), curve_poly_ptr, field.element(4), 1};
+                                field.element(1)})
+                        * field.element(4);
+        DivisionPoly psi_4 = {std::move(psi_4_poly), curve_poly_ptr, 1};
 
         std::vector<DivisionPoly> result = {
             std::move(psi_0), std::move(psi_1), std::move(psi_2), std::move(psi_3), std::move(psi_4)};
@@ -58,11 +62,10 @@ namespace elliptic_curve_guide::algorithm::schoof {
                 result.emplace_back(std::move(next));
             } else {
                 DivisionPoly lhs = result[n + 2] * DivisionPoly::pow(result[n - 1], 2);
-                //lhs.reduce_y();
                 DivisionPoly rhs = result[n - 2] * DivisionPoly::pow(result[n + 1], 2);
-                //rhs.reduce_y();
                 DivisionPoly next = result[n] * (lhs - rhs);
-                next.divide_by_2_y();
+                next.divide_by_y();
+                next *= FieldElement::inverse(field.element(2));
                 next.reduce_y();
                 result.emplace_back(std::move(next));
             }
@@ -131,6 +134,7 @@ namespace elliptic_curve_guide::algorithm::schoof {
 
             while (temp != sum) {
                 ++c;
+                assert(c < modulus);
                 var = temp + pi;
 
                 if (std::holds_alternative<polynomial::Poly>(var)) {

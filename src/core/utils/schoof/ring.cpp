@@ -8,10 +8,21 @@ namespace elliptic_curve_guide::ring {
 
     RingElement RingElement::pow(const RingElement& element, const uint& power) {
         if (power == 0) {
-            return RingElement(Poly(element.m_modulus->get_field(), {1}), element.m_modulus);
+            return RingElement(Poly(element.get_field(), {1}), element.m_modulus);
         }
 
         return algorithm::fast_pow<RingElement>(element, power);
+    }
+
+    RingElement RingElement::compose(const RingElement& outside_element, const RingElement& inside_element) {
+        RingElement result(Poly(outside_element.get_field(), {outside_element.m_value[0]}),
+                           outside_element.m_modulus);
+
+        for (size_t i = 1; i <= outside_element.m_value.degree(); ++i) {
+            result += pow(inside_element, i) * outside_element.m_value[i];
+        }
+
+        return result;
     }
 
     // operator+
@@ -142,8 +153,16 @@ namespace elliptic_curve_guide::ring {
         *this = pow(*this, power);
     }
 
+    void RingElement::compose(const RingElement& inside_element) {
+        *this = compose(*this, inside_element);
+    }
+
     const RingElement::Poly& RingElement::modulus() const {
         return *m_modulus;
+    }
+
+    const RingElement::Field& RingElement::get_field() const {
+        return m_modulus->get_field();
     }
 
     const RingElement::Poly& RingElement::value() const {

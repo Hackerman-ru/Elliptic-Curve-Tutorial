@@ -2,7 +2,8 @@
 #define ECG_POLYNOMIAL_H
 
 #include "field.h"
-#include "optional"
+
+#include <optional>
 
 namespace elliptic_curve_guide {
     namespace polynomial {
@@ -13,8 +14,8 @@ namespace elliptic_curve_guide {
         public:
             static Poly pow(const Poly& poly, const uint& power);
             static Poly compose(const Poly& outside_poly, const Poly& inside_poly);
-            static Poly decrease_degree_by(const Poly& poly, size_t shift);
             static Poly increase_degree_by(const Poly& poly, size_t shift);
+            static Poly get_x_power_n(const Field& field, size_t n);
 
             Poly(const Field& field);
             Poly(const Field& field, const std::vector<Element>& coeffs);
@@ -48,12 +49,9 @@ namespace elliptic_curve_guide {
             Poly& operator*=(const Element& value);
             Poly& operator%=(const Poly& other);
 
-            bool operator==(const Poly& other) const;
+            friend bool operator==(const Poly& lhs, const Poly& rhs);
 
             void pow(const uint& power);
-            void decrease_degree();
-            void increase_degree();
-            void decrease_degree_by(size_t shift);
             void increase_degree_by(size_t shift);
             size_t degree() const;
             void compose(const Poly& inside_poly);
