@@ -30,8 +30,8 @@ namespace elliptic_curve_guide {
                       const uint& h);
 
                 Keys generate_keys() const;
-                Signature generate_signature(const uint& private_key, const uint& message) const;
-                bool is_correct_signature(const Point& public_key, const uint& message,
+                Signature generate_signature(const uint& message, const uint& private_key) const;
+                bool is_correct_signature(const uint& message, const Point& public_key,
                                           const Signature& signature) const;
 
             private:

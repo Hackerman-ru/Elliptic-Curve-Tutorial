@@ -1,5 +1,5 @@
-#ifndef ECG_UINT_ALGORITHMS_H
-#define ECG_UINT_ALGORITHMS_H
+#ifndef ECG_BITSIZE_H
+#define ECG_BITSIZE_H
 
 #include "uint.h"
 

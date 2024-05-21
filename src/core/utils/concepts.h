@@ -1,5 +1,5 @@
-#ifndef ECG_UTIL_H
-#define ECG_UTIL_H
+#ifndef ECG_CONCEPTS_H
+#define ECG_CONCEPTS_H
 
 #include <concepts>
 
