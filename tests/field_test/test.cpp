@@ -5,12 +5,8 @@
 #include "utils/primes.h"
 #include "utils/random.h"
 
-#include <boost/multiprecision/cpp_int.hpp>
-#include <boost/multiprecision/fwd.hpp>
-
 using namespace elliptic_curve_guide;
 using namespace field;
-
 using namespace algorithm::random;
 
 static constexpr size_t c_primes_n = 150;
