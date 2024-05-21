@@ -1380,7 +1380,7 @@ namespace elliptic_curve_guide {
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point(const Element& x, const Element& y) const {
                 if (is_null_coordinates(x, y)) {
-                    return null_point();
+                    return null_point<type>();
                 }
 
                 if (!is_valid_coordinates(x, y)) {
@@ -1393,7 +1393,7 @@ namespace elliptic_curve_guide {
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point(Element&& x, const Element& y) const {
                 if (is_null_coordinates(x, y)) {
-                    return null_point();
+                    return null_point<type>();
                 }
 
                 if (!is_valid_coordinates(x, y)) {
@@ -1406,7 +1406,7 @@ namespace elliptic_curve_guide {
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point(const Element& x, Element&& y) const {
                 if (is_null_coordinates(x, y)) {
-                    return null_point();
+                    return null_point<type>();
                 }
 
                 if (!is_valid_coordinates(x, y)) {
@@ -1419,7 +1419,7 @@ namespace elliptic_curve_guide {
             template<CoordinatesType type = CoordinatesType::Normal>
             std::optional<EllipticCurvePoint<type>> point(Element&& x, Element&& y) const {
                 if (is_null_coordinates(x, y)) {
-                    return null_point();
+                    return null_point<type>();
                 }
 
                 if (!is_valid_coordinates(x, y)) {
@@ -1437,11 +1437,10 @@ namespace elliptic_curve_guide {
             template<CoordinatesType type = CoordinatesType::Normal>
             EllipticCurvePoint<type> random_point() const {
                 static constexpr size_t c_repeat_number = 1000;
-                const uint& p = m_field->modulus();
 
                 for (size_t i = 0; i < c_repeat_number; ++i) {
-                    uint x = algorithm::random::generate_random_uint_modulo(p);
-                    auto opt = point_with_x_equal_to<type>(m_field->element(x));
+                    Element x = algorithm::random::generate_random_field_element(*m_field);
+                    auto opt = point_with_x_equal_to<type>(x);
 
                     if (opt.has_value()) {
                         return opt.value();

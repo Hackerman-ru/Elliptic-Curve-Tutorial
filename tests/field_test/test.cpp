@@ -26,14 +26,14 @@ static constexpr size_t c_stress_test_negotiation_n = 400;
 static constexpr size_t c_stress_test_power_n = 200;
 static constexpr size_t c_stress_test_shift_n = 200;
 
-#define UCMP(my_value, correct_value)                                      \
+#define UINT_EQ(my_value, correct_value)                                   \
     if (my_value != correct_value) {                                       \
         std::string my_str = my_value.convert_to<std::string>();           \
         std::string correct_str = correct_value.convert_to<std::string>(); \
         ASSERT_EQ(my_str, correct_str);                                    \
     }
 
-#define FCMP(my_value, correct_value)                                              \
+#define FIELD_EQ(my_value, correct_value)                                          \
     if (my_value != correct_value) {                                               \
         std::string my_str = my_value.value().convert_to<std::string>();           \
         std::string correct_str = correct_value.value().convert_to<std::string>(); \
@@ -72,7 +72,7 @@ TEST(SimpleTest, Inversion) {
     inverse.inverse();
     uint result = inverse.value();
     uint correct_result("437500003");
-    UCMP(result, correct_result);
+    UINT_EQ(result, correct_result);
 }
 
 TEST(SimpleTest, Comparison) {
@@ -88,7 +88,7 @@ TEST(SimpleTest, Shift) {
     FieldElement b = a << uint("30");
     uint result = b.value();
     uint correct_result("410065471");
-    UCMP(result, correct_result);
+    UINT_EQ(result, correct_result);
 }
 
 // Correctness tests
@@ -97,7 +97,7 @@ TEST(CorrectnessTest, Creating) {
     for (size_t i = 0; i < c_primes_n; ++i) {
         uint p = primes::prime_number_list[i];
         Field f(p);
-        UCMP(f.modulus(), p);
+        UINT_EQ(f.modulus(), p);
     }
 }
 
@@ -129,7 +129,7 @@ TEST(CorrectnessTest, Addition) {
             FieldElement b = generate_random_field_element(f);
             uint my_value = (a + b).value();
             uint correct_value = (a.value() + b.value()) % p;
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -144,7 +144,7 @@ TEST(CorrectnessTest, Negotiation) {
             FieldElement b = -a;
             uint my_value = (a + b).value();
             uint correct_value = 0;
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -159,7 +159,7 @@ TEST(CorrectnessTest, Subtraction) {
             FieldElement b = generate_random_field_element(f);
             uint my_value = (a - b).value();
             uint correct_value = (a.value() + p - b.value()) % p;
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -174,7 +174,7 @@ TEST(CorrectnessTest, Multiplication) {
             FieldElement b = generate_random_field_element(f);
             uint my_value = (a * b).value();
             uint correct_value = (a.value() * b.value()) % p;
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -190,7 +190,7 @@ TEST(CorrectnessTest, Division) {
             FieldElement q = a / b;
             uint my_value = (q * b).value();
             uint correct_value = a.value();
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -205,7 +205,7 @@ TEST(CorrectnessTest, Inversion) {
             FieldElement a = generate_random_non_zero_field_element(f);
             FieldElement inv_a = FieldElement::inverse(a);
             FieldElement result = a * inv_a;
-            FCMP(result, one);
+            FIELD_EQ(result, one);
         }
     }
 }
@@ -228,7 +228,7 @@ TEST(CorrectnessTest, Power) {
                 current_power++;
             }
 
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }
@@ -251,7 +251,7 @@ TEST(CorrectnessTest, Shift) {
                 current_shift++;
             }
 
-            UCMP(my_value, correct_value);
+            UINT_EQ(my_value, correct_value);
         }
     }
 }

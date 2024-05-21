@@ -71,7 +71,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
             uint x = random::generate_random_uint_modulo(p);
             x &= zero_mask;
             x |= message ^ (message & zero_mask);
-            auto opt = m_curve.point_with_x_equal_to(F.element(x));
+            auto opt = m_curve.point_with_x_equal_to<point_type>(F.element(x));
 
             if (opt.has_value()) {
                 return opt.value();
