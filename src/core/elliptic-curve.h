@@ -103,7 +103,7 @@ namespace elliptic_curve_guide {
         EllipticCurvePoint<type> operator-(const EllipticCurvePoint<type>& lhs,
                                            EllipticCurvePoint<type>&& rhs) {
             rhs -= lhs;
-            rhs.negative();
+            rhs = -rhs;
             return rhs;
         }
 
@@ -173,7 +173,6 @@ namespace elliptic_curve_guide {
         class EllipticCurvePoint<CoordinatesType::Normal> : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 
@@ -345,7 +344,6 @@ namespace elliptic_curve_guide {
         class EllipticCurvePoint<CoordinatesType::Projective> : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 
@@ -541,7 +539,6 @@ namespace elliptic_curve_guide {
         class EllipticCurvePoint<CoordinatesType::Jacobi> : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 
@@ -732,7 +729,6 @@ namespace elliptic_curve_guide {
         class EllipticCurvePoint<CoordinatesType::JacobiChudnovski> : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 
@@ -938,7 +934,6 @@ namespace elliptic_curve_guide {
         class EllipticCurvePoint<CoordinatesType::ModifiedJacobi> : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 
@@ -1138,7 +1133,6 @@ namespace elliptic_curve_guide {
             : public EllipticCurvePointConcept {
         private:
             friend class EllipticCurve;
-            friend EllipticCurvePoint operator-(const EllipticCurvePoint& lhs, EllipticCurvePoint&& rhs);
             friend EllipticCurvePoint algorithm::wnaf_addition<EllipticCurvePoint>(EllipticCurvePoint value,
                                                                                    const uint& n);
 

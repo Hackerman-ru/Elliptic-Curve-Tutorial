@@ -38,10 +38,15 @@ namespace elliptic_curve_guide::algorithm::encryption {
         return {.generator_degree = generator_degree, .message_with_salt = message_with_salt};
     }
 
-    ElGamal::Point
-        ElGamal::decrypt(const EncryptedMessage<ElGamal::EncryptionType::Standard>& encrypted_message,
-                         const uint& private_key) const {
+    ElGamal::Point encryption::ElGamal::decrypt_to_point(
+        const EncryptedMessage<EncryptionType::Standard>& encrypted_message, const uint& private_key) const {
         return encrypted_message.message_with_salt - private_key * encrypted_message.generator_degree;
+    }
+
+    uint encryption::ElGamal::decrypt_to_uint(
+        const EncryptedMessage<EncryptionType::Standard>& encrypted_message, const uint& private_key) const {
+        auto M = encrypted_message.message_with_salt - private_key * encrypted_message.generator_degree;
+        return map_to_uint(M);
     }
 
     uint ElGamal::decrypt(const EncryptedMessage<ElGamal::EncryptionType::Hashed>& encrypted_message,

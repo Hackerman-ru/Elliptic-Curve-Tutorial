@@ -13,7 +13,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         return {.public_key = Q, .private_key = d};
     }
 
-    ECDSA::Signature ECDSA::generate_signature(const uint& private_key, const uint& message) const {
+    ECDSA::Signature ECDSA::generate_signature(const uint& message, const uint& private_key) const {
         const Field F(m_n);
 
         for (;;) {
@@ -39,7 +39,7 @@ namespace elliptic_curve_guide::algorithm::encryption {
         return {};
     }
 
-    bool ECDSA::is_correct_signature(const Point& public_key, const uint& message,
+    bool ECDSA::is_correct_signature(const uint& message, const Point& public_key,
                                      const Signature& signature) const {
         const uint& r = signature.r;
         const uint& s = signature.s;

@@ -53,8 +53,10 @@ namespace elliptic_curve_guide {
                             const Point& public_key,
                             const std::function<uint(const Point&)>& hash_function) const;
 
-                Point decrypt(const EncryptedMessage<EncryptionType::Standard>& encrypted_message,
-                              const uint& private_key) const;
+                Point decrypt_to_point(const EncryptedMessage<EncryptionType::Standard>& encrypted_message,
+                                       const uint& private_key) const;
+                uint decrypt_to_uint(const EncryptedMessage<EncryptionType::Standard>& encrypted_message,
+                                     const uint& private_key) const;
                 uint decrypt(const EncryptedMessage<EncryptionType::Hashed>& encrypted_message,
                              const uint& private_key,
                              const std::function<uint(const Point&)>& hash_function) const;
