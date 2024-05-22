@@ -103,6 +103,7 @@ namespace elliptic_curve_guide::algorithm {
         field::FieldElement current_z = value;
 
         while (current_r != 0) {
+            size_t prev_r = current_r;
             current_z *= cache.b_second_powers[e - current_r];
 
             for (size_t next_r = 0; next_r < current_r; ++next_r) {
@@ -115,6 +116,7 @@ namespace elliptic_curve_guide::algorithm {
             }
 
             two_orders.emplace_back(current_r);
+            assert(prev_r > current_r);
         }
 
         field::FieldElement current_x = field::FieldElement::pow(current_z, (cache.residue + 1) >> 1);

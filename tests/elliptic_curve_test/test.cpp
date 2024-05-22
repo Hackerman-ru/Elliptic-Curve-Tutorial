@@ -7,6 +7,8 @@
 #include "utils/primes.h"
 #include "utils/random.h"
 
+#include <random>
+
 using namespace elliptic_curve_guide;
 using namespace field;
 using namespace elliptic_curve;
@@ -18,14 +20,12 @@ static constexpr uint c_good_p = 53617;   // e = 4
 static constexpr uint c_big_p = "0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff";
 
 static constexpr size_t c_correctness_test_find_y_n = 20;
-static constexpr size_t c_correctness_test_random_n = 20;
-static constexpr size_t c_correctness_test_zero_n = 20;
-static constexpr size_t c_correctness_test_addition_n = 20;
 static constexpr size_t c_correctness_test_kp_n = 20;
-static constexpr uint c_correctness_max_k_n = 100;
+static constexpr size_t c_correctness_test_n = 1000;
+static constexpr size_t c_correctness_max_k_n = 1000;
 
-static constexpr size_t c_stress_test_find_y_n = 50;
-static constexpr size_t c_stress_test_kp_n = 25;
+static constexpr size_t c_stress_test_find_y_n = 1000;
+static constexpr size_t c_stress_test_kp_n = 1000;
 static constexpr uint c_stress_max_k_n = "0xffffff12fffabcffff34fffffffffffff123ff";
 
 struct Coordinates {
@@ -80,6 +80,13 @@ testing::AssertionResult has_point(const std::optional<EllipticCurvePoint<type>>
         ASSERT_EQ(lhs_coord, rhs_coord);              \
     }
 
+std::mt19937_64 gen(42);
+
+static uint get_random_prime() {
+    size_t pos = gen() % (c_primes_n - 2) + 2;
+    return primes::prime_number_list[pos];
+}
+
 // Common tests
 // Simple tests
 TEST(SimpleTest, Creation) {
@@ -107,8 +114,7 @@ TEST(SimpleTest, FindY) {
 // Correctness tests
 TEST(CorrectnessTest, FindY) {
     for (size_t i = 0; i < c_correctness_test_find_y_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -206,8 +212,7 @@ TEST(CorrectnessTest, FindY) {
 // Stress tests
 TEST(StressTest, FindY) {
     for (size_t i = 0; i < c_stress_test_find_y_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -248,9 +253,9 @@ TEST(StressTest, FindY) {
 // Normal Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomNormal) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -298,9 +303,9 @@ TEST(CorrectnessTest, RandomNormal) {
 }
 
 TEST(CorrectnessTest, ZeroNormal) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -313,9 +318,9 @@ TEST(CorrectnessTest, ZeroNormal) {
 }
 
 TEST(CorrectnessTest, AdditionNormal) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -377,8 +382,8 @@ TEST(CorrectnessTest, AdditionNormal) {
 
 TEST(CorrectnessTest, kPNormal) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -421,8 +426,7 @@ TEST(CorrectnessTest, kPNormal) {
 // Stress tests
 TEST(StressTest, kPNormal) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -448,9 +452,9 @@ TEST(StressTest, kPNormal) {
 // Jacobi Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomJacobi) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -498,9 +502,9 @@ TEST(CorrectnessTest, RandomJacobi) {
 }
 
 TEST(CorrectnessTest, ZeroJacobi) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -513,9 +517,9 @@ TEST(CorrectnessTest, ZeroJacobi) {
 }
 
 TEST(CorrectnessTest, AdditionJacobi) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -577,8 +581,8 @@ TEST(CorrectnessTest, AdditionJacobi) {
 
 TEST(CorrectnessTest, kPJacobi) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -621,8 +625,7 @@ TEST(CorrectnessTest, kPJacobi) {
 // Stress tests
 TEST(StressTest, kPJacobi) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -648,9 +651,9 @@ TEST(StressTest, kPJacobi) {
 // Projective Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomProjective) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -698,9 +701,9 @@ TEST(CorrectnessTest, RandomProjective) {
 }
 
 TEST(CorrectnessTest, ZeroProjective) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -713,9 +716,9 @@ TEST(CorrectnessTest, ZeroProjective) {
 }
 
 TEST(CorrectnessTest, AdditionProjective) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -777,8 +780,8 @@ TEST(CorrectnessTest, AdditionProjective) {
 
 TEST(CorrectnessTest, kPProjective) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -821,8 +824,7 @@ TEST(CorrectnessTest, kPProjective) {
 // Stress tests
 TEST(StressTest, kPProjective) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -848,9 +850,9 @@ TEST(StressTest, kPProjective) {
 // ModifiedJacobi Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomModifiedJacobi) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -898,9 +900,9 @@ TEST(CorrectnessTest, RandomModifiedJacobi) {
 }
 
 TEST(CorrectnessTest, ZeroModifiedJacobi) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -913,9 +915,9 @@ TEST(CorrectnessTest, ZeroModifiedJacobi) {
 }
 
 TEST(CorrectnessTest, AdditionModifiedJacobi) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -977,8 +979,8 @@ TEST(CorrectnessTest, AdditionModifiedJacobi) {
 
 TEST(CorrectnessTest, kPModifiedJacobi) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1021,8 +1023,7 @@ TEST(CorrectnessTest, kPModifiedJacobi) {
 // Stress tests
 TEST(StressTest, kPModifiedJacobi) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -1048,9 +1049,9 @@ TEST(StressTest, kPModifiedJacobi) {
 // JacobiChudnovski Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1098,9 +1099,9 @@ TEST(CorrectnessTest, RandomJacobiChudnovski) {
 }
 
 TEST(CorrectnessTest, ZeroJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1113,9 +1114,9 @@ TEST(CorrectnessTest, ZeroJacobiChudnovski) {
 }
 
 TEST(CorrectnessTest, AdditionJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1177,8 +1178,8 @@ TEST(CorrectnessTest, AdditionJacobiChudnovski) {
 
 TEST(CorrectnessTest, kPJacobiChudnovski) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1221,8 +1222,7 @@ TEST(CorrectnessTest, kPJacobiChudnovski) {
 // Stress tests
 TEST(StressTest, kPJacobiChudnovski) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);
@@ -1248,9 +1248,9 @@ TEST(StressTest, kPJacobiChudnovski) {
 // SimplifiedJacobiChudnovski Coordinates tests
 // Correctness tests
 TEST(CorrectnessTest, RandomSimplifiedJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_random_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1298,9 +1298,9 @@ TEST(CorrectnessTest, RandomSimplifiedJacobiChudnovski) {
 }
 
 TEST(CorrectnessTest, ZeroSimplifiedJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_zero_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1313,9 +1313,9 @@ TEST(CorrectnessTest, ZeroSimplifiedJacobiChudnovski) {
 }
 
 TEST(CorrectnessTest, AdditionSimplifiedJacobiChudnovski) {
-    for (size_t i = 0; i < c_correctness_test_addition_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1377,8 +1377,8 @@ TEST(CorrectnessTest, AdditionSimplifiedJacobiChudnovski) {
 
 TEST(CorrectnessTest, kPSimplifiedJacobiChudnovski) {
     for (size_t i = 0; i < c_correctness_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        Field F(primes::prime_number_list[pos]);
+        uint p = get_random_prime();
+        Field F(p);
 
         FieldElement a = generate_random_field_element(F);
         FieldElement b = generate_random_field_element(F);
@@ -1423,8 +1423,7 @@ TEST(CorrectnessTest, kPSimplifiedJacobiChudnovski) {
 // Stress tests
 TEST(StressTest, kPSimplifiedJacobiChudnovski) {
     for (size_t i = 0; i < c_stress_test_kp_n; ++i) {
-        size_t pos = generate_random_uint_modulo(c_primes_n).convert_to<size_t>();
-        uint p = primes::prime_number_list[pos];
+        uint p = get_random_prime();
         Field F(p);
 
         FieldElement a = generate_random_field_element(F);

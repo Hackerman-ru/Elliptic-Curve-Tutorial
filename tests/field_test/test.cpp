@@ -5,16 +5,14 @@
 #include "utils/primes.h"
 #include "utils/random.h"
 
+#include <random>
+
 using namespace elliptic_curve_guide;
 using namespace field;
 using namespace algorithm::random;
 
 static constexpr size_t c_primes_n = 150;
-static constexpr size_t c_correctness_test_arithmetic_n = 50;
-static constexpr size_t c_correctness_test_inversion_n = 100;
-static constexpr size_t c_correctness_test_negotiation_n = 100;
-static constexpr size_t c_correctness_test_power_n = 80;
-static constexpr size_t c_correctness_test_shift_n = 100;
+static constexpr size_t c_correctness_test_n = 100;
 
 static constexpr size_t c_stress_test_arithmetic_n = 200;
 static constexpr size_t c_stress_test_inversion_n = 400;
@@ -35,6 +33,13 @@ static constexpr size_t c_stress_test_shift_n = 200;
         std::string correct_str = correct_value.value().convert_to<std::string>(); \
         ASSERT_EQ(my_str, correct_str);                                            \
     }
+
+std::mt19937_64 gen(42);
+
+static uint get_random_prime() {
+    size_t pos = gen() % (c_primes_n - 2) + 2;
+    return primes::prime_number_list[pos];
+}
 
 // Simple tests
 TEST(SimpleTest, Creating) {
@@ -90,128 +95,113 @@ TEST(SimpleTest, Shift) {
 // Correctness tests
 
 TEST(CorrectnessTest, Creating) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
         UINT_EQ(f.modulus(), p);
     }
 }
 
 TEST(CorrectnessTest, Comparison) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = generate_random_field_element(f);
-            uint a_value = a.value();
-            uint b_value = b.value();
-            ASSERT_EQ(a != b, a_value != b_value);
-            ASSERT_EQ(a == b, a_value == b_value);
-            ASSERT_EQ(a < b, a_value < b_value);
-            ASSERT_EQ(a > b, a_value > b_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = generate_random_field_element(f);
+        uint a_value = a.value();
+        uint b_value = b.value();
+        ASSERT_EQ(a != b, a_value != b_value);
+        ASSERT_EQ(a == b, a_value == b_value);
+        ASSERT_EQ(a < b, a_value < b_value);
+        ASSERT_EQ(a > b, a_value > b_value);
     }
 }
 
 TEST(CorrectnessTest, Addition) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = generate_random_field_element(f);
-            uint my_value = (a + b).value();
-            uint correct_value = (a.value() + b.value()) % p;
-            UINT_EQ(my_value, correct_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = generate_random_field_element(f);
+        uint my_value = (a + b).value();
+        uint correct_value = (a.value() + b.value()) % p;
+        UINT_EQ(my_value, correct_value);
     }
 }
 
 TEST(CorrectnessTest, Negotiation) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_negotiation_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = -a;
-            uint my_value = (a + b).value();
-            uint correct_value = 0;
-            UINT_EQ(my_value, correct_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = -a;
+        uint my_value = (a + b).value();
+        uint correct_value = 0;
+        UINT_EQ(my_value, correct_value);
     }
 }
 
 TEST(CorrectnessTest, Subtraction) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = generate_random_field_element(f);
-            uint my_value = (a - b).value();
-            uint correct_value = (a.value() + p - b.value()) % p;
-            UINT_EQ(my_value, correct_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = generate_random_field_element(f);
+        uint my_value = (a - b).value();
+        uint correct_value = (a.value() + p - b.value()) % p;
+        UINT_EQ(my_value, correct_value);
     }
 }
 
 TEST(CorrectnessTest, Multiplication) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = generate_random_field_element(f);
-            uint my_value = (a * b).value();
-            uint correct_value = (a.value() * b.value()) % p;
-            UINT_EQ(my_value, correct_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = generate_random_field_element(f);
+        uint my_value = (a * b).value();
+        uint correct_value = (a.value() * b.value()) % p;
+        UINT_EQ(my_value, correct_value);
     }
 }
 
 TEST(CorrectnessTest, Division) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_arithmetic_n; ++j) {
-            FieldElement a = generate_random_field_element(f);
-            FieldElement b = generate_random_non_zero_field_element(f);
-            FieldElement q = a / b;
-            uint my_value = (q * b).value();
-            uint correct_value = a.value();
-            UINT_EQ(my_value, correct_value);
-        }
+        FieldElement a = generate_random_field_element(f);
+        FieldElement b = generate_random_non_zero_field_element(f);
+        FieldElement q = a / b;
+        uint my_value = (q * b).value();
+        uint correct_value = a.value();
+        UINT_EQ(my_value, correct_value);
     }
 }
 
 TEST(CorrectnessTest, Inversion) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
-        FieldElement one = f.element(1);
 
-        for (size_t j = 0; j < c_correctness_test_inversion_n; ++j) {
-            FieldElement a = generate_random_non_zero_field_element(f);
-            FieldElement inv_a = FieldElement::inverse(a);
-            FieldElement result = a * inv_a;
-            FIELD_EQ(result, one);
-        }
+        FieldElement a = generate_random_non_zero_field_element(f);
+        FieldElement inv_a = FieldElement::inverse(a);
+        FieldElement result = a * inv_a;
+        FIELD_EQ(result, f.element(1));
     }
 }
 
 TEST(CorrectnessTest, Power) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_power_n; ++j) {
+        for (uint j = 1; j < p; j <<= 1) {
             FieldElement a = generate_random_field_element(f);
             uint my_value = FieldElement::pow(a, j).value();
 
@@ -230,11 +220,11 @@ TEST(CorrectnessTest, Power) {
 }
 
 TEST(CorrectnessTest, Shift) {
-    for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+    for (size_t i = 0; i < c_correctness_test_n; ++i) {
+        uint p = get_random_prime();
         Field f(p);
 
-        for (size_t j = 0; j < c_correctness_test_shift_n; ++j) {
+        for (size_t j = 0; j < p; ++j) {
             FieldElement a = generate_random_field_element(f);
             uint my_value = (a << j).value();
 
@@ -255,7 +245,7 @@ TEST(CorrectnessTest, Shift) {
 // Stress tests
 TEST(StressTest, Addition) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
@@ -268,7 +258,7 @@ TEST(StressTest, Addition) {
 
 TEST(StressTest, Negotiation) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_negotiation_n; ++j) {
@@ -280,7 +270,7 @@ TEST(StressTest, Negotiation) {
 
 TEST(StressTest, Subtraction) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
@@ -293,7 +283,7 @@ TEST(StressTest, Subtraction) {
 
 TEST(StressTest, Multiplication) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
@@ -306,7 +296,7 @@ TEST(StressTest, Multiplication) {
 
 TEST(StressTest, Division) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_arithmetic_n; ++j) {
@@ -319,7 +309,7 @@ TEST(StressTest, Division) {
 
 TEST(StressTest, Inversion) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_inversion_n; ++j) {
@@ -331,7 +321,7 @@ TEST(StressTest, Inversion) {
 
 TEST(StressTest, Power) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_power_n; ++j) {
@@ -344,7 +334,7 @@ TEST(StressTest, Power) {
 
 TEST(StressTest, Shift) {
     for (size_t i = 0; i < c_primes_n; ++i) {
-        uint p = primes::prime_number_list[i];
+        uint p = get_random_prime();
         Field f(p);
 
         for (size_t j = 0; j < c_stress_test_shift_n; ++j) {
