@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="Encryption\el-gamal.h" />
+    <ClInclude Include="Encryption\ecdsa.h" />
+    <ClInclude Include="core\long-arithmetic.h" />
+    <ClInclude Include="core\field.h" />
+    <ClInclude Include="core\elliptic-curve.h" />
+    <ClInclude Include="core\utils\fft.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\string-parser.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\concepts.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\bitsize.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\random.h">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\csprng.h">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\csprng.hpp">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\csprng\is_iterable.hpp">
+      <Filter>utils\random</Filter>
+    </ClInclude>
+    <ClInclude Include="core\uint.h" />
+    <ClInclude Include="core\utils\fast-pow.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\modulo_inversion.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\field_root.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\wnaf.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\division_poly.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\endomorphism.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\polynomial.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\ring.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\schoof\schoof.h">
+      <Filter>utils\schoof</Filter>
+    </ClInclude>
+    <ClInclude Include="core\utils\primes.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="core\field.cpp" />
+    <ClCompile Include="core\elliptic-curve.cpp" />
+    <ClCompile Include="core\long-arithmetic.cpp" />
+    <ClCompile Include="core\utils\bitsize.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Encryption\ecdsa.cpp" />
+    <ClCompile Include="encryption\el-gamal.cpp" />
+    <ClCompile Include="core\utils\random.cpp">
+      <Filter>utils\random</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\csprng\csprng.cpp">
+      <Filter>utils\random</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\field_root.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\division_poly.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\endomorphism.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\polynomial.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\ring.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+    <ClCompile Include="core\utils\schoof\schoof.cpp">
+      <Filter>utils\schoof</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="utils">
+      <UniqueIdentifier>{7af97bf8-3024-44b7-88c5-358175296e7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\random">
+      <UniqueIdentifier>{0f2daa40-8ebc-4187-b0f9-af31ad6d3ab0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils\schoof">
+      <UniqueIdentifier>{01e516f4-dfda-40ab-8fe0-2baeba66a164}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

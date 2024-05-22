@@ -1,0 +1,9 @@
+[submodule "libs/multiprecision"]
+	path = libs/multiprecision
+	url = https://github.com/boostorg/multiprecision
+[submodule "libs/random"]
+	path = libs/random
+	url = https://github.com/Duthomhas/CSPRNG
+[submodule "libs/cthash"]
+	path = libs/cthash
+	url = https://github.com/hanickadot/cthash

@@ -1,0 +1,251 @@
+\ProvidesFile{field.tex}
+
+\section{Поле}
+Наши поля - это простые конечные поля, значит можно представить их в виде вычетов по простому модулю. Но чем мы будем оперировать? Элементами поля. То есть нам нужен класс элементов поля. Но они должны как-то знать свой простой модуль, который будет одинаков у большинства элементов этого поля, поэтому надо как-то ввести общий элемент для множества объектов. Главная идея: создать класс поля, который сам будет оркестрировать элементами поля: создавать элементы поля и давать им общий простой модуль.
+
+Итого нужно реализовать два класса:
+\subsection{Элемент поля}
+  Так как нужно раздавать простой модуль на множество объектов, то одним из лучших решений будет делать это через умный указатель на константный объект. так как мы не хотим, чтобы наш класс создавали извне, кроме класса поля, то сделаем класс поля другом, а конструктор приватным.
+\subsubsection{Каркас}
+  \begin{cppcode}
+class FieldElement {
+    friend class Field;
+
+    FieldElement(const uint& value, std::shared_ptr<const uint> modulus);
+    uint m_value;
+    std::shared_ptr<const uint> m_modulus;
+};
+  \end{cppcode}
+  Так как поступившее число может быть не меньше модуля, то определим приватный метод нормализации:
+    \begin{cppcode}
+uint FieldElement::normalize(const uint& value, std::shared_ptr<const uint> modulus) {
+    return value % *modulus;
+}
+  \end{cppcode}
+  Итого:
+  \begin{cppcode}
+class FieldElement {
+    friend class Field;
+
+    FieldElement(const uint& value, std::shared_ptr<const uint> modulus) :
+        m_value(normalize(value, modulus)), m_modulus(std::move(modulus)) {};
+    uint m_value;
+    std::shared_ptr<const uint> m_modulus;
+};
+
+  \end{cppcode}
+\subsubsection{Методы}
+\begin{itemize}
+  \item Стандартным образом определяем по 4 дружественных оператора на каждую операцию $+,-,*,/,<<$ через их $+=$ версии. Заметим, что нельзя определить операторы $>>,\q >>=$, так как это нарушает арифметику простого поля, потому что деление в поле - это умножение на обратный к делителю.
+
+  \item Метод отрицания --- это просто модуль - значение:
+  \begin{cppcode}
+FieldElement FieldElement::operator-() const {
+    return FieldElement(*m_modulus - m_value, m_modulus);
+}
+  \end{cppcode}
+  \item   Возведение в степень uint --- стандартный double-and-add:
+  \begin{cppcode}
+template<typename T>
+T fast_pow(const T& value, const uint& power) {
+    if ((power & 1) != 0) {
+        if (power == 1) {
+            return value;
+        }
+
+        return value * fast_pow<T>(value, power - 1);
+    }
+
+    T temp = fast_pow<T>(value, power >> 1);
+    return temp * temp;
+}
+
+FieldElement FieldElement::pow(const FieldElement& element, const uint& power) {
+    return fast_pow<FieldElement>(element, power);
+}
+  \end{cppcode}
+
+  \item Обратный элемент по простому модулю можно найти по расширенному алгоритму Евклида. Не буду себя утруждать объяснениями такого базового алгоритма:
+  \begin{cppcode}
+template<typename T>
+static T extended_modular_gcd(const T& a, const T& b, T& x, T& y, const T& modulus) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+
+    T x1, y1;
+    T d = extended_modular_gcd<T>(b, a % b, x1, y1, modulus);
+    x = y1;
+    T temp = y1 * (a / b);
+
+    while (x1 < temp) {
+        x1 += modulus;
+    }
+
+    y = x1 - temp;
+    return d;
+}
+
+template<typename T>
+T inverse_modulo(const T& value, const T& modulus) {
+    T result, temp;
+    extended_modular_gcd<T>(value, modulus, result, temp, modulus);
+    return result;
+}
+
+void FieldElement::inverse() {
+    m_value = inverse_modulo<uint>(m_value, *m_modulus);
+}
+  \end{cppcode}
+  
+  \item Заметим, что для сложения и вычитания достаточно не деления, а простого сравнения для поддержания инварианта:
+  \begin{cppcode}
+FieldElement& FieldElement::operator+=(const FieldElement& other) {
+    m_value += other.m_value;
+
+    if (m_value >= *m_modulus) {
+        m_value -= *m_modulus;
+    }
+
+    return *this;
+}
+
+FieldElement& FieldElement::operator-=(const FieldElement& other) {
+    if (m_value < other.m_value) {
+        m_value += *m_modulus;
+    }
+
+    m_value -= other.m_value;
+
+    return *this;
+}
+  \end{cppcode}
+  
+  \item Битовый сдвиг влево производим по одному, чтобы случайно не получить переполнение:
+  \begin{cppcode}
+FieldElement& FieldElement::operator<<=(const uint& shift) {
+    for (size_t i = 0; i < shift; ++i) {
+        m_value <<= 1;
+
+        if (m_value >= *m_modulus) {
+            m_value -= *m_modulus;
+        }
+    }
+
+    return *this;
+}
+  \end{cppcode}
+
+  \item Сравнение будет в двух вариантах, так как длинка от буста не поддерживает оператор <=>:
+  \begin{cppcode}
+friend bool operator==(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value == rhs.m_value;
+}
+
+#ifdef ECG_USE_BOOST
+friend bool operator<(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value < rhs.m_value;
+}
+
+friend bool operator>(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value > rhs.m_value;
+}
+
+friend bool operator<=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value <= rhs.m_value;
+}
+
+friend bool operator>=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value >= rhs.m_value;
+}
+
+friend bool operator!=(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value != rhs.m_value;
+}
+#else
+friend std::strong_ordering operator<=>(const FieldElement& lhs, const FieldElement& rhs) {
+    return lhs.m_value <=> rhs.m_value;
+}
+#endif
+  \end{cppcode}
+
+  \item Делаем публичный метод is\_invertible, который проверяет, обратим ли элемент в поле. Так как в простом поле любой ненулевой элемент обратим, то
+  \begin{cppcode}
+bool FieldElement::is_invertible() const {
+    return m_value != 0;
+}
+  \end{cppcode}
+
+  \item Прописываем геттеры для модуля и значения и идём дальше.
+\end{itemize}
+\subsection{Поле}
+  Поле будем создавать от простого модуля в uint или в виде строки:
+  \begin{cppcode}
+class Field {
+public:
+    Field(const uint& modulus);
+
+private:
+    std::shared_ptr<const uint> m_modulus;
+};
+  \end{cppcode}
+  Заметим, что конвертация от строки к uint произойдёт автоматически, если у uint есть не explicit конструктор от строки, и можно будет писать так:
+  \begin{cppcode}
+Field F("0xFFFFFFFFFFF123");
+  \end{cppcode}
+  Но у бустовской длинки нет конструктора от строки, поэтому заведём отдельный дефайн ECG\_USE\_BOOST, если мы использовали длинку от буста, и определим новый конструктор:
+  \begin{cppcode}
+class Field {
+public:
+#ifdef ECG_USE_BOOST
+    Field(const char* str);
+#endif
+    Field(const uint& modulus);
+
+private:
+    std::shared_ptr<const uint> m_modulus;
+};
+\end{cppcode}
+  Теперь мы бы хотели создавать элементы поля. Из-за буста опять в двух вариантах:
+  \begin{cppcode}
+class Field {
+public:
+#ifdef ECG_USE_BOOST
+    Field(const char* str);
+    FieldElement element(const char* str) const;
+#endif
+    Field(const uint& modulus);
+    FieldElement element(const uint& value) const;
+    const uint& modulus() const;
+
+private:
+    std::shared_ptr<const uint> m_modulus;
+};
+  \end{cppcode}
+  где element реализуем как:
+  \begin{cppcode}
+#ifdef ECG_USE_BOOST
+FieldElement Field::element(const char* str) const {
+    return FieldElement(uint(str), m_modulus);
+}
+#endif
+FieldElement Field::element(const uint& value) const {
+    return FieldElement(value, m_modulus);
+}
+  \end{cppcode}
+
+  Даём оператор сравнения на равенство для поля и геттер поля:
+  \begin{cppcode}
+const uint& Field::modulus() const {
+    return *m_modulus;
+}
+
+bool Field::operator==(const Field& other) const {
+    return *m_modulus == *other.m_modulus;
+}
+  \end{cppcode}
+
+  Идём дальше.
+

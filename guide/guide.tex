@@ -1,0 +1,35 @@
+\documentclass{article}
+
+\usepackage{packages}
+\usepackage{environments}
+\usepackage{commands}
+
+\title{\textbf{Руководство по реализации криптографии на эллиптических кривых}\vfill}
+\author{Санан Корняков}
+\date{\the\year}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+\tableofcontents
+\newpage
+
+\input{chapters/introduction}
+\input{chapters/long_arithmetic}
+\input{chapters/field}
+\input{chapters/elliptic_curve}
+\input{chapters/elgamal}
+\input{chapters/ecdsa}
+\input{chapters/tests}
+\input{chapters/specialization}
+\input{chapters/conclusion}
+
+\newpage
+\bibliographystyle{unsrt}
+\addcontentsline{toc}{section}{Список литературы}
+\bibliography{bibl}
+
+\end{document}
+
