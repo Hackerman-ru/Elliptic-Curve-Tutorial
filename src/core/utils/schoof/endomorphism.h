@@ -1,9 +1,7 @@
 #ifndef ECG_ENDOMORPHISM_H
 #define ECG_ENDOMORPHISM_H
 
-#include "polynomial.h"
 #include "ring.h"
-#include "uint.h"
 #include "utils/wnaf.h"
 
 #include <variant>
@@ -13,16 +11,22 @@ namespace elliptic_curve_guide {
         class End {
             using Poly = polynomial::Poly;
             using Ring = ring::Ring;
-            using Element = ring::RingElement;
+            using Field = field::Field;
+            using RingElement = ring::RingElement;
+            using FieldElement = field::FieldElement;
 
             friend End algorithm::wnaf_addition<End>(End end, const uint& value);
 
         public:
-            End(const Ring& ring, const Poly& a, const Poly& b,
-                const std::shared_ptr<const Element>& curve_function);
-            End(const Ring& ring, const Element& a, const Element& b,
-                const std::shared_ptr<const Element>& curve_function);
-            End(const Ring& ring, Element&& a, Element&& b, std::shared_ptr<const Element>&& curve_function);
+            struct Info {
+                Ring ring;
+                FieldElement a;
+                RingElement curve_function;
+            };
+
+            End(const Poly& a, const Poly& b, std::shared_ptr<const Info> info);
+            End(const RingElement& a, const RingElement& b, std::shared_ptr<const Info> info);
+            End(RingElement&& a, RingElement&& b, std::shared_ptr<const Info> info);
 
             using AdditionResult = std::variant<End, Poly>;
 
@@ -51,10 +55,9 @@ namespace elliptic_curve_guide {
 
             void nullify();
 
-            Ring m_ring;
-            Element m_a;
-            Element m_b;
-            std::shared_ptr<const Element> m_curve_function;
+            RingElement m_a_x;
+            RingElement m_b_x;
+            std::shared_ptr<const Info> m_info;
         };
     }   // namespace endomorphism
 }   // namespace elliptic_curve_guide

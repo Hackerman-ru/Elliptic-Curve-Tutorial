@@ -314,14 +314,7 @@ namespace elliptic_curve_guide::polynomial {
 }   // namespace elliptic_curve_guide::polynomial
 
 namespace elliptic_curve_guide::algorithm {
-    namespace {
-        struct DivisionResult {
-            polynomial::Poly quotient;
-            polynomial::Poly remainder;
-        };
-    }   // namespace
-
-    static DivisionResult divide(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
+    DivisionResult divide(const polynomial::Poly& lhs, const polynomial::Poly& rhs) {
         using Element = field::FieldElement;
         using polynomial::Poly;
         const field::Field& F = lhs.get_field();

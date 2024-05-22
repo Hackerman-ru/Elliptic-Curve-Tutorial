@@ -3,96 +3,107 @@
 #include "utils/wnaf.h"
 
 namespace elliptic_curve_guide::endomorphism {
-    End::End(const Ring& ring, const Poly& a, const Poly& b,
-             const std::shared_ptr<const Element>& curve_function) :
-        m_ring(ring), m_a(ring.element(a)), m_b(ring.element(b)), m_curve_function(curve_function) {}
+    End::End(const Poly& a, const Poly& b, std::shared_ptr<const Info> info) :
+        m_a_x((*info).ring.element(a)), m_b_x((*info).ring.element(b)), m_info(std::move(info)) {}
 
-    End::End(const Ring& ring, const Element& a, const Element& b,
-             const std::shared_ptr<const Element>& curve_function) :
-        m_ring(ring), m_a(a), m_b(b), m_curve_function(curve_function) {}
+    End::End(const RingElement& a, const RingElement& b, std::shared_ptr<const Info> info) :
+        m_a_x(a), m_b_x(b), m_info(std::move(info)) {}
 
-    End::End(const Ring& ring, Element&& a, Element&& b, std::shared_ptr<const Element>&& curve_function) :
-        m_ring(ring), m_a(std::move(a)), m_b(std::move(b)), m_curve_function(std::move(curve_function)) {}
+    End::End(RingElement&& a, RingElement&& b, std::shared_ptr<const Info> info) :
+        m_a_x(std::move(a)), m_b_x(std::move(b)), m_info(std::move(info)) {}
 
     End::AdditionResult End::twice(const End& end) {
-        const ring::Ring& R = end.m_ring;
-        const field::Field& F = R.modulus().get_field();
-        const Element& f = *end.m_curve_function;
+        using namespace algorithm;
 
-        Element denominator = F.element(2) * end.m_b * f;
-        algorithm::ModulusGcdResult gcd_result =
-            algorithm::modulus_gcd(denominator.value(), denominator.modulus());
+        const field::FieldElement& A = (*end.m_info).a;
+        const Ring& R = (*end.m_info).ring;
+        const Field& F = R.modulus().get_field();
+        const RingElement& curve_function = (*end.m_info).curve_function;
 
-        const polynomial::Poly& g = gcd_result.gcd;
+        RingElement denominator = F.element(2) * end.m_b_x * curve_function;
+        polynomial::Poly inverse_denominator(F);
 
-        if (g.degree() > 0) {
-            return g;
+        if (denominator.value().degree() == 0) {
+            inverse_denominator = denominator.value();
+            assert(inverse_denominator[0].value() != 0);
+            inverse_denominator[0].inverse();
+        } else {
+            ModulusGcdResult gcd_result = modulus_gcd(denominator.value(), denominator.modulus());
+            const polynomial::Poly& g = gcd_result.gcd;
+
+            if (g.degree() > 0) {
+                return g;
+            }
+
+            const polynomial::Poly& inverse_denominator = gcd_result.value_multiplier;
         }
 
-        const polynomial::Poly& inverse_denominator = gcd_result.value_multiplier;
-        const field::FieldElement& A = f.value()[1];
-        End::Element r = F.element(3) * Element::pow(end.m_a, 2) + R.element(Poly(F, {A}));
+        RingElement r = F.element(3) * RingElement::pow(end.m_a_x, 2) + R.element(Poly(F, {A}));
         r *= R.element(inverse_denominator);
-        End::Element a = End::Element::pow(r, 2) * f - end.m_a * F.element(2);
-        End::Element b = r * (end.m_a - a) - end.m_b;
-        End result(R, a, b, end.m_curve_function);
+        RingElement a = RingElement::pow(r, 2) * curve_function - end.m_a_x * F.element(2);
+        RingElement b = r * (end.m_a_x - a) - end.m_b_x;
+        End result(a, b, end.m_info);
         return result;
     }
 
     End::AdditionResult operator+(const End& lhs, const End& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator+ : endomorphisms from different rings");
+        using namespace ring;
+        using namespace algorithm;
 
-        if (lhs.m_a == rhs.m_a) {
+        if (lhs.m_a_x == rhs.m_a_x) {
             return End::twice(lhs);
         }
 
-        End::Element denominator = lhs.m_a - rhs.m_a;
-        algorithm::ModulusGcdResult gcd_result =
-            algorithm::modulus_gcd(denominator.value(), denominator.modulus());
+        const Ring& R = (*lhs.m_info).ring;
+        const field::Field F = R.get_field();
+        const RingElement& curve_function = (*lhs.m_info).curve_function;
 
-        const polynomial::Poly& g = gcd_result.gcd;
-        const ring::Ring& R = lhs.m_ring;
-        const End::Element& f = *lhs.m_curve_function;
+        RingElement denominator = lhs.m_a_x - rhs.m_a_x;
+        polynomial::Poly inverse_denominator(F);
 
-        if (g.degree() > 0) {
-            return g;
+        if (denominator.value().degree() == 0) {
+            inverse_denominator = denominator.value();
+            assert(inverse_denominator[0].value() != 0);
+            inverse_denominator[0].inverse();
+        } else {
+            ModulusGcdResult gcd_result = modulus_gcd(denominator.value(), denominator.modulus());
+            const polynomial::Poly& g = gcd_result.gcd;
+
+            if (g.degree() > 0) {
+                return g;
+            }
+
+            inverse_denominator = gcd_result.value_multiplier;
         }
 
-        const polynomial::Poly& inverse_denominator =
-            gcd_result.value_multiplier * field::FieldElement::inverse(gcd_result.gcd[0]);
-        End::Element r = (lhs.m_b - rhs.m_b) * R.element(inverse_denominator);
-        End::Element a = End::Element::pow(r, 2) * f - lhs.m_a - rhs.m_a;
-        End::Element b = r * (lhs.m_a - a) - lhs.m_b;
-        End result(R, a, b, lhs.m_curve_function);
+        RingElement r = (lhs.m_b_x - rhs.m_b_x) * R.element(inverse_denominator);
+        RingElement a = RingElement::pow(r, 2) * curve_function - lhs.m_a_x - rhs.m_a_x;
+        RingElement b = r * (lhs.m_a_x - a) - lhs.m_b_x;
+        End result(a, b, lhs.m_info);
         return result;
     }
 
     End::AdditionResult operator-(const End& lhs, const End& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator- : endomorphisms from different rings");
         return lhs + (-rhs);
     }
 
     End operator*(const End& lhs, const End& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator* : endomorphisms from different rings");
         End result = lhs;
         result *= rhs;
         return result;
     }
 
     End operator*(End&& lhs, const End& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator* : endomorphisms from different rings");
         lhs *= rhs;
         return lhs;
     }
 
     End operator*(const End& lhs, End&& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator* : endomorphisms from different rings");
         rhs *= lhs;
         return rhs;
     }
 
     End operator*(End&& lhs, End&& rhs) {
-        assert(lhs.m_ring == rhs.m_ring && "End::operator* : endomorphisms from different rings");
         lhs *= rhs;
         return lhs;
     }
@@ -125,60 +136,6 @@ namespace elliptic_curve_guide::endomorphism {
             End temp = std::get<End>(var);
             return temp + temp;
         }
-
-        /*algorithm::WnafForm wform = algorithm::get_wnaf(n);
-        End::AdditionResult var = value + value;
-
-        if (std::holds_alternative<polynomial::Poly>(var)) {
-            return std::get<polynomial::Poly>(var);
-        }
-
-        End two_value = std::get<End>(var);
-        std::vector<End> k_values = {value};
-
-        for (size_t i = 1; i < algorithm::c_k_number; ++i) {
-            var = k_values.back() + two_value;
-
-            if (std::holds_alternative<polynomial::Poly>(var)) {
-                return std::get<polynomial::Poly>(var);
-            }
-
-            k_values.emplace_back(std::get<End>(var));
-        }
-
-        value.nullify();
-
-        for (size_t i = wform.size(); i > 0; --i) {
-            var = value + value;
-
-            if (std::holds_alternative<polynomial::Poly>(var)) {
-                return std::get<polynomial::Poly>(var);
-            }
-
-            value = std::get<End>(var);
-
-            if (wform[i - 1].value != 0) {
-                if (!wform[i - 1].is_negative) {
-                    var = value + k_values[wform[i - 1].value >> 1];
-
-                    if (std::holds_alternative<polynomial::Poly>(var)) {
-                        return std::get<polynomial::Poly>(var);
-                    }
-
-                    value = std::get<End>(var);
-                } else {
-                    var = value - k_values[wform[i - 1].value >> 1];
-
-                    if (std::holds_alternative<polynomial::Poly>(var)) {
-                        return std::get<polynomial::Poly>(var);
-                    }
-
-                    value = std::get<End>(var);
-                }
-            }
-        }
-
-        return value;*/
     }
 
     End::AdditionResult operator*(const End& end, const uint& value) {
@@ -190,25 +147,25 @@ namespace elliptic_curve_guide::endomorphism {
     }
 
     bool End::operator==(const End& other) const {
-        return m_a == other.m_a && m_b == other.m_b;
+        return m_a_x == other.m_a_x && m_b_x == other.m_b_x;
     }
 
     End End::operator-() const {
         End result = *this;
-        result.m_b = -result.m_b;
+        result.m_b_x = -result.m_b_x;
         return result;
     }
 
     End& End::operator*=(const End& other) {
-        assert(m_ring == other.m_ring && "End::operator*= : endomorphisms from different rings");
-        m_a.compose(other.m_a);
-        m_b.compose(other.m_a);
-        m_b *= other.m_b;
+        m_a_x.compose(other.m_a_x);
+        m_b_x.compose(other.m_a_x);
+        m_b_x *= other.m_b_x;
         return *this;
     }
 
     void End::nullify() {
-        m_a = m_ring.element(Poly(m_ring.get_field(), {0, 1}));
-        m_b = m_ring.element(Poly(m_ring.get_field(), {1}));
+        const Ring& R = (*m_info).ring;
+        m_a_x = R.element(Poly(R.get_field(), {0, 1}));
+        m_b_x = R.element(Poly(R.get_field(), {1}));
     }
 }   // namespace elliptic_curve_guide::endomorphism

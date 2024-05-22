@@ -73,6 +73,13 @@ namespace elliptic_curve_guide {
     }   // namespace polynomial
 
     namespace algorithm {
+        struct DivisionResult {
+            polynomial::Poly quotient;
+            polynomial::Poly remainder;
+        };
+
+        DivisionResult divide(const polynomial::Poly& lhs, const polynomial::Poly& rhs);
+
         struct ModulusGcdResult {
             polynomial::Poly gcd;
             polynomial::Poly value_multiplier;

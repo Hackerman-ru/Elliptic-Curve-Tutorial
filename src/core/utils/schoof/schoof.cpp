@@ -8,9 +8,6 @@
 #include "utils/primes.h"
 
 namespace elliptic_curve_guide::algorithm::schoof {
-    static constexpr size_t c_prime_number_list_size =
-        sizeof(primes::prime_number_list) / sizeof(primes::prime_number_list[0]);
-
     static constexpr size_t c_max_needed_prime_number = 400;
 
     static std::vector<polynomial::DivisionPoly> get_division_polynomials(const polynomial::Poly& curve_poly,
@@ -90,8 +87,8 @@ namespace elliptic_curve_guide::algorithm::schoof {
         polynomial::Poly curve_poly(F, {curve.get_b(), curve.get_a(), F.element(0), F.element(1)});
 
         if (modulus == 2) {
-            bool has_2_torsion_points = has_root(curve_poly);
-            return has_2_torsion_points ? 0 : 1;
+            bool has_second_torsion_points = has_root(curve_poly);
+            return has_second_torsion_points ? 0 : 1;
         }
 
         static std::vector<polynomial::DivisionPoly> division_polynomials =
@@ -101,17 +98,19 @@ namespace elliptic_curve_guide::algorithm::schoof {
 
         for (;;) {
             ring::Ring R(h);
+            ring::RingElement ring_curve_poly = R.element(curve_poly);
+            End::Info info {.ring = R, .a = curve.get_a(), .curve_function = ring_curve_poly};
+            auto info_ptr = std::make_shared<const End::Info>(std::move(info));
 
             Element x = R.element(polynomial::Poly(F, {0, 1}));
             Element one = R.element(polynomial::Poly(F, {1}));
 
             Element pi_a = Element::pow(x, p);
-            auto curve_poly_ptr = std::make_shared<const Element>(R.element(curve_poly));
-            Element pi_b = Element::pow(*curve_poly_ptr, (p - 1) >> 1);
+            Element pi_b = Element::pow(ring_curve_poly, (p - 1) >> 1);
 
-            End pi(R, pi_a, pi_b, curve_poly_ptr);
+            End pi(pi_a, pi_b, info_ptr);
             End pi_squared = pi * pi;
-            End id(R, x, one, curve_poly_ptr);
+            End id(x, one, info_ptr);
             End::AdditionResult var = id * p;
 
             if (std::holds_alternative<polynomial::Poly>(var)) {
